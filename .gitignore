@@ -27,3 +27,4 @@ backend/media/
 # Divers
 .env
 .env.*
+.env.local
