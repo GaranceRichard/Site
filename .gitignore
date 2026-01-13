@@ -1,0 +1,29 @@
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# Frontend (Next)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.*.local
+
+# Backend (Python/Django)
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/db.sqlite3
+backend/.env
+backend/.env.*
+backend/staticfiles/
+backend/media/
+
+# Divers
+.env
+.env.*
