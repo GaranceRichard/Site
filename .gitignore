@@ -24,6 +24,7 @@ backend/.env.*
 backend/staticfiles/
 backend/media/
 
+
 # Divers
 .env
 .env.*
