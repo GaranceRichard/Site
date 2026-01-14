@@ -1,33 +1,31 @@
-GaranceRichard — Site (Frontend Next.js + Backend Django/DRF)
+# GaranceRichard — Site (Frontend Next.js + Backend Django/DRF)
 
 Site vitrine avec page de contact.
+- Frontend : Next.js (App Router)
+- Backend : Django + Django REST Framework
+- Fonctionnalité : formulaire /contact → API /api/contact/messages → stockage en base + consultation via admin Django
 
-Frontend : Next.js (App Router)
+## Fonctionnalités
+- Page d’accueil (vitrine)
+- Page /contact avec formulaire
+- API POST /api/contact/messages (Django REST Framework)
+- Stockage des messages en base (SQLite en dev)
+- Consultation via l’admin Django
+- Anti-spam : honeypot côté front + throttling côté API
 
-Backend : Django + Django REST Framework
-
-Fonctionnalité : formulaire /contact → API /api/contact/messages → stockage en base + consultation via admin Django
-
-Structure du projet
-
+## Structure du projet
 garancerichard-site/
 backend/ (Django + API REST)
 frontend/ (Next.js)
 
-Prérequis
+## Prérequis
+- Node.js (LTS recommandé)
+- Python (version compatible avec backend/requirements.txt)
+- Git
 
-Node.js (LTS recommandé)
-
-Python (version compatible avec backend/requirements.txt)
-
-Git
-
-Démarrage rapide (développement)
-
-Backend (Django)
-
-Dans un terminal :
-
+## Démarrage rapide (développement)
+### Backend (Django)
+- Dans un terminal :
 cd backend
 
 (optionnel) créer un venv :
@@ -35,10 +33,10 @@ python -m venv .venv
 
 Activer le venv :
 
-Windows PowerShell :
+- Windows PowerShell :
 .\.venv\Scripts\Activate.ps1
 
-macOS/Linux :
+- macOS/Linux :
 source .venv/bin/activate
 
 Installer les dépendances :
@@ -52,25 +50,20 @@ Lancer le serveur :
 python manage.py runserver
 
 Backend : http://127.0.0.1:8000
-
 Admin : http://127.0.0.1:8000/admin/
 
-Frontend (Next.js)
+### Frontend (Next.js)
 
 Dans un second terminal :
 
 cd frontend
-
 npm install
-
 npm run dev
 
 Frontend : http://localhost:3000
 
-Configuration des variables d’environnement
-
-Backend — backend/.env (local)
-
+## Configuration des variables d’environnement
+### Backend — backend/.env (local)
 Créer un fichier backend/.env (non versionné) avec :
 
 DJANGO_SECRET_KEY=dev-secret-key
@@ -78,53 +71,44 @@ DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
 DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000
 
-Frontend — frontend/.env.local (local)
-
+### Frontend — frontend/.env.local (local)
 Créer un fichier frontend/.env.local (non versionné) avec :
 
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 
-API — Contact
-
+## API — Contact
 Endpoint : POST /api/contact/messages
 
 Champs attendus (JSON) :
 
-name : chaîne
-
-email : chaîne (email)
-
-subject : chaîne (optionnel)
-
-message : chaîne
-
-consent : booléen (doit être true)
-
-source : chaîne (optionnel, ex. contact-page)
+- name : chaîne
+- email : chaîne (email)
+- subject : chaîne (optionnel)
+- message : chaîne
+- consent : booléen (doit être true)
+- source : chaîne (optionnel, ex. contact-page)
 
 Notes :
 
-consent doit être true (validation backend)
+- consent doit être true (validation backend)
+- anti-spam : honeypot côté front + throttling côté API
 
-anti-spam : honeypot côté front + throttling côté API
-
-Test rapide (curl)
-
-Windows PowerShell (une seule ligne) :
+## Test rapide (curl)
+### Windows PowerShell (2 lignes) :
 
 $body = '{"name":"Test","email":"test@example.com","subject":"Hello","message":"Test","consent":true,"source":"curl"}'
 curl -i -X POST "http://127.0.0.1:8000/api/contact/messages" -H "Content-Type: application/json" -d $body
 
-Si vous êtes sur macOS/Linux, la commande est la même (le point important est de garder les guillemets échappés).
-
-Bonnes pratiques repo
-
+## Bonnes pratiques repo
 Ne pas committer :
 
-backend/.venv/
+- backend/.venv/
+- frontend/node_modules/
+- fichiers .env*
 
-frontend/node_modules/
-
-fichiers .env*
-
-backend/db.sqlite3 (recommandé)
+## Déploiement (à minima)
+- DJANGO_DEBUG=False
+- DJANGO_SECRET_KEY fort
+- DJANGO_ALLOWED_HOSTS et DJANGO_CORS_ALLOWED_ORIGINS alignés avec le domaine
+- Base de données de production (PostgreSQL recommandé)
+- HTTPS en frontal
