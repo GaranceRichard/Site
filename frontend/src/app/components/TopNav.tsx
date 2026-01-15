@@ -29,7 +29,7 @@ export default function TopNav({
 
   const NAV_PILL =
     "inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-neutral-200 bg-white px-2.5 py-1 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
-    
+
   function closeMenu() {
     setOpen(false);
   }
@@ -57,11 +57,8 @@ export default function TopNav({
             <ScrollNav items={nav} className={NAV_PILL} />
           </nav>
 
-          {/* Actions */}
           <div className="flex items-center gap-2 md:gap-3">
-            <ThemeToggle className={NAV_PILL} />
-
-            {/* Desktop CTA */}
+            {/* Desktop CTA d'abord */}
             <div className="hidden md:flex items-center gap-3">
               <a
                 href={bookingUrl}
@@ -75,9 +72,12 @@ export default function TopNav({
               <Link href="/contact" className={NAV_PILL}>
                 Contact
               </Link>
+
+              {/* Toggle en dernier */}
+              <ThemeToggle className={NAV_PILL} />
             </div>
 
-            {/* Mobile : bouton Menu */}
+            {/* Mobile : bouton Menu (toggle dans le menu mobile si vous le souhaitez) */}
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
@@ -88,6 +88,7 @@ export default function TopNav({
               Menu
             </button>
           </div>
+
         </div>
 
         {/* Mobile menu */}
