@@ -1,6 +1,10 @@
 // frontend/src/app/page.tsx
 import Link from "next/link";
 import ThemeToggle from "./components/ThemeToggle";
+import ScrollNav from "./components/ScrollNav";
+import TopNav from "./components/TopNav";
+import ScrollTo from "./components/ScrollTo";
+
 
 type NavItem = { label: string; href: string };
 
@@ -151,77 +155,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       {/* Header sticky */}
-      <header className="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50/85 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/75">
-        <Container>
-          <div className="flex h-[72px] items-center justify-between gap-6">
-            <a href="#home" className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-sm font-semibold shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
-                G
-              </span>
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">Garance</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Coach Lean-Agile
-                </p>
-              </div>
-            </a>
-
-            <nav className="hidden items-center gap-5 md:flex">
-              {NAV.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-50"
-                >
-                  {item.label}
-                </a>
-              ))}
-
-              {/* Switch jour/nuit */}
-              <ThemeToggle />
-
-              {/* RDV (lien externe Google) */}
-              <a
-                href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl border border-neutral-200 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-800 dark:border-neutral-800"
-              >
-                Prendre rendez-vous
-              </a>
-
-              {/* Contact (modale /contact) */}
-              <Link
-                href="/contact"
-                className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800"
-              >
-                Contact
-              </Link>
-            </nav>
-
-            {/* Mobile : RDV + toggle */}
-            <div className="md:hidden flex items-center gap-2">
-              <ThemeToggle />
-              <a
-                href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl border border-neutral-200 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-800 dark:border-neutral-800"
-              >
-                RDV
-              </a>
-            </div>
-          </div>
-
-          {/* Mobile : lien contact sous le header */}
-          <div className="md:hidden pb-3">
-            <Link href="/contact" className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-50">
-              Contact
-            </Link>
-          </div>
-        </Container>
-      </header>
-
+      <TopNav nav={NAV} bookingUrl={BOOKING_URL} />
       {/* HERO */}
       <section id="home" className="relative overflow-hidden">
         <div className="absolute inset-0 bg-neutral-50 dark:bg-neutral-950" />
@@ -485,9 +419,9 @@ export default function HomePage() {
               © {new Date().getFullYear()} Garance — Coach Lean-Agile
             </p>
             <div className="flex gap-4 text-sm text-neutral-600 dark:text-neutral-300">
-              <a href="#home" className="hover:text-neutral-900 dark:hover:text-neutral-50">
+              <ScrollTo targetId="home" className="hover:text-neutral-900 dark:hover:text-neutral-50">
                 Haut de page
-              </a>
+              </ScrollTo>
               <a
                 href={BOOKING_URL}
                 target="_blank"
