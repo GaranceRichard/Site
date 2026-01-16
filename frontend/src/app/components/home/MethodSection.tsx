@@ -1,13 +1,12 @@
-// frontend/src/app/components/home/MethodSection.tsx
 import { Container, SectionTitle } from "./ui";
 
-type MethodStep = {
+export type MethodStep = {
   step: string;
   title: string;
   text: string;
 };
 
-export default function MethodSection({ steps }: { steps: MethodStep[] }) {
+export default function MethodSection({ steps }: { steps: readonly MethodStep[] }) {
   return (
     <section id="method" className="py-16 sm:py-20">
       <Container>

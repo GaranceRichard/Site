@@ -1,12 +1,11 @@
-// frontend/src/app/components/home/ServicesSection.tsx
 import { Container, SectionTitle, DetailsAccordion } from "./ui";
 
-type Service = {
+export type Service = {
   title: string;
-  points: string[];
+  points: readonly string[];
 };
 
-export default function ServicesSection({ services }: { services: Service[] }) {
+export default function ServicesSection({ services }: { services: readonly Service[] }) {
   return (
     <section id="services" className="py-16 sm:py-20">
       <Container>
@@ -31,7 +30,7 @@ export default function ServicesSection({ services }: { services: Service[] }) {
           <div className="md:col-span-7">
             <div className="space-y-4">
               {services.map((s) => (
-                <DetailsAccordion key={s.title} title={s.title} points={s.points} />
+                <DetailsAccordion key={s.title} title={s.title} points={[...s.points]} />
               ))}
             </div>
           </div>

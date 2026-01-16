@@ -1,13 +1,12 @@
-// frontend/src/app/components/home/CasesSection.tsx
 import { Container, SectionTitle, CaseCard } from "./ui";
 
-type CaseItem = {
+export type CaseItem = {
   title: string;
   tag: string;
   description: string;
 };
 
-export default function CasesSection({ cases }: { cases: CaseItem[] }) {
+export default function CasesSection({ cases }: { cases: readonly CaseItem[] }) {
   return (
     <section id="cases" className="py-16 sm:py-20">
       <Container>
