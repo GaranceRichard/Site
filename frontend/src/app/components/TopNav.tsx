@@ -7,7 +7,6 @@ import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import ScrollTo from "./ScrollTo";
 
-
 type NavItem = { label: string; href: string };
 
 export default function TopNav({
@@ -39,11 +38,11 @@ export default function TopNav({
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="flex h-[72px] items-center justify-between gap-6">
           {/* Branding */}
-          <ScrollTo targetId="home" className="flex items-center gap-3">
+          <ScrollTo targetId="home" className="flex min-w-0 items-center gap-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-sm font-semibold shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
               G
             </span>
-            <div className="leading-tight">
+            <div className="min-w-0 leading-tight">
               <p className="text-sm font-semibold">Garance</p>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Coach Lean-Agile
@@ -51,14 +50,14 @@ export default function TopNav({
             </div>
           </ScrollTo>
 
-
           {/* Desktop nav */}
           <nav className="hidden items-center gap-3 md:flex">
             <ScrollNav items={nav} className={NAV_PILL} />
           </nav>
 
+          {/* Actions */}
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Desktop CTA d'abord */}
+            {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <a
                 href={bookingUrl}
@@ -73,11 +72,11 @@ export default function TopNav({
                 Contact
               </Link>
 
-              {/* Toggle en dernier */}
-              <ThemeToggle className={NAV_PILL} />
+              {/* Toggle thème (icône) en dernier */}
+              <ThemeToggle className={`${NAV_PILL} shrink-0`} />
             </div>
 
-            {/* Mobile : bouton Menu (toggle dans le menu mobile si vous le souhaitez) */}
+            {/* Mobile : bouton Menu */}
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
@@ -88,7 +87,6 @@ export default function TopNav({
               Menu
             </button>
           </div>
-
         </div>
 
         {/* Mobile menu */}
@@ -96,7 +94,7 @@ export default function TopNav({
           id="mobile-menu"
           className={[
             "md:hidden overflow-hidden transition-[max-height,opacity] duration-200",
-            open ? "max-h-[520px] opacity-100 pb-4" : "max-h-0 opacity-0",
+            open ? "max-h-[620px] opacity-100 pb-4" : "max-h-0 opacity-0",
           ].join(" ")}
         >
           <div className="grid gap-2 pt-2">
@@ -114,9 +112,12 @@ export default function TopNav({
               Prendre rendez-vous
             </a>
 
-            <Link href="/contact" onClick={closeMenu as any} className={NAV_PILL}>
+            <Link href="/contact" onClick={() => closeMenu()} className={NAV_PILL}>
               Contact
             </Link>
+
+            {/* Toggle thème (icône) en dernier */}
+            <ThemeToggle className={NAV_PILL} />
           </div>
         </div>
       </div>

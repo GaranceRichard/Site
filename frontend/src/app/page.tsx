@@ -1,7 +1,5 @@
 // frontend/src/app/page.tsx
 import Link from "next/link";
-import ThemeToggle from "./components/ThemeToggle";
-import ScrollNav from "./components/ScrollNav";
 import TopNav from "./components/TopNav";
 import ScrollTo from "./components/ScrollTo";
 

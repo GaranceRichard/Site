@@ -73,9 +73,9 @@ export default function ContactForm() {
 
       setStatus("success");
       setForm((f) => ({ ...f, name: "", email: "", subject: "", message: "", consent: false, website: "" }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err?.message ?? "Erreur inattendue");
+      setErrorMsg(err instanceof Error ? err.message : "Erreur inattendue");
     }
   }
 
