@@ -2,7 +2,13 @@
 import Link from "next/link";
 import TopNav from "./components/TopNav";
 import ScrollTo from "./components/ScrollTo";
-
+import {
+  Container,
+  SectionTitle,
+  DetailsAccordion,
+  CaseCard,
+  InlinePill,
+} from "./components/home/ui";
 
 type NavItem = { label: string; href: string };
 
@@ -65,95 +71,12 @@ const CASES = [
   },
 ];
 
-function Container({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">{children}</div>;
-}
-
-function SectionTitle({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="max-w-3xl">
-      <p className="text-sm font-medium tracking-wide text-neutral-500 dark:text-neutral-400">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-        {title}
-      </h2>
-      {description ? (
-        <p className="mt-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-300">
-          {description}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function DetailsAccordion({ title, points }: { title: string; points: string[] }) {
-  return (
-    <details className="group rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-        <span className="text-sm font-semibold">{title}</span>
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
-          <span className="group-open:hidden">+</span>
-          <span className="hidden group-open:inline">–</span>
-        </span>
-      </summary>
-
-      <div className="mt-4 space-y-2">
-        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-          {points.map((p) => (
-            <li key={p}>{p}</li>
-          ))}
-        </ul>
-      </div>
-    </details>
-  );
-}
-
-function CaseCard({
-  title,
-  tag,
-  description,
-}: {
-  title: string;
-  tag: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold">{title}</p>
-        <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
-          {tag}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function InlinePill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200">
-      {children}
-    </span>
-  );
-}
-
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       {/* Header sticky */}
       <TopNav nav={NAV} bookingUrl={BOOKING_URL} />
+
       {/* HERO */}
       <section id="home" className="relative overflow-hidden">
         <div className="absolute inset-0 bg-neutral-50 dark:bg-neutral-950" />
@@ -175,8 +98,8 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-300">
-                Accompagnement orienté résultats : clarifier la priorité, stabiliser le flux, renforcer
-                l’autonomie — sans surcouche inutile.
+                Accompagnement orienté résultats : clarifier la priorité, stabiliser le flux,
+                renforcer l’autonomie — sans surcouche inutile.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -324,7 +247,8 @@ export default function HomePage() {
 
           <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
             <span className="font-semibold text-neutral-900 dark:text-neutral-50">Option :</span>{" "}
-            intégrer ici des “preuves” (avant/après, métriques, verbatims), en gardant la même sobriété.
+            intégrer ici des “preuves” (avant/après, métriques, verbatims), en gardant la même
+            sobriété.
           </div>
         </Container>
       </section>
@@ -344,10 +268,26 @@ export default function HomePage() {
             <div className="md:col-span-7">
               <ol className="space-y-4">
                 {[
-                  { step: "01", title: "Observer", text: "Cartographier le flux, clarifier les irritants, comprendre les contraintes." },
-                  { step: "02", title: "Choisir", text: "Définir 2–3 leviers maximum : priorisation, WIP, qualité, gouvernance." },
-                  { step: "03", title: "Exécuter", text: "Mettre en place des routines utiles, ajuster, renforcer l’autonomie." },
-                  { step: "04", title: "Ancrer", text: "Stabiliser : standards légers, suivi, transfert et montée en compétence." },
+                  {
+                    step: "01",
+                    title: "Observer",
+                    text: "Cartographier le flux, clarifier les irritants, comprendre les contraintes.",
+                  },
+                  {
+                    step: "02",
+                    title: "Choisir",
+                    text: "Définir 2–3 leviers maximum : priorisation, WIP, qualité, gouvernance.",
+                  },
+                  {
+                    step: "03",
+                    title: "Exécuter",
+                    text: "Mettre en place des routines utiles, ajuster, renforcer l’autonomie.",
+                  },
+                  {
+                    step: "04",
+                    title: "Ancrer",
+                    text: "Stabiliser : standards légers, suivi, transfert et montée en compétence.",
+                  },
                 ].map((item) => (
                   <li
                     key={item.step}
