@@ -1,35 +1,61 @@
 // frontend/src/app/components/ThemeToggle.tsx
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 const KEY = "theme";
 
-function safeApplyTheme(theme: Theme) {
-  if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
-}
-
-function safeGetThemeFromDom(): Theme {
-  if (typeof document === "undefined") return "light";
+function getThemeFromDom(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
+function subscribe(callback: () => void) {
+  // Observe les changements de classe sur <html> (ex: script theme-init, autres toggles)
+  const el = document.documentElement;
+
+  const obs = new MutationObserver(() => callback());
+  obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+
+  // Optionnel: si un autre code déclenche un event "themechange"
+  const onThemeChange = () => callback();
+  window.addEventListener("themechange", onThemeChange);
+
+  return () => {
+    obs.disconnect();
+    window.removeEventListener("themechange", onThemeChange);
+  };
+}
+
 export default function ThemeToggle({ className }: { className?: string }) {
-  // ✅ Important : initializer "safe" pour SSR/prerender (pas de document direct)
-  const [theme, setTheme] = useState<Theme>(() => safeGetThemeFromDom());
+  // ✅ SSR: on force un snapshot stable ("light") pour éviter mismatch
+  const theme = useSyncExternalStore(
+    subscribe,
+    () => getThemeFromDom(),
+    () => "light"
+  );
 
   function toggle() {
-    setTheme((current) => {
-      const next: Theme = current === "dark" ? "light" : "dark";
-      try {
-        window.localStorage.setItem(KEY, next);
-      } catch {}
-      safeApplyTheme(next);
-      return next;
-    });
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    try {
+      window.localStorage.setItem(KEY, next);
+    } catch {}
+
+    applyTheme(next);
+
+    // Notifie les autres listeners éventuels (et utile si MutationObserver est absent)
+    try {
+      window.dispatchEvent(new Event("themechange"));
+    } catch {}
   }
+
+  const base =
+    className ??
+    "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
 
   return (
     <button
@@ -37,10 +63,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
       onClick={toggle}
       aria-label={theme === "dark" ? "Passer en mode jour" : "Passer en mode nuit"}
       title={theme === "dark" ? "Mode jour" : "Mode nuit"}
-      className={
-        className ??
-        "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800"
-      }
+      className={base}
     >
       {theme === "dark" ? (
         // Soleil
