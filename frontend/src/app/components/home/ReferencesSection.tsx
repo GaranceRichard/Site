@@ -1,15 +1,22 @@
+// frontend/src/app/components/home/ReferencesSection.tsx
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Container, SectionTitle } from "./ui";
 import { REFERENCES, type ReferenceItem } from "../../content/references";
 import ReferenceModal from "./ReferenceModal";
 
 export default function ReferencesSection() {
   const items = useMemo(() => REFERENCES, []);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<ReferenceItem | null>(null);
+
+  const desktopWrapRef = useRef<HTMLDivElement | null>(null);
+
+  function clearActive() {
+    setActiveIndex(null);
+  }
 
   return (
     <section id="references" className="py-16 sm:py-20">
@@ -22,9 +29,18 @@ export default function ReferencesSection() {
 
         {/* Desktop — Accordéon horizontal */}
         <div className="mt-10 hidden md:block">
-          <div className="flex h-[420px] gap-4">
+          <div
+            ref={desktopWrapRef}
+            className="flex h-[420px] gap-1"
+            onMouseLeave={clearActive}
+            onBlurCapture={(e) => {
+              const next = e.relatedTarget as Node | null;
+              if (desktopWrapRef.current && next && desktopWrapRef.current.contains(next)) return;
+              clearActive();
+            }}
+          >
             {items.map((r, i) => {
-              const isActive = i === activeIndex;
+              const isActive = activeIndex === i;
 
               return (
                 <button
@@ -42,12 +58,9 @@ export default function ReferencesSection() {
                     "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
                     "focus:outline-none focus:ring-2 focus:ring-neutral-400/40",
                   ].join(" ")}
-                  style={{ flex: isActive ? 3 : 1 }}
+                  style={{ flex: isActive ? 6 : 1 }}
                 >
-                  {/* Fond neutre pour homogénéiser logos/photos */}
-                  <div className="absolute inset-0 bg-neutral-50 dark:bg-neutral-950" />
-
-                  {/* Visuel */}
+                  {/* Image plein cadre */}
                   <div className="absolute inset-0">
                     <Image
                       src={r.imageSrc}
@@ -55,54 +68,48 @@ export default function ReferencesSection() {
                       fill
                       sizes="(min-width: 768px) 33vw, 100vw"
                       className={[
-                        "object-contain p-10",
+                        "object-cover",
                         "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
                         isActive ? "scale-100" : "scale-[0.99]",
                       ].join(" ")}
                       priority={false}
                     />
-
-                    {/* Voile pour la lisibilité du texte */}
-                    <div
-                      className={[
-                        "absolute inset-0",
-                        "bg-gradient-to-t from-black/45 via-black/10 to-transparent",
-                        "transition-opacity duration-300",
-                        isActive ? "opacity-100" : "opacity-90",
-                      ].join(" ")}
-                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
                   </div>
 
-                  {/* Contenu */}
-                  <div className="relative flex h-full flex-col justify-end p-6">
-                    {r.label ? (
-                      <div className="inline-flex w-fit items-center rounded-full border border-white/20 bg-black/30 px-3 py-1 text-xs text-white backdrop-blur">
-                        {r.label}
+                  {/* Contenu : layout stable => textes alignés */}
+                  <div className="relative h-full p-6">
+                    <div className="grid h-full content-end gap-2">
+                      {/* Ligne 1 : nom */}
+                      <p className="text-lg font-semibold text-white">
+                        {isActive ? r.nameExpanded : r.nameCollapsed}
+                      </p>
+
+                      {/* Ligne 2 : mission (1 ligne, hauteur fixe) */}
+                      <div className="h-5 overflow-hidden">
+                        <p
+                          className={[
+                            "text-sm leading-5 text-white/85 line-clamp-1",
+                            "transition-all duration-300",
+                            isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
+                          ].join(" ")}
+                        >
+                          {r.missionTitle}
+                        </p>
                       </div>
-                    ) : null}
 
-                    <p className="mt-3 text-lg font-semibold text-white">
-                      {isActive ? r.nameExpanded : r.nameCollapsed}
-                    </p>
-
-                    <p
-                      className={[
-                        "mt-2 text-sm leading-relaxed text-white/85",
-                        "transition-all duration-300",
-                        isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
-                      ].join(" ")}
-                    >
-                      {r.missionTitle}
-                    </p>
-
-                    <div
-                      className={[
-                        "mt-5 text-xs font-semibold text-white/85",
-                        "transition-all duration-300",
-                        isActive ? "opacity-100" : "opacity-0",
-                      ].join(" ")}
-                    >
-                      Voir la mission →
+                      {/* Ligne 3 : CTA (hauteur fixe) */}
+                      <div className="h-5 pt-2">
+                        <div
+                          className={[
+                            "text-xs font-semibold text-white/85",
+                            "transition-opacity duration-300",
+                            isActive ? "opacity-100" : "opacity-0",
+                          ].join(" ")}
+                        >
+                          Voir la mission →
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -118,7 +125,7 @@ export default function ReferencesSection() {
         {/* Mobile — Carousel snap */}
         <div className="mt-10 md:hidden">
           <div className="-mx-5 overflow-x-auto px-5 pb-2">
-            <div className="flex snap-x snap-mandatory gap-4">
+            <div className="flex snap-x snap-mandatory gap-3">
               {items.map((r) => (
                 <button
                   key={r.id}
@@ -131,26 +138,20 @@ export default function ReferencesSection() {
                     "dark:border-neutral-800 dark:bg-neutral-900",
                   ].join(" ")}
                 >
-                  <div className="relative h-[240px] w-full bg-neutral-50 dark:bg-neutral-950">
+                  <div className="relative h-[240px] w-full">
                     <Image
                       src={r.imageSrc}
                       alt=""
                       fill
                       sizes="90vw"
-                      className="object-contain p-10"
+                      className="object-cover"
                       priority={false}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                   </div>
 
                   <div className="relative p-5">
-                    {r.label ? (
-                      <div className="inline-flex w-fit items-center rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-xs text-neutral-700 shadow-sm dark:border-neutral-800 dark:bg-neutral-950/90 dark:text-neutral-200">
-                        {r.label}
-                      </div>
-                    ) : null}
-
-                    <p className="mt-3 text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+                    <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
                       {r.nameExpanded}
                     </p>
                     <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">

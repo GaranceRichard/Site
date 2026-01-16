@@ -1,18 +1,24 @@
+// frontend/src/app/content/references.ts
+
 export type Reference = {
   id: string;
 
   // Affichages
   nameCollapsed: string; // petit
-  nameExpanded: string;  // grand
-  missionTitle: string;  // sous le nom étendu
+  nameExpanded: string; // grand
+  missionTitle: string; // sous le nom étendu
   label?: string;
 
   // Média
   imageSrc: string; // image/visuel
 
+  // Badge optionnel (ex: French Tech)
+  badgeSrc?: string;
+  badgeAlt?: string;
+
   // Détail (modale)
   situation: string; // contexte
-  tasks: string[];   // mission
+  tasks: string[]; // mission
   actions: string[]; // actions
   results: string[]; // résultats
 };
@@ -36,19 +42,21 @@ export const REFERENCES: readonly Reference[] = [
     nameExpanded: "Biodiv-Wind",
     missionTitle: "Facilitation & alignement",
     label: "Référence",
-    imageSrc: "/references/biodiv-wind.png",
+    imageSrc: "/references/biodiv-wind.webp",
     situation: "Contexte à compléter.",
     tasks: ["Mission à compléter."],
     actions: ["Actions à compléter."],
     results: ["Résultats à compléter."],
+    badgeSrc: "/badges/french-tech.png",
+    badgeAlt: "French Tech",
   },
   {
     id: "solution30",
-    nameCollapsed: "S30",
+    nameCollapsed: "Solutions30",
     nameExpanded: "Solution30",
     missionTitle: "Stabilisation du delivery",
     label: "Référence",
-    imageSrc: "/references/solutions30.png",
+    imageSrc: "/references/solutions30.jpg",
     situation: "Contexte à compléter.",
     tasks: ["Mission à compléter."],
     actions: ["Actions à compléter."],
