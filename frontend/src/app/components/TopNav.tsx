@@ -3,11 +3,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import ScrollTo from "./ScrollTo";
 
 type NavItem = { label: string; href: string };
+
+// ✅ Mets ton logo ici (fichier à placer dans /frontend/public/brand/logo.png par ex.)
 
 export default function TopNav({
   nav,
@@ -39,11 +42,18 @@ export default function TopNav({
         <div className="flex h-[72px] items-center justify-between gap-6">
           {/* Branding */}
           <ScrollTo targetId="home" className="flex min-w-0 items-center gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-sm font-semibold shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
-              G
-            </span>
+            {/* ✅ Logo (remplace le G) */}
+            <Image
+              src="/brand/logo.png"
+              alt="Garance Richard"
+              width={70}
+              height={70}
+              priority
+              className="h-22 w-24 object-contain"
+            />
+
             <div className="min-w-0 leading-tight">
-              <p className="text-sm font-semibold">Garance</p>
+              <p className="text-sm font-semibold">Garance Richard</p>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 Coach Lean-Agile
               </p>
