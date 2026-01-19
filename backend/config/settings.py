@@ -36,7 +36,11 @@ else:
     DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
 # Hosts / CORS / CSRF
-ALLOWED_HOSTS = _csv("DJANGO_ALLOWED_HOSTS") if (IS_PROD or os.getenv("DJANGO_ALLOWED_HOSTS")) else ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = (
+    _csv("DJANGO_ALLOWED_HOSTS")
+    if (IS_PROD or os.getenv("DJANGO_ALLOWED_HOSTS"))
+    else ["127.0.0.1", "localhost"]
+)
 CORS_ALLOWED_ORIGINS = _csv("DJANGO_CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = _csv("DJANGO_CSRF_TRUSTED_ORIGINS")
 
@@ -125,7 +129,18 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # DRF
 # -------------------------------------------------
 REST_FRAMEWORK = {
-    # On garde le throttling au niveau de la view (ContactMessageCreateView)
+    # ✅ Auth JWT (pour les endpoints backoffice)
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    # ✅ On laisse AllowAny par défaut pour ne pas casser l'API publique contact.
+    # Les endpoints backoffice seront protégés au niveau des views (IsAdminUser).
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.AllowAny",
+    ),
+
+    # Throttling (inchangé)
     "DEFAULT_THROTTLE_CLASSES": [],
     "DEFAULT_THROTTLE_RATES": {
         "contact": "10/min",
@@ -148,7 +163,9 @@ if IS_PROD:
 
     # HSTS (commencez bas, puis montez)
     SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "3600"))  # 1h
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() == "true"
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+        os.getenv("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() == "true"
+    )
     SECURE_HSTS_PRELOAD = os.getenv("DJANGO_SECURE_HSTS_PRELOAD", "False").lower() == "true"
 
     # Headers

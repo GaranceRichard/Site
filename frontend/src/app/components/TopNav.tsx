@@ -4,13 +4,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
-import ScrollTo from "./ScrollTo";
 
 type NavItem = { label: string; href: string };
-
-// ✅ Mets ton logo ici (fichier à placer dans /frontend/public/brand/logo.png par ex.)
 
 export default function TopNav({
   nav,
@@ -19,7 +17,9 @@ export default function TopNav({
   nav: NavItem[];
   bookingUrl: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isLogged, setIsLogged] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -29,6 +29,35 @@ export default function TopNav({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // ✅ “Connecté” si token présent
+  useEffect(() => {
+  let cancelled = false;
+
+  const compute = () => {
+    try {
+      return Boolean(sessionStorage.getItem("access_token"));
+    } catch {
+      return false;
+    }
+  };
+
+  const update = () => {
+    if (cancelled) return;
+    setIsLogged(compute());
+  };
+
+  if (typeof queueMicrotask === "function") {
+    queueMicrotask(update);
+  } else {
+    window.setTimeout(update, 0);
+  }
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
+
   const NAV_PILL =
     "inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-neutral-200 bg-white px-2.5 py-1 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
 
@@ -36,13 +65,45 @@ export default function TopNav({
     setOpen(false);
   }
 
+  function onBrandClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+
+    // Re-check au clic (au cas où le token vient d’être posé)
+    let logged = false;
+    try {
+      logged = Boolean(sessionStorage.getItem("access_token"));
+      setIsLogged(logged);
+    } catch {
+      logged = false;
+      setIsLogged(false);
+    }
+
+    if (logged) {
+      router.push("/backoffice");
+      return;
+    }
+
+    // Sinon : scroll vers home (comportement “logo = haut de page / accueil”)
+    const el = document.getElementById("home");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (window.location.hash) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50/85 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/75">
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="flex h-[72px] items-center justify-between gap-6">
-          {/* Branding */}
-          <ScrollTo targetId="home" className="flex min-w-0 items-center gap-3">
-            {/* ✅ Logo (remplace le G) */}
+          {/* Branding (logo) : si connecté -> /backoffice, sinon scroll home */}
+          <button
+            type="button"
+            onClick={onBrandClick}
+            className="flex min-w-0 items-center gap-3 text-left"
+            aria-label={isLogged ? "Aller au backoffice" : "Aller à l’accueil"}
+            title={isLogged ? "Backoffice" : "Accueil"}
+          >
             <Image
               src="/brand/logo.png"
               alt="Garance Richard"
@@ -58,7 +119,7 @@ export default function TopNav({
                 Coach Lean-Agile
               </p>
             </div>
-          </ScrollTo>
+          </button>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-3 md:flex">
@@ -82,7 +143,6 @@ export default function TopNav({
                 Contact
               </Link>
 
-              {/* Toggle thème (icône) en dernier */}
               <ThemeToggle className={`${NAV_PILL} shrink-0`} />
             </div>
 
@@ -108,10 +168,8 @@ export default function TopNav({
           ].join(" ")}
         >
           <div className="grid gap-2 pt-2">
-            {/* Menus mobiles : mêmes items + même style */}
             <ScrollNav items={nav} className={NAV_PILL} onNavigate={closeMenu} />
 
-            {/* CTA mobiles : mêmes classes */}
             <a
               href={bookingUrl}
               target="_blank"
@@ -126,7 +184,6 @@ export default function TopNav({
               Contact
             </Link>
 
-            {/* Toggle thème (icône) en dernier */}
             <ThemeToggle className={NAV_PILL} />
           </div>
         </div>
