@@ -55,7 +55,7 @@ export default function ReferencesSection() {
                     "group relative overflow-hidden rounded-3xl border border-neutral-200 bg-white text-left",
                     "shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:shadow-lg",
                     "dark:border-neutral-800 dark:bg-neutral-900",
-                    "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                    "transition-[flex,box-shadow,transform,filter] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
                     "focus:outline-none focus:ring-2 focus:ring-neutral-400/40",
                   ].join(" ")}
                   style={{ flex: isActive ? 6 : 1 }}

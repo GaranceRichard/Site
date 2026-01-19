@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 
 type FormState = {
   name: string;
@@ -13,11 +14,7 @@ type FormState = {
   website: string; // honeypot
 };
 
-export default function ContactForm({
-  onSuccess,
-}: {
-  onSuccess?: () => void;
-}) {
+export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
@@ -33,14 +30,25 @@ export default function ContactForm({
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  async function onSubmit(e: React.FormEvent) {
+  function onTextChange(
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    const { name, value } = e.currentTarget;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function onConsentChange(e: ChangeEvent<HTMLInputElement>) {
+    setForm((prev) => ({ ...prev, consent: e.currentTarget.checked }));
+  }
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMsg("");
 
     // Honeypot : si rempli, on simule un succès sans appeler l’API
     if (form.website.trim().length > 0) {
       setStatus("success");
-      onSuccess?.(); // ✅ ferme la modale + affiche le toast
+      onSuccess?.();
       return;
     }
 
@@ -88,7 +96,6 @@ export default function ContactForm({
         website: "",
       }));
 
-      // ✅ on laisse le parent décider : fermer la modale + toast global
       onSuccess?.();
     } catch (err: unknown) {
       setStatus("error");
@@ -103,8 +110,9 @@ export default function ContactForm({
         <label>
           Website
           <input
+            name="website"
             value={form.website}
-            onChange={(e) => setForm({ ...form, website: e.target.value })}
+            onChange={onTextChange}
             autoComplete="off"
           />
         </label>
@@ -115,8 +123,9 @@ export default function ContactForm({
           Nom
           <input
             required
+            name="name"
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={onTextChange}
             className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
           />
         </label>
@@ -126,8 +135,9 @@ export default function ContactForm({
           <input
             required
             type="email"
+            name="email"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={onTextChange}
             className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
           />
         </label>
@@ -136,8 +146,9 @@ export default function ContactForm({
       <label className="grid gap-2 text-sm font-semibold">
         Sujet
         <input
+          name="subject"
           value={form.subject}
-          onChange={(e) => setForm({ ...form, subject: e.target.value })}
+          onChange={onTextChange}
           className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
         />
       </label>
@@ -146,8 +157,9 @@ export default function ContactForm({
         Message
         <textarea
           required
+          name="message"
           value={form.message}
-          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          onChange={onTextChange}
           rows={6}
           className="min-h-[140px] w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
         />
@@ -157,7 +169,7 @@ export default function ContactForm({
         <input
           type="checkbox"
           checked={form.consent}
-          onChange={(e) => setForm({ ...form, consent: e.target.checked })}
+          onChange={onConsentChange}
         />
         J’accepte que mes informations soient utilisées pour être recontacté(e).
       </label>
@@ -170,7 +182,6 @@ export default function ContactForm({
         {status === "sending" ? "Envoi..." : "Envoyer"}
       </button>
 
-      {/* Optionnel : vous pouvez supprimer ces messages, puisqu’on ferme la modale au succès */}
       {status === "success" && (
         <p className="text-sm text-neutral-700">Merci, votre message a bien été envoyé.</p>
       )}

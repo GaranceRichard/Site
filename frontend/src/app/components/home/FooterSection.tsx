@@ -1,3 +1,4 @@
+// frontend/src/app/components/home/FooterSection.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,15 +8,15 @@ import AuthLoginButton from "../auth/LoginButton";
 
 export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
   return (
-    <footer className="border-t border-neutral-200 py-10 dark:border-neutral-800">
+    <footer className="border-t border-neutral-200 dark:border-neutral-800">
       <Container>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex h-[72px] items-center justify-between">
           <p className="text-sm text-neutral-600 dark:text-neutral-300">
             © {new Date().getFullYear()} Garance — Coach Lean-Agile
           </p>
 
           {/* Liens footer */}
-          <div className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-300">
+          <div className="flex flex-wrap items-center justify-end gap-4 text-sm text-neutral-600 dark:text-neutral-300">
             <ScrollTo
               targetId="home"
               className="hover:text-neutral-900 dark:hover:text-neutral-50"
@@ -39,8 +40,8 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
               Contact
             </Link>
 
-            {/* Icône back-office — APRÈS Contact */}
-            <AuthLoginButton size={80} className="ml-1" />
+            {/* Icône back-office — même taille que le logo du header */}
+            <AuthLoginButton size={70} className="ml-1" />
           </div>
         </div>
       </Container>

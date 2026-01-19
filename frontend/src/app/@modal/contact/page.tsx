@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import ContactForm from "../../contact/ContactForm";
 
-const ENTER_MS = 320;
+const EXIT_MS = 520;
 const FLASH_KEY = "flash";
 
 export default function ContactModal() {
@@ -17,12 +17,14 @@ export default function ContactModal() {
 
   const prevOverflowRef = useRef<string>("");
   const openTimerRef = useRef<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
 
-  // ✅ Ouvre/ferme en fonction de l'URL
   useEffect(() => {
     if (pathname !== "/contact") {
       setOpen(false);
       setClosing(false);
+      if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
       return;
     }
 
@@ -37,9 +39,9 @@ export default function ContactModal() {
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = prevOverflowRef.current;
       window.removeEventListener("keydown", onKeyDown);
       if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
@@ -49,11 +51,13 @@ export default function ContactModal() {
     setClosing(true);
     setOpen(false);
 
-    document.body.style.overflow = prevOverflowRef.current;
-    router.push("/");
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      document.body.style.overflow = prevOverflowRef.current;
+      router.push("/");
+    }, EXIT_MS);
   }
 
-  // ✅ Succès : on arme le toast global puis on ferme la modale (retour /)
   function handleSuccess() {
     try {
       window.sessionStorage.setItem(FLASH_KEY, "contact_success");
@@ -64,6 +68,9 @@ export default function ContactModal() {
   }
 
   if (pathname !== "/contact") return null;
+
+  const ease = "ease-[cubic-bezier(0.22,1,0.36,1)]";
+  const dur = open ? "duration-[420ms]" : "duration-[520ms]";
 
   return (
     <div
@@ -78,8 +85,10 @@ export default function ContactModal() {
         aria-label="Fermer"
         onClick={close}
         className={[
-          "absolute inset-0 transition-all",
-          "duration-[260ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "absolute inset-0",
+          "transition-[opacity,backdrop-filter,background-color]",
+          ease,
+          dur,
           open
             ? "pointer-events-auto opacity-100 bg-black/40 backdrop-blur-[2px]"
             : "pointer-events-none opacity-0 bg-black/0 backdrop-blur-0",
@@ -92,11 +101,12 @@ export default function ContactModal() {
           className={[
             "rounded-3xl border border-neutral-200 bg-white text-neutral-900 shadow-2xl",
             "dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50",
-            "transition-all will-change-transform",
-            `duration-[${ENTER_MS}ms] ease-[cubic-bezier(0.22,1,0.36,1)]`,
+            "transition-[transform,opacity] will-change-transform",
+            ease,
+            dur,
             open
               ? "pointer-events-auto opacity-100 translate-y-0 scale-100"
-              : "pointer-events-none opacity-0 translate-y-5 scale-[0.97]",
+              : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]",
           ].join(" ")}
         >
           {/* Header */}
@@ -123,14 +133,15 @@ export default function ContactModal() {
           {/* Contenu */}
           <div
             className={[
-              "p-6 transition-all will-change-transform",
-              "duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "p-6",
+              "transition-[transform,opacity] will-change-transform",
+              ease,
+              dur,
               open
-                ? "opacity-100 translate-y-0 delay-[60ms]"
+                ? "opacity-100 translate-y-0 delay-[90ms]"
                 : "opacity-0 translate-y-2 delay-0",
             ].join(" ")}
           >
-            {/* ✅ Le formulaire déclenche handleSuccess() au succès */}
             <ContactForm onSuccess={handleSuccess} />
           </div>
         </div>

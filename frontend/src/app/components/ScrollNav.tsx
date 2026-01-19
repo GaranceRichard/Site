@@ -1,6 +1,8 @@
 // frontend/src/app/components/ScrollNav.tsx
 "use client";
 
+import type { MouseEvent } from "react";
+
 type NavItem = { label: string; href: string };
 
 export default function ScrollNav({
@@ -12,7 +14,7 @@ export default function ScrollNav({
   className: string;
   onNavigate?: () => void;
 }) {
-  function onClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+  function onClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
     e.preventDefault();
 
     const id = href.startsWith("#") ? href.slice(1) : href;
