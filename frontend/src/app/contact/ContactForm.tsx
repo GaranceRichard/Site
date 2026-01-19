@@ -1,3 +1,4 @@
+// frontend/src/app/contact/ContactForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,7 +13,11 @@ type FormState = {
   website: string; // honeypot
 };
 
-export default function ContactForm() {
+export default function ContactForm({
+  onSuccess,
+}: {
+  onSuccess?: () => void;
+}) {
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
@@ -32,8 +37,10 @@ export default function ContactForm() {
     e.preventDefault();
     setErrorMsg("");
 
+    // Honeypot : si rempli, on simule un succès sans appeler l’API
     if (form.website.trim().length > 0) {
       setStatus("success");
+      onSuccess?.(); // ✅ ferme la modale + affiche le toast
       return;
     }
 
@@ -60,7 +67,6 @@ export default function ContactForm() {
       });
 
       if (!res.ok) {
-        // DRF renvoie souvent du JSON : on tente json(), sinon text()
         let detail = "";
         try {
           const data = await res.json();
@@ -72,7 +78,18 @@ export default function ContactForm() {
       }
 
       setStatus("success");
-      setForm((f) => ({ ...f, name: "", email: "", subject: "", message: "", consent: false, website: "" }));
+      setForm((f) => ({
+        ...f,
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        consent: false,
+        website: "",
+      }));
+
+      // ✅ on laisse le parent décider : fermer la modale + toast global
+      onSuccess?.();
     } catch (err: unknown) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Erreur inattendue");
@@ -153,8 +170,13 @@ export default function ContactForm() {
         {status === "sending" ? "Envoi..." : "Envoyer"}
       </button>
 
-      {status === "success" && <p className="text-sm text-neutral-700">Merci, votre message a bien été envoyé.</p>}
-      {status === "error" && <p className="text-sm text-red-700 whitespace-pre-wrap">Erreur : {errorMsg}</p>}
+      {/* Optionnel : vous pouvez supprimer ces messages, puisqu’on ferme la modale au succès */}
+      {status === "success" && (
+        <p className="text-sm text-neutral-700">Merci, votre message a bien été envoyé.</p>
+      )}
+      {status === "error" && (
+        <p className="text-sm text-red-700 whitespace-pre-wrap">Erreur : {errorMsg}</p>
+      )}
     </form>
   );
 }

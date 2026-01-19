@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import FlashToast from "./components/FlashToast";
 
 export const metadata: Metadata = {
   title: "Mon site",
@@ -36,6 +37,9 @@ export default function RootLayout({
         />
         {children}
         {modal}
+
+        {/* Notification légère globale */}
+        <FlashToast />
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import ContactForm from "../../contact/ContactForm";
 
 const ENTER_MS = 320;
+const FLASH_KEY = "flash";
 
 export default function ContactModal() {
   const router = useRouter();
@@ -17,20 +18,17 @@ export default function ContactModal() {
   const prevOverflowRef = useRef<string>("");
   const openTimerRef = useRef<number | null>(null);
 
-  // ✅ Ouvre/ferme en fonction de l'URL (important pour les navigations qui réutilisent le composant)
+  // ✅ Ouvre/ferme en fonction de l'URL
   useEffect(() => {
-    // Si on n'est pas sur /contact, on s'assure de ne rien bloquer
     if (pathname !== "/contact") {
       setOpen(false);
       setClosing(false);
       return;
     }
 
-    // On est sur /contact : comportement modal
     prevOverflowRef.current = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    // Entrée : on laisse un frame au navigateur pour éviter l'effet "flash"
     openTimerRef.current = window.setTimeout(() => setOpen(true), 20);
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -51,21 +49,26 @@ export default function ContactModal() {
     setClosing(true);
     setOpen(false);
 
-    // Réattribue le scroll immédiatement
     document.body.style.overflow = prevOverflowRef.current;
-
-    // ✅ Sortie explicite de /contact pour garantir un prochain "Contact" => réouverture
     router.push("/");
   }
 
-  // Optionnel mais propre : si on n'est pas sur /contact, on ne rend rien
+  // ✅ Succès : on arme le toast global puis on ferme la modale (retour /)
+  function handleSuccess() {
+    try {
+      window.sessionStorage.setItem(FLASH_KEY, "contact_success");
+    } catch {
+      // no-op
+    }
+    close();
+  }
+
   if (pathname !== "/contact") return null;
 
   return (
     <div
       className={[
         "fixed inset-0 z-[100]",
-        // quand on ferme, plus rien ne doit capter les clics
         open ? "pointer-events-auto" : "pointer-events-none",
       ].join(" ")}
     >
@@ -127,7 +130,8 @@ export default function ContactModal() {
                 : "opacity-0 translate-y-2 delay-0",
             ].join(" ")}
           >
-            <ContactForm />
+            {/* ✅ Le formulaire déclenche handleSuccess() au succès */}
+            <ContactForm onSuccess={handleSuccess} />
           </div>
         </div>
       </div>
