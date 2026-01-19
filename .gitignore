@@ -4,28 +4,38 @@ Thumbs.db
 .vscode/
 *.log
 
+# Environnements / secrets
+.env
+.env.*
+.env.local
+frontend/.env.local
+frontend/.env.*.local
+backend/.env
+backend/.env.*
+
 # Frontend (Next)
 frontend/node_modules/
 frontend/.next/
 frontend/out/
-frontend/.env.local
-frontend/.env.*.local
+frontend/.turbo/
+frontend/.vercel/
+*.tsbuildinfo
 
 # Backend (Python/Django)
 backend/.venv/
-backend/__pycache__/
-backend/**/__pycache__/
-*.pyc
-*.pyo
-*.pyd
+**/__pycache__/
+*.py[cod]
 backend/db.sqlite3
-backend/.env
-backend/.env.*
 backend/staticfiles/
 backend/media/
 
+# Tests / quality tools (si utilisés)
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Divers
-.env
-.env.*
-.env.local
+# Autoriser les templates d'env
+!backend/.env.example
+!frontend/.env.local.example

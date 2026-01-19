@@ -2,122 +2,60 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+# -------------------------------------------------
+# Environnement
+# -------------------------------------------------
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development").lower()  # development | production
+IS_PROD = DJANGO_ENV == "production"
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+def _csv(name: str) -> list[str]:
+    raw = os.getenv(name, "")
+    return [x.strip() for x in raw.split(",") if x.strip()]
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-default")
-DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
+# -------------------------------------------------
+# Sécurité minimale (dev vs prod)
+# -------------------------------------------------
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if os.getenv("DJANGO_ALLOWED_HOSTS") else []
+if IS_PROD:
+    if not SECRET_KEY or SECRET_KEY in ("unsafe-default", "dev-secret-key"):
+        raise RuntimeError("DJANGO_SECRET_KEY manquant ou trop faible pour la production.")
+    DEBUG = False
+else:
+    # En dev, on accepte une clé faible si besoin (mais vous pouvez aussi l’exiger)
+    if not SECRET_KEY:
+        SECRET_KEY = "dev-secret-key"
+    DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
-CORS_ALLOWED_ORIGINS = os.getenv("DJANGO_CORS_ALLOWED_ORIGINS", "").split(",") if os.getenv("DJANGO_CORS_ALLOWED_ORIGINS") else []
+ALLOWED_HOSTS = _csv("DJANGO_ALLOWED_HOSTS") if (IS_PROD or os.getenv("DJANGO_ALLOWED_HOSTS")) else ["127.0.0.1", "localhost"]
+CORS_ALLOWED_ORIGINS = _csv("DJANGO_CORS_ALLOWED_ORIGINS")
 
+# Très utile dès que vous avez un domaine en HTTPS (prod)
+CSRF_TRUSTED_ORIGINS = _csv("DJANGO_CSRF_TRUSTED_ORIGINS")
 
-# Application definition
+# -------------------------------------------------
+# Hardening prod (n’affecte pas le dev)
+# -------------------------------------------------
+if IS_PROD:
+    # Si vous êtes derrière un proxy / load balancer (Nginx, Vercel, etc.)
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    "rest_framework",
-    "corsheaders",
-    "contact",
-]
+    # Redirection HTTPS
+    SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True").lower() == "true"
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    # Cookies sécurisés
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
-ROOT_URLCONF = 'config.urls'
+    # HSTS (commencez bas, puis montez)
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "3600"))  # 1h
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() == "true"
+    SECURE_HSTS_PRELOAD = os.getenv("DJANGO_SECURE_HSTS_PRELOAD", "False").lower() == "true"
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-WSGI_APPLICATION = 'config.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-STATIC_URL = 'static/'
-
-
-
-REST_FRAMEWORK = {
-    "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {
-        "contact": "10/min",
-    },
-}
-
+    # Headers
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"
+    SECURE_REFERRER_POLICY = "same-origin"
