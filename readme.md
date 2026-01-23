@@ -78,6 +78,12 @@ npm run dev
 
 Frontend : http://localhost:3000
 
+### Lancer backend + frontend (Windows)
+Depuis la racine du repo :
+```powershell
+.\scripts\dev-all.ps1
+```
+
 ## Configuration des variables d’environnement
 ### Backend — backend/.env (local)
 Créer un fichier backend/.env (non versionné) avec :
