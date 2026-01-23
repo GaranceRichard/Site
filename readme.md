@@ -93,6 +93,17 @@ Notes :
 - consent doit être true (validation backend)
 - anti-spam : honeypot côté front + throttling côté API
 
+## Tests (socle minimal)
+### Backend (Django)
+Depuis `backend/` :
+- Lancer tous les tests :
+python manage.py test
+
+### Frontend (Next.js)
+Depuis `frontend/` :
+- Lancer les tests unitaires (Vitest) :
+npm run test
+
 ## Test rapide (curl)
 ### Windows PowerShell (2 lignes) :
 
@@ -105,6 +116,16 @@ Ne pas committer :
 - backend/.venv/
 - frontend/node_modules/
 - fichiers .env*
+
+## Checklist production (socle sain)
+- DJANGO_DEBUG=False
+- DJANGO_SECRET_KEY fort
+- DJANGO_ALLOWED_HOSTS configuré (domaines réels)
+- DJANGO_CORS_ALLOWED_ORIGINS + DJANGO_CSRF_TRUSTED_ORIGINS alignés avec le domaine
+- DATABASE_URL configurée (PostgreSQL recommandé)
+- HTTPS en frontal + DJANGO_SECURE_SSL_REDIRECT=True
+- Sauvegardes DB + logs centralisés
+- (Optionnel) SENTRY_DSN pour monitoring
 
 ## Déploiement (à minima)
 - DJANGO_DEBUG=False
