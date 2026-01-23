@@ -2,6 +2,8 @@
 .DS_Store
 Thumbs.db
 .vscode/
+!.vscode/
+!.vscode/tasks.json
 *.log
 
 # Environnements / secrets

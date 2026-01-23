@@ -84,6 +84,12 @@ Depuis la racine du repo :
 .\scripts\dev-all.ps1
 ```
 
+### Lancer backend + frontend (VS Code)
+Utiliser les tasks VS Code :
+1) Ouvrir la palette de commandes (Ctrl+Shift+P)
+2) "Tasks: Run Task"
+3) Choisir `dev:all`
+
 ## Configuration des variables d’environnement
 ### Backend — backend/.env (local)
 Créer un fichier backend/.env (non versionné) avec :
