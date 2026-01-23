@@ -4,6 +4,8 @@ import sys
 import subprocess
 
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.test.utils import override_settings
 
 from rest_framework import status
@@ -80,8 +82,8 @@ class SecurityBootTests(APITestCase):
 
         env = os.environ.copy()
         env["DJANGO_SECRET_KEY"] = ""
-        env["DJANGO_ENV"] = env.get("DJANGO_ENV", "development")
-        env["DJANGO_DEBUG"] = env.get("DJANGO_DEBUG", "True")
+        env["DJANGO_ENV"] = "production"
+        env["DJANGO_DEBUG"] = "False"
 
         p = subprocess.run(
             [sys.executable, "-c", code],
@@ -118,6 +120,57 @@ class SecurityCorsTests(APITestCase):
             "Access-Control-Allow-Origin"
         )
         self.assertEqual(allow_origin, origin)
+
+
+class AuthJwtTests(APITestCase):
+    def setUp(self):
+        self.token_url = "/api/auth/token/"
+        self.admin_list_url = "/api/contact/messages/admin"
+        self.username = "admin"
+        self.password = "admin-pass-123"
+
+        User = get_user_model()
+        User.objects.create_user(
+            username=self.username,
+            password=self.password,
+            is_staff=True,
+        )
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_login_success_allows_admin_access(self):
+        res = self.client.post(
+            self.token_url,
+            {"username": self.username, "password": self.password},
+            format="json",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("access", res.data)
+        self.assertIn("refresh", res.data)
+
+        token = res.data["access"]
+        admin_res = self.client.get(
+            self.admin_list_url,
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(admin_res.status_code, status.HTTP_200_OK)
+
+    def test_login_invalid_credentials_is_rejected(self):
+        res = self.client.post(
+            self.token_url,
+            {"username": self.username, "password": "wrong-pass"},
+            format="json",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 @override_settings(
