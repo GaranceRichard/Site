@@ -70,11 +70,18 @@ DJANGO_SECRET_KEY=dev-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
 DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000
+DJANGO_ENABLE_JWT=true
 
 ### Frontend — frontend/.env.local (local)
 Créer un fichier frontend/.env.local (non versionné) avec :
 
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_BACKOFFICE_ENABLED=true
+
+### Backoffice (JWT + comptes admin)
+Le backoffice utilise JWT. Pour se connecter :
+- Activer `DJANGO_ENABLE_JWT=true` côté backend.
+- Utiliser un compte Django `is_staff` ou `is_superuser` (via `python manage.py createsuperuser`).
 
 ## API — Contact
 Endpoint : POST /api/contact/messages
