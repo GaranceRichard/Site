@@ -2,31 +2,85 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "dev:backend",
+      "label": "Global",
+      "type": "shell",
+      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "always",
+        "focus": true,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend",
       "type": "shell",
       "command": "if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { .\\.venv\\Scripts\\Activate.ps1 }; python manage.py runserver",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "dev:frontend",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "focus": false,
+        "showReuseMessage": false
       },
       "isBackground": true,
       "problemMatcher": []
     },
     {
+      "label": "Frontend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "focus": false,
+        "showReuseMessage": false
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Test Back",
+      "type": "shell",
+      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "focus": false,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test Front",
+      "type": "shell",
+      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "focus": false,
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "dev:all",
-      "dependsOn": [
-        "dev:backend",
-        "dev:frontend"
-      ],
+      "dependsOn": ["Global", "Backend", "Frontend", "Test Back", "Test Front"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     }
