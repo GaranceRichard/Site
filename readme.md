@@ -15,8 +15,8 @@ Site vitrine avec page de contact.
 
 ## Structure du projet
 garancerichard-site/
-backend/ (Django + API REST)
-frontend/ (Next.js)
+- backend/ (Django + API REST)
+- frontend/ (Next.js)
 
 ## Prérequis
 - Node.js (LTS recommandé)
@@ -26,28 +26,42 @@ frontend/ (Next.js)
 ## Démarrage rapide (développement)
 ### Backend (Django)
 - Dans un terminal :
+```powershell
 cd backend
+```
 
 (optionnel) créer un venv :
+```powershell
 python -m venv .venv
+```
 
 Activer le venv :
 
 - Windows PowerShell :
+```powershell
 .\.venv\Scripts\Activate.ps1
+```
 
 - macOS/Linux :
+```bash
 source .venv/bin/activate
+```
 
 Installer les dépendances :
+```powershell
 python -m pip install -r requirements.txt
+```
 
 Migrations + admin :
+```powershell
 python manage.py migrate
 python manage.py createsuperuser
+```
 
 Lancer le serveur :
+```powershell
 python manage.py runserver
+```
 
 Backend : http://127.0.0.1:8000
 Admin : http://127.0.0.1:8000/admin/
@@ -56,9 +70,11 @@ Admin : http://127.0.0.1:8000/admin/
 
 Dans un second terminal :
 
+```powershell
 cd frontend
 npm install
 npm run dev
+```
 
 Frontend : http://localhost:3000
 
@@ -66,22 +82,38 @@ Frontend : http://localhost:3000
 ### Backend — backend/.env (local)
 Créer un fichier backend/.env (non versionné) avec :
 
+```ini
 DJANGO_SECRET_KEY=dev-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
 DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000
 DJANGO_ENABLE_JWT=true
+```
 
 ### Frontend — frontend/.env.local (local)
 Créer un fichier frontend/.env.local (non versionné) avec :
 
+```ini
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_BACKOFFICE_ENABLED=true
+```
 
 ### Backoffice (JWT + comptes admin)
 Le backoffice utilise JWT. Pour se connecter :
 - Activer `DJANGO_ENABLE_JWT=true` côté backend.
 - Utiliser un compte Django `is_staff` ou `is_superuser` (via `python manage.py createsuperuser`).
+- Vérifier que `NEXT_PUBLIC_API_BASE_URL` pointe bien vers le backend.
+
+Flux de connexion :
+1) Aller sur la page d'accueil.
+2) Cliquer sur le logo backoffice (footer).
+3) Saisir l'identifiant et le mot de passe admin.
+4) Redirection vers `/backoffice` et chargement des messages.
+
+Depannage (modal qui reapparait / 401 / 403) :
+- `DJANGO_ENABLE_JWT=true` + serveur backend redemarre.
+- Compte admin avec `is_staff` ou `is_superuser`.
+- `NEXT_PUBLIC_API_BASE_URL` correct (par defaut http://127.0.0.1:8000).
 
 ## API — Contact
 Endpoint : POST /api/contact/messages
@@ -104,21 +136,29 @@ Notes :
 ### Backend (Django)
 Depuis `backend/` :
 - Lancer tous les tests :
+```powershell
 python manage.py test
+```
 
 ### Frontend (Next.js)
 Depuis `frontend/` :
 - Lancer les tests unitaires (Vitest) :
+```powershell
 npm run test
+```
 
 ### E2E (Playwright)
 Depuis `frontend/` :
 - Installer les navigateurs (une seule fois) :
+```powershell
 npx playwright install
+```
 - Lancer les tests E2E :
+```powershell
 $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
+```
 
 ## Test rapide (curl)
 ### Windows PowerShell (2 lignes) :
