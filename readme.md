@@ -111,6 +111,15 @@ Depuis `frontend/` :
 - Lancer les tests unitaires (Vitest) :
 npm run test
 
+### E2E (Playwright)
+Depuis `frontend/` :
+- Installer les navigateurs (une seule fois) :
+npx playwright install
+- Lancer les tests E2E :
+$env:E2E_ADMIN_USER="votre_admin"
+$env:E2E_ADMIN_PASS="votre_mdp"
+npm run test:e2e
+
 ## Test rapide (curl)
 ### Windows PowerShell (2 lignes) :
 
