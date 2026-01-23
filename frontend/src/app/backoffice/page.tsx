@@ -24,6 +24,7 @@ export default function BackofficePage() {
   const [items, setItems] = useState<Msg[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [authMsg, setAuthMsg] = useState<string>("");
 
   function clearTokens() {
     try {
@@ -41,6 +42,7 @@ export default function BackofficePage() {
 
   async function load() {
     setErrorMsg("");
+    setAuthMsg("");
 
     if (!apiBase) {
       setStatus("error");
@@ -56,7 +58,10 @@ export default function BackofficePage() {
     }
 
     if (!token) {
-      router.push("/");
+      setStatus("idle");
+      setItems([]);
+      setAuthMsg("Connexion requise pour acceder au backoffice.");
+      setOpenLogin(true);
       return;
     }
 
@@ -71,6 +76,7 @@ export default function BackofficePage() {
         setStatus("idle");
         setItems([]);
         clearTokens();
+        setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
         setOpenLogin(true);
         return;
       }
@@ -83,6 +89,7 @@ export default function BackofficePage() {
       const data = (await res.json()) as Msg[];
       setItems(data);
       setStatus("idle");
+      setAuthMsg("");
     } catch (e: unknown) {
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
@@ -132,6 +139,28 @@ export default function BackofficePage() {
 
         {status === "error" ? (
           <p className="mt-8 whitespace-pre-wrap text-sm text-red-700">Erreur : {errorMsg}</p>
+        ) : null}
+
+        {authMsg ? (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p>{authMsg}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setOpenLogin(true)}
+                className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
+              >
+                Se reconnecter
+              </button>
+              <button
+                type="button"
+                onClick={logoutAndGoHome}
+                className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
+              >
+                Retour accueil
+              </button>
+            </div>
+          </div>
         ) : null}
 
         <div className="mt-8 grid gap-4">
