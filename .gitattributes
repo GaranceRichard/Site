@@ -1,1 +1,2 @@
 * text=auto eol=lf
+backend/requirements.txt text eol=lf diff
