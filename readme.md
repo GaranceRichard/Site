@@ -147,7 +147,7 @@ Notes :
 
 ## API ? Backoffice
 - GET /api/contact/messages/admin (liste, admin uniquement)
-  - Parametres : limit (defaut 50, max 200), q (nom/email/sujet), cursor, direction (next|prev)
+  - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet)
 - POST /api/contact/messages/admin/delete (supprime une liste d?IDs, admin uniquement)
 
 ## Tests (socle minimal)

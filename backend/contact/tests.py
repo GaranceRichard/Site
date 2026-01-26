@@ -91,28 +91,14 @@ class ContactApiTests(APITestCase):
 
         token = token_res.data["access"]
         res = self.client.get(
-            "/api/contact/messages/admin?limit=2",
+            "/api/contact/messages/admin?limit=2&page=2",
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data.get("count"), 3)
-        self.assertEqual(len(res.data.get("results", [])), 2)
-        self.assertIsNotNone(res.data.get("next_cursor"))
-
-        res2 = self.client.get(
-            f"/api/contact/messages/admin?limit=2&cursor={res.data.get('next_cursor')}&direction=next",
-            HTTP_AUTHORIZATION=f"Bearer {token}",
-        )
-        self.assertEqual(res2.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res2.data.get("results", [])), 1)
-
-        res3 = self.client.get(
-            f"/api/contact/messages/admin?limit=2&cursor={res2.data.get('prev_cursor')}&direction=prev",
-            HTTP_AUTHORIZATION=f"Bearer {token}",
-        )
-        self.assertEqual(res3.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res3.data.get("results", [])), 2)
+        self.assertEqual(res.data.get("page"), 2)
+        self.assertEqual(len(res.data.get("results", [])), 1)
 
     @override_settings(
         REST_FRAMEWORK={

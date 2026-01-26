@@ -28,17 +28,16 @@ export default function BackofficePage() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [authMsg, setAuthMsg] = useState<string>("");
   const [selected, setSelected] = useState<Msg | null>(null);
-  const [pageIndex, setPageIndex] = useState(1);
+  const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [undoIds, setUndoIds] = useState<number[] | null>(null);
   const [undoItems, setUndoItems] = useState<Msg[]>([]);
   const undoTimerRef = useRef<number | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [prevCursor, setPrevCursor] = useState<string | null>(null);
 
-  const PAGE_SIZE = 8;
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const visibleItems = items;
 
   function clearTokens() {
@@ -59,15 +58,7 @@ export default function BackofficePage() {
     router.push("/");
   }
 
-  async function load({
-    cursor = null,
-    direction = null,
-    reset = false,
-  }: {
-    cursor?: string | null;
-    direction?: "next" | "prev" | null;
-    reset?: boolean;
-  }) {
+  async function load(nextPage: number) {
     setErrorMsg("");
     setAuthMsg("");
     setSelectedIds(new Set());
@@ -98,12 +89,9 @@ export default function BackofficePage() {
     try {
       const params = new URLSearchParams();
       params.set("limit", String(PAGE_SIZE));
+      params.set("page", String(nextPage));
       const search = query.trim();
       if (search) params.set("q", search);
-      if (cursor) {
-        params.set("cursor", cursor);
-        params.set("direction", direction || "next");
-      }
 
       const res = await fetch(`${apiBase}/api/contact/messages/admin?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -125,22 +113,13 @@ export default function BackofficePage() {
 
       const data = (await res.json()) as {
         count: number;
+        page: number;
         limit: number;
         results: Msg[];
-        next_cursor: string | null;
-        prev_cursor: string | null;
       };
       setItems(data.results);
       setTotalCount(data.count);
-      setNextCursor(data.next_cursor ?? null);
-      setPrevCursor(data.prev_cursor ?? null);
-      if (reset || !cursor) {
-        setPageIndex(1);
-      } else if (direction === "next") {
-        setPageIndex((prev) => prev + 1);
-      } else if (direction === "prev") {
-        setPageIndex((prev) => Math.max(1, prev - 1));
-      }
+      setPage(data.page);
       setStatus("idle");
       setAuthMsg("");
     } catch (e: unknown) {
@@ -150,9 +129,15 @@ export default function BackofficePage() {
   }
 
   useEffect(() => {
-    void load({ reset: true });
+    void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [page, query]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   function toggleSelected(id: number) {
     setSelectedIds((prev) => {
@@ -267,6 +252,23 @@ export default function BackofficePage() {
     setUndoItems([]);
   }
 
+  function buildPages(current: number, total: number) {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const pages: Array<number | "..."> = [1];
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+
+    if (left > 2) pages.push("...");
+    for (let i = left; i <= right; i += 1) pages.push(i);
+    if (right < total - 1) pages.push("...");
+    pages.push(total);
+
+    return pages;
+  }
+
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       <div className="flex h-full">
@@ -322,7 +324,7 @@ export default function BackofficePage() {
             </button>
             <button
               type="button"
-              onClick={() => load({ reset: true })}
+              onClick={() => load(page)}
               className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
                          dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             >
@@ -355,7 +357,7 @@ export default function BackofficePage() {
               value={query}
               onChange={(e) => {
                 setQuery(e.currentTarget.value);
-                setPageIndex(1);
+                setPage(1);
               }}
               placeholder="Rechercher par nom, email ou sujet"
               className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
@@ -403,23 +405,23 @@ export default function BackofficePage() {
 
             {items.length > 0 ? (
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-                <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
-                  <span />
+                <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
+                  <span className="flex items-center justify-center" />
                   <span>Nom</span>
                   <span>Email</span>
                   <span>Sujet</span>
-                  <span className="text-right">Date</span>
+                  <span>Date</span>
                 </div>
                 <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
                   {visibleItems.map((m) => (
                     <li key={m.id} className="py-3">
-                      <div className="grid w-full grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-left">
+                      <div className="grid w-full grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-center">
                         <input
                           type="checkbox"
                           aria-label={`Selectionner ${m.name}`}
                           checked={selectedIds.has(m.id)}
                           onChange={() => toggleSelected(m.id)}
-                          className="h-4 w-4 accent-neutral-900 dark:accent-neutral-100"
+                          className="h-4 w-4 justify-self-center accent-neutral-900 dark:accent-neutral-100"
                         />
                         <button
                           type="button"
@@ -431,7 +433,7 @@ export default function BackofficePage() {
                           <span className="truncate text-neutral-600 dark:text-neutral-300">
                             {m.subject || "—"}
                           </span>
-                          <span className="text-right text-xs text-neutral-500 dark:text-neutral-400">
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400">
                             {new Date(m.created_at).toLocaleDateString()}
                           </span>
                         </button>
@@ -440,9 +442,9 @@ export default function BackofficePage() {
                   ))}
                 </ul>
 
-                <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
-                    Page {pageIndex} — {totalCount} message(s)
+                    Page {page} / {totalPages} — {totalCount} message(s)
                     {selectedIds.size ? ` — ${selectedIds.size} sélectionné(s)` : ""}
                   </span>
                   <div className="flex items-center gap-2">
@@ -457,21 +459,44 @@ export default function BackofficePage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => prevCursor && load({ cursor: prevCursor, direction: "prev" })}
-                      disabled={!prevCursor}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
                       className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
                                  dark:border-neutral-800"
                     >
-                      Précédent
+                      Prev
                     </button>
+                    {buildPages(page, totalPages).map((p, idx) =>
+                      p === "..." ? (
+                        <span key={`ellipsis-${idx}`} className="px-1">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={p}
+                          type="button"
+                          aria-label={`Page ${p}`}
+                          onClick={() => setPage(p)}
+                          className={[
+                            "rounded-lg border border-neutral-200 px-2 py-1 text-xs font-semibold",
+                            p === page
+                              ? "bg-neutral-900 text-white"
+                              : "bg-white text-neutral-700 hover:bg-neutral-50",
+                            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+                          ].join(" ")}
+                        >
+                          {p}
+                        </button>
+                      )
+                    )}
                     <button
                       type="button"
-                      onClick={() => nextCursor && load({ cursor: nextCursor, direction: "next" })}
-                      disabled={!nextCursor}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
                       className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
                                  dark:border-neutral-800"
                     >
-                      Suivant
+                      Next
                     </button>
                   </div>
                 </div>
@@ -485,7 +510,7 @@ export default function BackofficePage() {
         open={openLogin}
         onClose={() => {
           setOpenLogin(false);
-          void load({ reset: true });
+          void load(page);
         }}
       />
 

@@ -131,7 +131,7 @@ test("messages list shows single-line columns and pagination", async ({ page }) 
   await expect(page.getByText("Sujet")).toBeVisible();
   await expect(page.getByText("Date")).toBeVisible();
 
-  await expect(page.getByText(/Page 1 — \d+ message/)).toBeVisible();
+  await expect(page.getByText(/Page 1 \/ \d+ — \d+ message/)).toBeVisible();
 });
 
 test("search filters messages by name, email, or subject", async ({ page }) => {
@@ -153,7 +153,7 @@ test("search filters messages by name, email, or subject", async ({ page }) => {
   const email = (await firstEmail.textContent())?.trim() || "";
   if (email) {
     await search.fill(email);
-    await expect(page.getByText(/Page \d+ —/)).toBeVisible();
+    await expect(page.getByText(/Page \d+ \/ \d+ —/)).toBeVisible();
   }
 });
 
