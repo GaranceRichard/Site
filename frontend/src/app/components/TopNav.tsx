@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
+import { isBackofficeEnabled } from "../lib/backoffice";
 
 type NavItem = { label: string; href: string };
 
@@ -18,6 +19,7 @@ export default function TopNav({
   bookingUrl: string;
 }) {
   const router = useRouter();
+  const backofficeEnabled = isBackofficeEnabled();
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
 
@@ -78,7 +80,7 @@ export default function TopNav({
       setIsLogged(false);
     }
 
-    if (logged) {
+    if (logged && backofficeEnabled) {
       router.push("/backoffice");
       return;
     }
@@ -96,13 +98,15 @@ export default function TopNav({
     <header className="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50/85 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/75">
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="flex h-[72px] items-center justify-between gap-6">
-          {/* Branding (logo) : si connecté -> /backoffice, sinon scroll home */}
+          {/* Branding (logo) : si connecté + backoffice activé -> /backoffice, sinon scroll home */}
           <button
             type="button"
             onClick={onBrandClick}
             className="flex min-w-0 items-center gap-3 text-left"
-            aria-label={isLogged ? "Aller au backoffice" : "Aller à l’accueil"}
-            title={isLogged ? "Backoffice" : "Accueil"}
+            aria-label={
+              isLogged && backofficeEnabled ?"Aller au backoffice" : "Aller à l’accueil"
+            }
+            title={isLogged && backofficeEnabled ?"Backoffice" : "Accueil"}
           >
             <Image
               src="/brand/logo.png"
@@ -164,7 +168,7 @@ export default function TopNav({
           id="mobile-menu"
           className={[
             "md:hidden overflow-hidden transition-[max-height,opacity] duration-200",
-            open ? "max-h-[620px] opacity-100 pb-4" : "max-h-0 opacity-0",
+            open ?"max-h-[620px] opacity-100 pb-4" : "max-h-0 opacity-0",
           ].join(" ")}
         >
           <div className="grid gap-2 pt-2">

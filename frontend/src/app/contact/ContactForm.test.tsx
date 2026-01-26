@@ -33,7 +33,7 @@ describe("ContactForm", () => {
     );
   }
 
-  it("ignore le honeypot et affiche le succÃ¨s", async () => {
+  it("ignore le honeypot et affiche le succès", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
 
     const fetchMock = vi.fn();

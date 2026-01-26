@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const adminUser = process.env.E2E_ADMIN_USER;
 const adminPass = process.env.E2E_ADMIN_PASS;

@@ -7,7 +7,7 @@ type Theme = "light" | "dark";
 const KEY = "theme";
 
 function getThemeFromDom(): Theme {
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  return document.documentElement.classList.contains("dark") ?"dark" : "light";
 }
 
 function applyTheme(theme: Theme) {
@@ -40,7 +40,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   );
 
   function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
+    const next: Theme = theme === "dark" ?"light" : "dark";
     try {
       window.localStorage.setItem(KEY, next);
     } catch {}
@@ -53,19 +53,19 @@ export default function ThemeToggle({ className }: { className?: string }) {
     } catch {}
   }
 
-  const base =
-    className ??
-    "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
+  const base = className
+    ? className
+    : "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === "dark" ? "Passer en mode jour" : "Passer en mode nuit"}
-      title={theme === "dark" ? "Mode jour" : "Mode nuit"}
+      aria-label={theme === "dark" ?"Passer en mode jour" : "Passer en mode nuit"}
+      title={theme === "dark" ?"Mode jour" : "Mode nuit"}
       className={base}
     >
-      {theme === "dark" ? (
+      {theme === "dark" ?(
         // Soleil
         <svg
           aria-hidden="true"

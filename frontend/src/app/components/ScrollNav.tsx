@@ -17,7 +17,7 @@ export default function ScrollNav({
   function onClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
     e.preventDefault();
 
-    const id = href.startsWith("#") ? href.slice(1) : href;
+    const id = href.startsWith("#") ?href.slice(1) : href;
     const el = document.getElementById(id);
     if (!el) return;
 

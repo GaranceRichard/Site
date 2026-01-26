@@ -1,0 +1,17 @@
+[run]
+branch = True
+source =
+    contact
+    config
+omit =
+    */migrations/*
+    */tests/*
+    */__init__.py
+    config/settings.py
+    */asgi.py
+    */wsgi.py
+
+[report]
+show_missing = True
+skip_covered = True
+fail_under = 80

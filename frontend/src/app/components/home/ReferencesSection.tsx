@@ -58,7 +58,7 @@ export default function ReferencesSection() {
                     "transition-[flex,box-shadow,transform,filter] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
                     "focus:outline-none focus:ring-2 focus:ring-neutral-400/40",
                   ].join(" ")}
-                  style={{ flex: isActive ? 6 : 1 }}
+                  style={{ flex: isActive ?6 : 1 }}
                 >
                   {/* Image plein cadre */}
                   <div className="absolute inset-0">
@@ -70,7 +70,7 @@ export default function ReferencesSection() {
                       className={[
                         "object-cover",
                         "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                        isActive ? "scale-100" : "scale-[0.99]",
+                        isActive ?"scale-100" : "scale-[0.99]",
                       ].join(" ")}
                       priority={false}
                     />
@@ -82,7 +82,7 @@ export default function ReferencesSection() {
                     <div className="grid h-full content-end gap-2">
                       {/* Ligne 1 : nom */}
                       <p className="text-lg font-semibold text-white">
-                        {isActive ? r.nameExpanded : r.nameCollapsed}
+                        {isActive ?r.nameExpanded : r.nameCollapsed}
                       </p>
 
                       {/* Ligne 2 : mission (1 ligne, hauteur fixe) */}
@@ -91,7 +91,7 @@ export default function ReferencesSection() {
                           className={[
                             "text-sm leading-5 text-white/85 line-clamp-1",
                             "transition-all duration-300",
-                            isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
+                            isActive ?"opacity-100 translate-y-0" : "opacity-0 translate-y-1",
                           ].join(" ")}
                         >
                           {r.missionTitle}
@@ -104,7 +104,7 @@ export default function ReferencesSection() {
                           className={[
                             "text-xs font-semibold text-white/85",
                             "transition-opacity duration-300",
-                            isActive ? "opacity-100" : "opacity-0",
+                            isActive ?"opacity-100" : "opacity-0",
                           ].join(" ")}
                         >
                           Voir la mission →

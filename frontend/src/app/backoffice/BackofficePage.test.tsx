@@ -4,11 +4,14 @@ import { cleanup } from "@testing-library/react";
 
 import BackofficePage from "./page";
 
+const pushMock = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
 }));
 
 beforeEach(() => {
+  pushMock.mockClear();
   // Basic sessionStorage shim
   const store = new Map<string, string>();
   Object.defineProperty(window, "sessionStorage", {
@@ -21,6 +24,7 @@ beforeEach(() => {
   });
 
   process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+  process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "true";
 
   window.sessionStorage.setItem("access_token", "token");
   global.fetch = vi.fn().mockResolvedValue({
@@ -47,10 +51,10 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  cleanup();
-});
+  afterEach(() => {
+    vi.restoreAllMocks();
+    cleanup();
+  });
 
 describe("BackofficePage", () => {
   const getPageCounter = () =>
@@ -62,7 +66,7 @@ describe("BackofficePage", () => {
   const normalizeText = (text: string | null | undefined) =>
     (text || "").replace(/\s+/g, " ").trim();
 
-  it("affiche le compteur et dÃ©sactive la suppression sans sÃ©lection", async () => {
+  it("affiche le compteur et désactive la suppression sans sélection", async () => {
     render(<BackofficePage />);
 
     await waitFor(() => {
@@ -74,7 +78,7 @@ describe("BackofficePage", () => {
     expect(deleteBtn).toBeDisabled();
   });
 
-  it("active/dÃ©sactive la pagination selon les cursors", async () => {
+  it("active/désactive la pagination selon les cursors", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -112,7 +116,7 @@ describe("BackofficePage", () => {
     expect(nextBtn).toBeEnabled();
   });
 
-  it("dÃ©clenche une recherche via le paramÃ¨tre q", async () => {
+  it("déclenche une recherche via le paramètre q", async () => {
     render(<BackofficePage />);
 
     const search = screen.getByRole("searchbox");
@@ -126,7 +130,7 @@ describe("BackofficePage", () => {
     expect(lastCall?.[0]).toContain("q=alice");
   });
 
-  it("charge par dÃ©faut avec le tri date desc", async () => {
+  it("charge par défaut avec le tri date desc", async () => {
     render(<BackofficePage />);
 
     await waitFor(() => {
@@ -141,7 +145,7 @@ describe("BackofficePage", () => {
     expect(dateHeader.textContent).toContain("↓");
   });
 
-  it("bascule la flÃ¨che de tri sur la colonne Date", async () => {
+  it("bascule la flèche de tri sur la colonne Date", async () => {
     render(<BackofficePage />);
 
     const dateHeader = await screen.findByRole("button", { name: "Trier par date" });
@@ -193,7 +197,7 @@ describe("BackofficePage", () => {
     expect(lastCall?.[0]).toContain("dir=desc");
   });
 
-  it("affiche le toast dâ€™annulation aprÃ¨s suppression", async () => {
+  it("affiche le toast d’annulation après suppression", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -254,4 +258,277 @@ describe("BackofficePage", () => {
 
     expect(screen.getByText("Alice Doe")).toBeInTheDocument();
   });
+
+  it("affiche une erreur si l'API n'est pas configurée", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "";
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Erreur : Configuration manquante : NEXT_PUBLIC_API_BASE_URL.")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("redirige vers l'accueil si aucun token n'est présent", async () => {
+    window.sessionStorage.removeItem("access_token");
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/");
+    });
+  });
+
+  it("ouvre la modale de connexion si l'API retourne 401", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue("Unauthorized"),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Session expiree ou acces refuse. Reconnectez-vous.")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Se reconnecter" })).toBeInTheDocument();
+  });
+
+  it("affiche le loader pendant le chargement", async () => {
+    let resolveFetch: (value: unknown) => void;
+    const fetchPromise = new Promise((resolve) => {
+      resolveFetch = resolve;
+    });
+
+    (global.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(fetchPromise as Promise<unknown>);
+
+    render(<BackofficePage />);
+
+    expect(screen.getByText("Chargement…")).toBeInTheDocument();
+
+    resolveFetch!({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        count: 0,
+        page: 1,
+        limit: 10,
+        results: [],
+      }),
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement…")).not.toBeInTheDocument();
+    });
+  });
+
+  it("ouvre le détail d'un message au clic", async () => {
+    render(<BackofficePage />);
+
+    const rowButton = await screen.findByText("Alice Doe");
+    fireEvent.click(rowButton);
+
+    expect(screen.getByTestId("message-modal")).toBeInTheDocument();
+    const modal = screen.getByTestId("message-modal");
+    const closeButtons = modal.querySelectorAll("button");
+    closeButtons[0]?.click();
+  });
+
+  it("affiche un état vide quand aucun message n'est retourné", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        count: 0,
+        page: 1,
+        limit: 10,
+        results: [],
+      }),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Aucun message.")).toBeInTheDocument();
+    });
+  });
+
+  it("affiche les ellipses quand il y a beaucoup de pages", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        count: 100,
+        page: 5,
+        limit: 10,
+        results: [
+          {
+            id: 1,
+            name: "Alice Doe",
+            email: "alice@example.com",
+            subject: "Budget",
+            message: "Hello",
+            consent: true,
+            source: "tests",
+            created_at: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("…").length).toBeGreaterThan(0);
+    });
+  });
+
+  it("affiche l'écran de backoffice désactivé", async () => {
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "false";
+
+    render(<BackofficePage />);
+
+    expect(screen.getByText("Backoffice désactivé")).toBeInTheDocument();
+
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "true";
+  });
+
+  it("les boutons footer déclenchent les actions", async () => {
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(getPageCounter()).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rafraîchir" }));
+    expect(global.fetch).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retour au site" }));
+    expect(pushMock).toHaveBeenCalledWith("/");
+
+    fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
+    expect(pushMock).toHaveBeenCalledWith("/");
+    expect(window.sessionStorage.getItem("access_token")).toBeNull();
+  });
+
+  it("permet de se reconnecter depuis l'alerte d'auth", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue("Unauthorized"),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Session expiree ou acces refuse. Reconnectez-vous.")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Se reconnecter" }));
+    expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+
+    const closeButtons = screen.getAllByRole("button", { name: "Fermer" });
+    fireEvent.click(closeButtons[0]);
+  });
+
+  it("le bouton retour accueil depuis l'alerte d'auth renvoie vers l'accueil", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue("Unauthorized"),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Session expiree ou acces refuse. Reconnectez-vous.")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retour accueil" }));
+    expect(pushMock).toHaveBeenCalledWith("/");
+  });
+
+  it("les boutons de pagination changent de page", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        count: 20,
+        page: 1,
+        limit: 10,
+        results: [
+          {
+            id: 1,
+            name: "Alice Doe",
+            email: "alice@example.com",
+            subject: "Budget",
+            message: "Hello",
+            consent: true,
+            source: "tests",
+            created_at: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(getPageCounter()).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    const lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    expect(lastCall?.[0]).toContain("page=2");
+  });
+
+  it(
+    "restaure les éléments si la suppression retourne 401",
+    async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [
+            {
+              id: 1,
+              name: "Alice Doe",
+              email: "alice@example.com",
+              subject: "Budget",
+              message: "Hello",
+              consent: true,
+              source: "tests",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: vi.fn().mockResolvedValue("Unauthorized"),
+      });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(getPageCounter()).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+
+    await new Promise((resolve) => setTimeout(resolve, 5100));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Session expiree ou acces refuse. Reconnectez-vous.")
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Se reconnecter" })).toBeInTheDocument();
+    },
+    10_000
+  );
 });

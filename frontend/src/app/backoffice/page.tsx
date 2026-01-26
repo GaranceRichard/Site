@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
 import ThemeToggle from "../components/ThemeToggle";
+import { isBackofficeEnabled } from "../lib/backoffice";
 
 type Msg = {
   id: number;
@@ -22,6 +23,7 @@ type SortDir = "asc" | "desc";
 
 export default function BackofficePage() {
   const router = useRouter();
+  const backofficeEnabled = isBackofficeEnabled();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [openLogin, setOpenLogin] = useState(false);
@@ -131,11 +133,15 @@ export default function BackofficePage() {
       setAuthMsg("");
     } catch (e: unknown) {
       setStatus("error");
-      setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+      setErrorMsg(e instanceof Error ?e.message : "Erreur inattendue");
     }
   }
 
   useEffect(() => {
+    if (!backofficeEnabled) {
+      router.push("/");
+      return;
+    }
     void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, query, sortField, sortDir]);
@@ -161,7 +167,7 @@ export default function BackofficePage() {
   function changeSort(field: SortField) {
     setPage(1);
     if (field === sortField) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+      setSortDir((prev) => (prev === "asc" ?"desc" : "asc"));
       return;
     }
     setSortField(field);
@@ -170,7 +176,7 @@ export default function BackofficePage() {
 
   function sortBadge(field: SortField) {
     if (field !== sortField) return null;
-    const arrow = sortDir === "asc" ? "↑" : "↓";
+    const arrow = sortDir === "asc" ?"↑" : "↓";
     return (
       <span className="text-xs font-semibold text-neutral-400" aria-hidden="true">
         {arrow}
@@ -262,7 +268,7 @@ export default function BackofficePage() {
         setUndoItems([]);
       } catch (e: unknown) {
         setStatus("error");
-        setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+        setErrorMsg(e instanceof Error ?e.message : "Erreur inattendue");
         restoreRemoved();
         setUndoIds(null);
         setUndoItems([]);
@@ -296,6 +302,27 @@ export default function BackofficePage() {
     return pages;
   }
 
+  if (!backofficeEnabled) {
+    return (
+      <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-16">
+          <h1 className="text-2xl font-semibold">Backoffice désactivé</h1>
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+            Cette page n’est pas disponible dans cet environnement.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="w-fit rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-neutral-50
+                       dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+          >
+            Retour à l’accueil
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       <div className="flex h-full">
@@ -315,7 +342,7 @@ export default function BackofficePage() {
               className={[
                 "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
                 section === "messages"
-                  ? "bg-neutral-900 text-white"
+                  ?"bg-neutral-900 text-white"
                   : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
                 "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
               ].join(" ")}
@@ -392,15 +419,15 @@ export default function BackofficePage() {
             />
           </div>
 
-          {status === "loading" ? (
+          {status === "loading" ?(
             <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-300">Chargement…</p>
           ) : null}
 
-          {status === "error" ? (
+          {status === "error" ?(
             <p className="mt-6 whitespace-pre-wrap text-sm text-red-700">Erreur : {errorMsg}</p>
           ) : null}
 
-          {authMsg ? (
+          {authMsg ?(
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <p>{authMsg}</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -423,14 +450,14 @@ export default function BackofficePage() {
           ) : null}
 
           <div className="mt-6 flex-1">
-            {items.length === 0 && status === "idle" ? (
+            {items.length === 0 && status === "idle" ?(
               <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600
                               dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
                 Aucun message.
               </div>
             ) : null}
 
-            {items.length > 0 ? (
+            {items.length > 0 ?(
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
                   <span className="flex items-center justify-center" />
@@ -504,7 +531,7 @@ export default function BackofficePage() {
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
                     Page {page} / {totalPages} — {totalCount} message(s)
-                    {selectedIds.size ? ` — ${selectedIds.size} sélectionné(s)` : ""}
+                    {selectedIds.size ?` — ${selectedIds.size} sélectionné(s)` : ""}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -526,7 +553,7 @@ export default function BackofficePage() {
                       Prev
                     </button>
                     {buildPages(page, totalPages).map((p, idx) =>
-                      p === "..." ? (
+                      p === "..." ?(
                         <span key={`ellipsis-${idx}`} className="px-1">
                           …
                         </span>
@@ -539,7 +566,7 @@ export default function BackofficePage() {
                           className={[
                             "rounded-lg border border-neutral-200 px-2 py-1 text-xs font-semibold",
                             p === page
-                              ? "bg-neutral-900 text-white"
+                              ?"bg-neutral-900 text-white"
                               : "bg-white text-neutral-700 hover:bg-neutral-50",
                             "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
                           ].join(" ")}
@@ -573,7 +600,7 @@ export default function BackofficePage() {
         }}
       />
 
-      {undoIds ? (
+      {undoIds ?(
         <div className="fixed bottom-6 right-6 z-[150] rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
           <div className="flex items-center gap-3">
             <span>{undoIds.length} message(s) supprimé(s).</span>
@@ -588,7 +615,7 @@ export default function BackofficePage() {
         </div>
       ) : null}
 
-      {selected ? (
+      {selected ?(
         <div className="fixed inset-0 z-[140] flex items-center justify-center">
           <button
             type="button"

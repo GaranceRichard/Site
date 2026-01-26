@@ -99,7 +99,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
       onSuccess?.();
     } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Erreur inattendue");
+      setErrorMsg(err instanceof Error ?err.message : "Erreur inattendue");
     }
   }
 
@@ -179,7 +179,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
         disabled={status === "sending"}
         className="rounded-xl border border-neutral-200 bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
       >
-        {status === "sending" ? "Envoi..." : "Envoyer"}
+        {status === "sending" ?"Envoi..." : "Envoyer"}
       </button>
 
       {status === "success" && (

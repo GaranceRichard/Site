@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../BackofficeModal";
+import { isBackofficeEnabled } from "../../lib/backoffice";
 
 export default function LoginButton({
   size = 28,
@@ -14,6 +15,7 @@ export default function LoginButton({
   className?: string;
 }) {
   const router = useRouter();
+  const backofficeEnabled = isBackofficeEnabled();
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
 
@@ -45,12 +47,15 @@ export default function LoginButton({
 }, [open]);
 
   function onClick() {
+    if (!backofficeEnabled) return;
     if (isLogged) {
       router.push("/backoffice");
       return;
     }
     setOpen(true);
   }
+
+  if (!backofficeEnabled) return null;
 
   return (
     <>

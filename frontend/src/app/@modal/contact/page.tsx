@@ -70,13 +70,13 @@ export default function ContactModal() {
   if (pathname !== "/contact") return null;
 
   const ease = "ease-[cubic-bezier(0.22,1,0.36,1)]";
-  const dur = open ? "duration-[420ms]" : "duration-[520ms]";
+  const dur = open ?"duration-[420ms]" : "duration-[520ms]";
 
   return (
     <div
       className={[
         "fixed inset-0 z-[100]",
-        open ? "pointer-events-auto" : "pointer-events-none",
+        open ?"pointer-events-auto" : "pointer-events-none",
       ].join(" ")}
     >
       {/* Backdrop */}
@@ -90,7 +90,7 @@ export default function ContactModal() {
           ease,
           dur,
           open
-            ? "pointer-events-auto opacity-100 bg-black/40 backdrop-blur-[2px]"
+            ?"pointer-events-auto opacity-100 bg-black/40 backdrop-blur-[2px]"
             : "pointer-events-none opacity-0 bg-black/0 backdrop-blur-0",
         ].join(" ")}
       />
@@ -105,7 +105,7 @@ export default function ContactModal() {
             ease,
             dur,
             open
-              ? "pointer-events-auto opacity-100 translate-y-0 scale-100"
+              ?"pointer-events-auto opacity-100 translate-y-0 scale-100"
               : "pointer-events-none opacity-0 translate-y-4 scale-[0.98]",
           ].join(" ")}
         >
@@ -138,7 +138,7 @@ export default function ContactModal() {
               ease,
               dur,
               open
-                ? "opacity-100 translate-y-0 delay-[90ms]"
+                ?"opacity-100 translate-y-0 delay-[90ms]"
                 : "opacity-0 translate-y-2 delay-0",
             ].join(" ")}
           >

@@ -145,7 +145,7 @@ Notes :
 - anti-spam : honeypot côté front + throttling côté API
 
 
-## API ? Backoffice
+## API ?Backoffice
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
 - POST /api/contact/messages/admin/delete (supprime une liste d?IDs, admin uniquement)
@@ -157,12 +157,22 @@ Depuis `backend/` :
 ```powershell
 python manage.py test
 ```
+- Couverture :
+```powershell
+python -m coverage run manage.py test
+python -m coverage report --fail-under=80
+python -m coverage html
+```
 
 ### Frontend (Next.js)
 Depuis `frontend/` :
 - Lancer les tests unitaires (Vitest) :
 ```powershell
 npm run test
+```
+ - Couverture :
+```powershell
+npm run test:coverage
 ```
 
 ### E2E (Playwright)
@@ -176,6 +186,13 @@ npx playwright install
 $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
+```
+ - Couverture E2E (Chromium uniquement) :
+```powershell
+$env:E2E_COVERAGE="true"
+$env:E2E_ADMIN_USER="votre_admin"
+$env:E2E_ADMIN_PASS="votre_mdp"
+npm run test:e2e:coverage
 ```
 
 

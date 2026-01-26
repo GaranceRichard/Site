@@ -50,10 +50,10 @@ export default function FlashToast() {
 
   if (!open || !kind) return null;
 
-  const title = kind === "contact_success" ? "Message envoyé" : "Information";
+  const title = kind === "contact_success" ?"Message envoyé" : "Information";
   const message =
     kind === "contact_success"
-      ? "Merci, votre message a bien été envoyé."
+      ?"Merci, votre message a bien été envoyé."
       : "Action effectuée.";
 
   return (

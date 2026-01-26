@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { isBackofficeEnabled } from "../lib/backoffice";
 
 const EXIT_MS = 520;
 
@@ -15,6 +16,7 @@ export default function BackofficeModal({
   onClose: () => void;
   onSuccess?: () => void;
 }) {
+  const backofficeEnabled = isBackofficeEnabled();
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -26,12 +28,18 @@ export default function BackofficeModal({
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+  const usernameRef = useRef<HTMLInputElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const closingRef = useRef(false);
 
   useEffect(() => {
     if (open) {
+      if (!backofficeEnabled) {
+        setMounted(true);
+        setVisible(true);
+        return;
+      }
       setMounted(true);
       closingRef.current = false;
 
@@ -43,7 +51,13 @@ export default function BackofficeModal({
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
-      rafRef.current = requestAnimationFrame(() => setVisible(true));
+      rafRef.current = requestAnimationFrame(() => {
+        setVisible(true);
+        // Focus the username field as soon as the modal is visible.
+        setTimeout(() => {
+          usernameRef.current?.focus();
+        }, 0);
+      });
       return;
     }
 
@@ -147,6 +161,7 @@ export default function BackofficeModal({
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); // ✅ Entrée valide le formulaire
+    if (!backofficeEnabled) return;
     if (status === "sending") return;
     void login();
   }
@@ -154,7 +169,7 @@ export default function BackofficeModal({
   if (!mounted) return null;
 
   const ease = "ease-[cubic-bezier(0.22,1,0.36,1)]";
-  const dur = visible ? "duration-[420ms]" : "duration-[520ms]";
+  const dur = visible ?"duration-[420ms]" : "duration-[520ms]";
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center">
@@ -167,7 +182,7 @@ export default function BackofficeModal({
           "transition-[opacity,backdrop-filter,background-color]",
           ease,
           dur,
-          visible ? "opacity-100 bg-black/50 backdrop-blur-sm" : "opacity-0 bg-black/0 backdrop-blur-0",
+          visible ?"opacity-100 bg-black/50 backdrop-blur-sm" : "opacity-0 bg-black/0 backdrop-blur-0",
         ].join(" ")}
       />
 
@@ -178,13 +193,15 @@ export default function BackofficeModal({
           "transition-[transform,opacity] will-change-transform",
           ease,
           dur,
-          visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-[0.98]",
+          visible ?"opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-[0.98]",
         ].join(" ")}
       >
         <h2 className="text-lg font-semibold">Accès back-office</h2>
 
         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-          Authentification requise (compte admin).
+          {backofficeEnabled
+            ?"Authentification requise (compte admin)."
+            : "Le back-office est désactivé pour cet environnement."}
         </p>
 
         {/* ✅ Form => Entrée valide */}
@@ -196,6 +213,8 @@ export default function BackofficeModal({
             value={email}
             onChange={onEmailChange}
             autoComplete="username"
+            disabled={!backofficeEnabled}
+            ref={usernameRef}
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
           />
 
@@ -206,6 +225,7 @@ export default function BackofficeModal({
             value={password}
             onChange={onPasswordChange}
             autoComplete="current-password"
+            disabled={!backofficeEnabled}
             className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
           />
 
@@ -220,14 +240,14 @@ export default function BackofficeModal({
 
             <button
               type="submit"
-              disabled={status === "sending"}
+              disabled={status === "sending" || !backofficeEnabled}
               className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {status === "sending" ? "Connexion..." : "Se connecter"}
+              {status === "sending" ?"Connexion..." : "Se connecter"}
             </button>
           </div>
 
-          {status === "error" ? (
+          {status === "error" ?(
             <p className="text-sm text-red-700">{errorMsg}</p>
           ) : null}
         </form>

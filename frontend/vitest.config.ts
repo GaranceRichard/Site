@@ -13,5 +13,26 @@ export default defineConfig({
       "**/.{idea,git,cache,output,temp}/**",
       "tests/**",
     ],
+    coverage: {
+      provider: "v8",
+      reportsDirectory: "coverage",
+      reporter: ["text", "html", "lcov"],
+      all: false,
+      thresholds: {
+        lines: 80,
+        statements: 80,
+        branches: 80,
+        functions: 80,
+      },
+      exclude: [
+        ".next/**",
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.{idea,git,cache,output,temp}/**",
+        "tests/**",
+        "src/**/index.ts",
+        "src/**/*.d.ts",
+      ],
+    },
   },
 });
