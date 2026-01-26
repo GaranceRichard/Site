@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import ContactMessage
+from django.utils import timezone
 
 
 class ContactApiTests(APITestCase):
@@ -149,6 +150,125 @@ class ContactApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data.get("count"), 1)
         self.assertEqual(len(res.data.get("results", [])), 1)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_list_default_sort_is_created_at_desc(self):
+        older = ContactMessage.objects.create(
+            name="Old",
+            email="old@example.com",
+            subject="Old",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+        newer = ContactMessage.objects.create(
+            name="New",
+            email="new@example.com",
+            subject="New",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+        ContactMessage.objects.filter(id=older.id).update(
+            created_at=timezone.now() - timezone.timedelta(days=2)
+        )
+        ContactMessage.objects.filter(id=newer.id).update(
+            created_at=timezone.now() - timezone.timedelta(days=1)
+        )
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="admin-default-sort",
+            password="admin-pass-246",
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": "admin-pass-246"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res = self.client.get(
+            "/api/contact/messages/admin?limit=10",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        results = res.data.get("results", [])
+        self.assertGreaterEqual(len(results), 2)
+        self.assertEqual(results[0]["name"], "New")
+        self.assertEqual(results[1]["name"], "Old")
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_list_sort_by_name(self):
+        msg_b = ContactMessage.objects.create(
+            name="Bob Smith",
+            email="bob@example.com",
+            subject="Zeta",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+        msg_a = ContactMessage.objects.create(
+            name="Alice Doe",
+            email="alice@example.com",
+            subject="Alpha",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+        ContactMessage.objects.filter(id=msg_b.id).update(
+            created_at=timezone.now() - timezone.timedelta(days=1)
+        )
+        ContactMessage.objects.filter(id=msg_a.id).update(
+            created_at=timezone.now() - timezone.timedelta(days=2)
+        )
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="admin-sort",
+            password="admin-pass-135",
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": "admin-pass-135"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res_asc = self.client.get(
+            "/api/contact/messages/admin?limit=10&sort=name&dir=asc",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        res_desc = self.client.get(
+            "/api/contact/messages/admin?limit=10&sort=name&dir=desc",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res_asc.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_desc.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_asc.data.get("results", [])[0]["name"], "Alice Doe")
+        self.assertEqual(res_desc.data.get("results", [])[0]["name"], "Bob Smith")
 
     def test_contact_throttling(self):
         payload = {

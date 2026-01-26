@@ -22,7 +22,7 @@ class ContactMessageListAdminView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        qs = ContactMessage.objects.all().order_by("-created_at")
+        qs = ContactMessage.objects.all()
         q = (self.request.query_params.get("q") or "").strip()
         if q:
             qs = qs.filter(
@@ -30,7 +30,20 @@ class ContactMessageListAdminView(generics.ListAPIView):
                 | models.Q(email__icontains=q)
                 | models.Q(subject__icontains=q)
             )
-        return qs
+        sort = (self.request.query_params.get("sort") or "created_at").strip()
+        direction = (self.request.query_params.get("dir") or "desc").strip().lower()
+        allowed = {
+            "created_at": "created_at",
+            "name": "name",
+            "email": "email",
+            "subject": "subject",
+        }
+        field = allowed.get(sort, "created_at")
+        prefix = "-" if direction == "desc" else ""
+        order = f"{prefix}{field}"
+        if field == "created_at":
+            return qs.order_by(order)
+        return qs.order_by(order, "-created_at")
 
     def list(self, request, *args, **kwargs):
         qs = self.get_queryset()

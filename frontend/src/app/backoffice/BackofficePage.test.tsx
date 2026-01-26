@@ -126,6 +126,73 @@ describe("BackofficePage", () => {
     expect(lastCall?.[0]).toContain("q=alice");
   });
 
+  it("charge par dÃ©faut avec le tri date desc", async () => {
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    const lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    expect(lastCall?.[0]).toContain("sort=created_at");
+    expect(lastCall?.[0]).toContain("dir=desc");
+
+    const dateHeader = await screen.findByRole("button", { name: "Trier par date" });
+    expect(dateHeader.textContent).toContain("↓");
+  });
+
+  it("bascule la flÃ¨che de tri sur la colonne Date", async () => {
+    render(<BackofficePage />);
+
+    const dateHeader = await screen.findByRole("button", { name: "Trier par date" });
+    fireEvent.click(dateHeader);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    let lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.pop();
+    expect(lastCall?.[0]).toContain("sort=created_at");
+    expect(lastCall?.[0]).toContain("dir=asc");
+    expect(dateHeader.textContent).toContain("↑");
+
+    fireEvent.click(dateHeader);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.pop();
+    expect(lastCall?.[0]).toContain("sort=created_at");
+    expect(lastCall?.[0]).toContain("dir=desc");
+    expect(dateHeader.textContent).toContain("↓");
+  });
+
+  it("bascule le tri asc/desc quand on clique sur un titre", async () => {
+    render(<BackofficePage />);
+
+    const header = await screen.findByRole("button", { name: "Trier par email" });
+    fireEvent.click(header);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    let lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.pop();
+    expect(lastCall?.[0]).toContain("sort=email");
+    expect(lastCall?.[0]).toContain("dir=asc");
+
+    fireEvent.click(header);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.pop();
+    expect(lastCall?.[0]).toContain("sort=email");
+    expect(lastCall?.[0]).toContain("dir=desc");
+  });
+
   it("affiche le toast dâ€™annulation aprÃ¨s suppression", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,

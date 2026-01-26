@@ -17,6 +17,9 @@ type Msg = {
   created_at: string;
 };
 
+type SortField = "created_at" | "name" | "email" | "subject";
+type SortDir = "asc" | "desc";
+
 export default function BackofficePage() {
   const router = useRouter();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -35,6 +38,8 @@ export default function BackofficePage() {
   const [undoItems, setUndoItems] = useState<Msg[]>([]);
   const undoTimerRef = useRef<number | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const PAGE_SIZE = 10;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -90,6 +95,8 @@ export default function BackofficePage() {
       const params = new URLSearchParams();
       params.set("limit", String(PAGE_SIZE));
       params.set("page", String(nextPage));
+      params.set("sort", sortField);
+      params.set("dir", sortDir);
       const search = query.trim();
       if (search) params.set("q", search);
 
@@ -131,7 +138,7 @@ export default function BackofficePage() {
   useEffect(() => {
     void load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, query]);
+  }, [page, query, sortField, sortDir]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -149,6 +156,26 @@ export default function BackofficePage() {
       }
       return next;
     });
+  }
+
+  function changeSort(field: SortField) {
+    setPage(1);
+    if (field === sortField) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortField(field);
+    setSortDir("asc");
+  }
+
+  function sortBadge(field: SortField) {
+    if (field !== sortField) return null;
+    const arrow = sortDir === "asc" ? "↑" : "↓";
+    return (
+      <span className="text-xs font-semibold text-neutral-400" aria-hidden="true">
+        {arrow}
+      </span>
+    );
   }
 
   function clearUndoTimer() {
@@ -407,10 +434,42 @@ export default function BackofficePage() {
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
                   <span className="flex items-center justify-center" />
-                  <span>Nom</span>
-                  <span>Email</span>
-                  <span>Sujet</span>
-                  <span>Date</span>
+                  <button
+                    type="button"
+                    onClick={() => changeSort("name")}
+                    aria-label="Trier par nom"
+                    className="inline-flex w-full items-center justify-center gap-2"
+                  >
+                    <span>Nom</span>
+                    {sortBadge("name")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeSort("email")}
+                    aria-label="Trier par email"
+                    className="inline-flex w-full items-center justify-center gap-2"
+                  >
+                    <span>Email</span>
+                    {sortBadge("email")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeSort("subject")}
+                    aria-label="Trier par sujet"
+                    className="inline-flex w-full items-center justify-center gap-2"
+                  >
+                    <span>Sujet</span>
+                    {sortBadge("subject")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeSort("created_at")}
+                    aria-label="Trier par date"
+                    className="inline-flex w-full items-center justify-center gap-2"
+                  >
+                    <span>Date</span>
+                    {sortBadge("created_at")}
+                  </button>
                 </div>
                 <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
                   {visibleItems.map((m) => (
@@ -557,7 +616,7 @@ export default function BackofficePage() {
               </button>
             </div>
 
-            <div className="mt-5 space-y-3 text-sm">
+            <div className="mt-5 space-y-3 text-sm break-words">
               <p>
                 <span className="font-semibold">Nom :</span> {selected.name}
               </p>
@@ -569,7 +628,7 @@ export default function BackofficePage() {
               </p>
               <div>
                 <p className="font-semibold">Message :</p>
-                <p className="mt-2 whitespace-pre-wrap text-neutral-700 dark:text-neutral-200">
+                <p className="mt-2 whitespace-pre-wrap break-words text-neutral-700 dark:text-neutral-200">
                   {selected.message}
                 </p>
               </div>
