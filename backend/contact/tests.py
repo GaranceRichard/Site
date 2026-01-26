@@ -107,6 +107,63 @@ class ContactApiTests(APITestCase):
         self.assertEqual(res2.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res2.data.get("results", [])), 1)
 
+        res3 = self.client.get(
+            f"/api/contact/messages/admin?limit=2&cursor={res2.data.get('prev_cursor')}&direction=prev",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(res3.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res3.data.get("results", [])), 2)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_list_search_filters_results(self):
+        ContactMessage.objects.create(
+            name="Alice Doe",
+            email="alice@example.com",
+            subject="Budget 2026",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+        ContactMessage.objects.create(
+            name="Bob Smith",
+            email="bob@example.com",
+            subject="Autre",
+            message="Test",
+            consent=True,
+            source="tests",
+        )
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="admin-search",
+            password="admin-pass-789",
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": "admin-pass-789"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res = self.client.get(
+            "/api/contact/messages/admin?limit=10&q=budget",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data.get("count"), 1)
+        self.assertEqual(len(res.data.get("results", [])), 1)
+
     def test_contact_throttling(self):
         payload = {
             "name": "Throttle",
