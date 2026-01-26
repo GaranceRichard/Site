@@ -21,6 +21,7 @@ export default function BackofficePage() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [openLogin, setOpenLogin] = useState(false);
+  const [section, setSection] = useState<"messages" | "stats" | "settings">("messages");
   const [items, setItems] = useState<Msg[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -37,6 +38,10 @@ export default function BackofficePage() {
 
   function logoutAndGoHome() {
     clearTokens();
+    router.push("/");
+  }
+
+  function goHome() {
     router.push("/");
   }
 
@@ -101,107 +106,157 @@ export default function BackofficePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const visibleItems = items.slice(0, 8);
+  const hiddenCount = Math.max(0, items.length - visibleItems.length);
+
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
-      <div className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
+      <div className="flex h-full">
+        <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
           <div>
-            <h1 className="text-2xl font-semibold">Backoffice</h1>
-            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-              Messages reçus via le formulaire de contact.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">Admin</p>
+            <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
           </div>
 
-          <div className="flex gap-2">
+          <div className="mt-8 space-y-2">
+            <button
+              type="button"
+              onClick={() => setSection("messages")}
+              className={[
+                "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+                section === "messages"
+                  ? "bg-neutral-900 text-white"
+                  : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+              ].join(" ")}
+            >
+              Messages contact
+            </button>
+            <button
+              type="button"
+              onClick={() => setSection("stats")}
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
+              disabled
+            >
+              Statistiques (bientôt)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSection("settings")}
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
+              disabled
+            >
+              Réglages (bientôt)
+            </button>
+          </div>
+
+          <div className="mt-auto space-y-2 pt-6">
+            <button
+              type="button"
+              onClick={goHome}
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
+                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+            >
+              Retour au site
+            </button>
             <button
               type="button"
               onClick={load}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-neutral-50
-                         dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
+                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             >
               Rafraîchir
             </button>
-
             <button
               type="button"
               onClick={logoutAndGoHome}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-neutral-50
-                         dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
+                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             >
               Se déconnecter
             </button>
           </div>
-        </div>
+        </aside>
 
-        {status === "loading" ? (
-          <p className="mt-8 text-sm text-neutral-600 dark:text-neutral-300">Chargement…</p>
-        ) : null}
-
-        {status === "error" ? (
-          <p className="mt-8 whitespace-pre-wrap text-sm text-red-700">Erreur : {errorMsg}</p>
-        ) : null}
-
-        {authMsg ? (
-          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <p>{authMsg}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setOpenLogin(true)}
-                className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
-              >
-                Se reconnecter
-              </button>
-              <button
-                type="button"
-                onClick={logoutAndGoHome}
-                className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
-              >
-                Retour accueil
-              </button>
+        <section className="flex min-w-0 flex-1 flex-col px-6 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Messages de contact</h2>
+              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+                Vue condensée des messages les plus récents.
+              </p>
             </div>
           </div>
-        ) : null}
 
-        <div className="mt-8 grid gap-4">
-          {items.length === 0 && status === "idle" ? (
-            <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600
-                            dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
-              Aucun message.
+          {status === "loading" ? (
+            <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-300">Chargement…</p>
+          ) : null}
+
+          {status === "error" ? (
+            <p className="mt-6 whitespace-pre-wrap text-sm text-red-700">Erreur : {errorMsg}</p>
+          ) : null}
+
+          {authMsg ? (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p>{authMsg}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenLogin(true)}
+                  className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
+                >
+                  Se reconnecter
+                </button>
+                <button
+                  type="button"
+                  onClick={logoutAndGoHome}
+                  className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
+                >
+                  Retour accueil
+                </button>
+              </div>
             </div>
           ) : null}
 
-          {items.map((m) => (
-            <div
-              key={m.id}
-              className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)]
-                         dark:border-neutral-800 dark:bg-neutral-900"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm font-semibold">
-                  {m.name} — {m.email}
-                </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {new Date(m.created_at).toLocaleString()}
-                </p>
+          <div className="mt-6 flex-1">
+            {items.length === 0 && status === "idle" ? (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600
+                              dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
+                Aucun message.
               </div>
+            ) : null}
 
-              {m.subject ? (
-                <p className="mt-3 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-                  Sujet : {m.subject}
-                </p>
-              ) : null}
-
-              <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200">
-                {m.message}
-              </p>
-
-              <p className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
-                Source : {m.source || "—"} • Consentement : {m.consent ? "oui" : "non"}
-              </p>
-            </div>
-          ))}
-        </div>
+            {items.length > 0 ? (
+              <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
+                  {visibleItems.map((m) => (
+                    <li key={m.id} className="py-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">
+                            {m.name} — {m.email}
+                          </p>
+                          <p className="truncate text-neutral-600 dark:text-neutral-300">
+                            {m.subject ? `Sujet : ${m.subject} — ` : ""}
+                            {m.message}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+                          {new Date(m.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {hiddenCount > 0 ? (
+                  <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                    + {hiddenCount} message(s) non affiché(s)
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </section>
       </div>
 
       <BackofficeModal

@@ -44,6 +44,13 @@ export default function LoginButton({
   };
 }, [open]);
 
+  function onClick() {
+    if (isLogged) {
+      router.push("/backoffice");
+      return;
+    }
+    setOpen(true);
+  }
 
   return (
     <>
@@ -51,7 +58,7 @@ export default function LoginButton({
         type="button"
         aria-label={isLogged ? "Back-office (connecté)" : "Accès back-office"}
         title={isLogged ? "Back-office (connecté)" : "Accès back-office"}
-        onClick={() => setOpen(true)}
+        onClick={onClick}
         className={[
           "transition-opacity",
           isLogged ? "opacity-100" : "opacity-60 hover:opacity-100",
