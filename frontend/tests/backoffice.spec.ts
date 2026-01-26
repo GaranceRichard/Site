@@ -91,3 +91,26 @@ test("return to site keeps session and footer icon reopens backoffice", async ({
   await page.getByRole("button", { name: "Back-office (connecté)" }).click();
   await expect(page).toHaveURL("/backoffice");
 });
+
+test("clicking a message opens details modal", async ({ page }) => {
+  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Accès back-office" }).click();
+  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
+  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+
+  const firstRow = page.locator("section ul li button").first();
+  await firstRow.click();
+
+  const modal = page.getByTestId("message-modal");
+  await expect(modal).toBeVisible();
+  await expect(modal.getByText("Nom :", { exact: true })).toBeVisible();
+  await expect(modal.getByText("Email :", { exact: true })).toBeVisible();
+  await expect(modal.getByText("Sujet :", { exact: true })).toBeVisible();
+  await expect(modal.getByText("Message :", { exact: true })).toBeVisible();
+});
