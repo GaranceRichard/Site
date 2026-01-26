@@ -195,3 +195,27 @@ test("delete button is disabled when nothing is selected", async ({ page }) => {
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
   await expect(deleteButton).toBeDisabled();
 });
+
+test("delete shows undo toast and restore on cancel", async ({ page }) => {
+  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Accès back-office" }).click();
+  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
+  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+
+  const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
+  await checkbox.check();
+
+  const deleteButton = page.getByRole("button", { name: "Supprimer" });
+  await deleteButton.click();
+
+  const undoToast = page.getByText(/message\(s\) supprimé\(s\)/);
+  await expect(undoToast).toBeVisible();
+  await page.getByRole("button", { name: "Annuler" }).click();
+  await expect(undoToast).not.toBeVisible();
+});

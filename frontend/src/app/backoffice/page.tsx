@@ -1,7 +1,7 @@
 // frontend/src/app/backoffice/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
 
@@ -30,6 +30,9 @@ export default function BackofficePage() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [undoIds, setUndoIds] = useState<number[] | null>(null);
+  const [undoItems, setUndoItems] = useState<Msg[]>([]);
+  const undoTimerRef = useRef<number | null>(null);
 
   const PAGE_SIZE = 8;
 
@@ -72,8 +75,7 @@ export default function BackofficePage() {
     if (!token) {
       setStatus("idle");
       setItems([]);
-      setAuthMsg("Connexion requise pour acceder au backoffice.");
-      setOpenLogin(true);
+      router.push("/");
       return;
     }
 
@@ -140,6 +142,19 @@ export default function BackofficePage() {
     });
   }
 
+  function clearUndoTimer() {
+    if (undoTimerRef.current) {
+      window.clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearUndoTimer();
+    };
+  }, []);
+
   async function deleteSelected() {
     if (!apiBase) {
       setStatus("error");
@@ -162,38 +177,56 @@ export default function BackofficePage() {
       return;
     }
 
-    setStatus("loading");
+    const ids = Array.from(selectedIds);
+    const removed = items.filter((m) => selectedIds.has(m.id));
 
-    try {
-      const res = await fetch(`${apiBase}/api/contact/messages/admin/delete`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ids: Array.from(selectedIds) }),
-      });
+    setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
+    setSelectedIds(new Set());
+    setUndoIds(ids);
+    setUndoItems(removed);
 
-      if (res.status === 401 || res.status === 403) {
+    clearUndoTimer();
+    undoTimerRef.current = window.setTimeout(async () => {
+      setStatus("loading");
+      try {
+        const res = await fetch(`${apiBase}/api/contact/messages/admin/delete`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ids }),
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          setStatus("idle");
+          clearTokens();
+          setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
+          setOpenLogin(true);
+          return;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `Erreur API (${res.status})`);
+        }
+
         setStatus("idle");
-        clearTokens();
-        setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
-        setOpenLogin(true);
-        return;
+        setUndoIds(null);
+        setUndoItems([]);
+      } catch (e: unknown) {
+        setStatus("error");
+        setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
       }
+    }, 5000);
+  }
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `Erreur API (${res.status})`);
-      }
-
-      setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
-      setSelectedIds(new Set());
-      setStatus("idle");
-    } catch (e: unknown) {
-      setStatus("error");
-      setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
-    }
+  function undoDelete() {
+    if (!undoIds || undoItems.length === 0) return;
+    clearUndoTimer();
+    setItems((prev) => [...undoItems, ...prev]);
+    setUndoIds(null);
+    setUndoItems([]);
   }
 
   return (
@@ -414,6 +447,21 @@ export default function BackofficePage() {
           load();
         }}
       />
+
+      {undoIds ? (
+        <div className="fixed bottom-6 right-6 z-[150] rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+          <div className="flex items-center gap-3">
+            <span>{undoIds.length} message(s) supprimé(s).</span>
+            <button
+              type="button"
+              onClick={undoDelete}
+              className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {selected ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center">
