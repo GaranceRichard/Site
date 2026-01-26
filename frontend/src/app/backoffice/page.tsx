@@ -27,6 +27,9 @@ export default function BackofficePage() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [authMsg, setAuthMsg] = useState<string>("");
   const [selected, setSelected] = useState<Msg | null>(null);
+  const [page, setPage] = useState(1);
+
+  const PAGE_SIZE = 8;
 
   function clearTokens() {
     try {
@@ -49,6 +52,7 @@ export default function BackofficePage() {
   async function load() {
     setErrorMsg("");
     setAuthMsg("");
+    setPage(1);
 
     if (!apiBase) {
       setStatus("error");
@@ -74,7 +78,7 @@ export default function BackofficePage() {
     setStatus("loading");
 
     try {
-      const res = await fetch(`${apiBase}/api/contact/messages/admin`, {
+      const res = await fetch(`${apiBase}/api/contact/messages/admin?limit=500`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -107,8 +111,10 @@ export default function BackofficePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const visibleItems = items.slice(0, 8);
-  const hiddenCount = Math.max(0, items.length - visibleItems.length);
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
 
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
@@ -229,35 +235,58 @@ export default function BackofficePage() {
 
             {items.length > 0 ? (
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="grid grid-cols-[1.2fr_1.4fr_1.4fr_0.7fr] gap-3 border-b border-neutral-200 pb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
+                  <span>Nom</span>
+                  <span>Email</span>
+                  <span>Sujet</span>
+                  <span className="text-right">Date</span>
+                </div>
                 <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
                   {visibleItems.map((m) => (
                     <li key={m.id} className="py-3">
                       <button
                         type="button"
                         onClick={() => setSelected(m)}
-                        className="flex w-full items-center justify-between gap-4 text-left"
+                        className="grid w-full grid-cols-[1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-left"
                       >
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold">
-                            {m.name} — {m.email}
-                          </p>
-                          <p className="truncate text-neutral-600 dark:text-neutral-300">
-                            {m.subject ? `Sujet : ${m.subject} — ` : ""}
-                            {m.message}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+                        <span className="truncate font-semibold">{m.name}</span>
+                        <span className="truncate text-neutral-600 dark:text-neutral-300">{m.email}</span>
+                        <span className="truncate text-neutral-600 dark:text-neutral-300">
+                          {m.subject || "—"}
+                        </span>
+                        <span className="text-right text-xs text-neutral-500 dark:text-neutral-400">
                           {new Date(m.created_at).toLocaleDateString()}
-                        </div>
+                        </span>
                       </button>
                     </li>
                   ))}
                 </ul>
-                {hiddenCount > 0 ? (
-                  <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-                    + {hiddenCount} message(s) non affiché(s)
-                  </p>
-                ) : null}
+
+                <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+                  <span>
+                    Page {safePage} / {totalPages} — {items.length} message(s)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
+                                 dark:border-neutral-800"
+                    >
+                      Précédent
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
+                                 dark:border-neutral-800"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>
