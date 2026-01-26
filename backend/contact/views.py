@@ -51,9 +51,21 @@ class ContactMessageListAdminView(generics.ListAPIView):
 
         limit = max(1, min(limit, 200))
 
-        total = qs.count()
+        if raw_cursor and direction not in ("next", "prev"):
+            return Response(
+                {"detail": "direction must be 'next' or 'prev'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         cursor = _decode_cursor(raw_cursor) if raw_cursor else None
+        if raw_cursor and cursor is None:
+            return Response(
+                {"detail": "cursor is invalid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        total = qs.count()
+
         if cursor and direction == "prev":
             qs = qs.filter(_newer_than(cursor))
             qs = qs.order_by("created_at", "id")[:limit]

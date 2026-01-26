@@ -204,6 +204,12 @@ export default function BackofficePage() {
     const ids = Array.from(selectedIds);
     const removed = items.filter((m) => selectedIds.has(m.id));
 
+    const restoreRemoved = () => {
+      if (removed.length === 0) return;
+      setItems((prev) => [...removed, ...prev]);
+      setTotalCount((prev) => prev + removed.length);
+    };
+
     setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
     setTotalCount((prev) => Math.max(0, prev - ids.length));
     setSelectedIds(new Set());
@@ -228,6 +234,9 @@ export default function BackofficePage() {
           clearTokens();
           setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
           setOpenLogin(true);
+          restoreRemoved();
+          setUndoIds(null);
+          setUndoItems([]);
           return;
         }
 
@@ -242,6 +251,9 @@ export default function BackofficePage() {
       } catch (e: unknown) {
         setStatus("error");
         setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+        restoreRemoved();
+        setUndoIds(null);
+        setUndoItems([]);
       }
     }, 5000);
   }
