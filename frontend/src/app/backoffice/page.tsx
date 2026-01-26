@@ -28,17 +28,17 @@ export default function BackofficePage() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [authMsg, setAuthMsg] = useState<string>("");
   const [selected, setSelected] = useState<Msg | null>(null);
-  const [page, setPage] = useState(1);
+  const [pageIndex, setPageIndex] = useState(1);
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [undoIds, setUndoIds] = useState<number[] | null>(null);
   const [undoItems, setUndoItems] = useState<Msg[]>([]);
   const undoTimerRef = useRef<number | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [prevCursor, setPrevCursor] = useState<string | null>(null);
 
   const PAGE_SIZE = 8;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
   const visibleItems = items;
 
   function clearTokens() {
@@ -59,9 +59,18 @@ export default function BackofficePage() {
     router.push("/");
   }
 
-  async function load(nextPage: number, search: string) {
+  async function load({
+    cursor = null,
+    direction = null,
+    reset = false,
+  }: {
+    cursor?: string | null;
+    direction?: "next" | "prev" | null;
+    reset?: boolean;
+  }) {
     setErrorMsg("");
     setAuthMsg("");
+    setSelectedIds(new Set());
 
     if (!apiBase) {
       setStatus("error");
@@ -79,6 +88,7 @@ export default function BackofficePage() {
     if (!token) {
       setStatus("idle");
       setItems([]);
+      setTotalCount(0);
       router.push("/");
       return;
     }
@@ -88,8 +98,12 @@ export default function BackofficePage() {
     try {
       const params = new URLSearchParams();
       params.set("limit", String(PAGE_SIZE));
-      params.set("page", String(nextPage));
+      const search = query.trim();
       if (search) params.set("q", search);
+      if (cursor) {
+        params.set("cursor", cursor);
+        params.set("direction", direction || "next");
+      }
 
       const res = await fetch(`${apiBase}/api/contact/messages/admin?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -111,12 +125,22 @@ export default function BackofficePage() {
 
       const data = (await res.json()) as {
         count: number;
-        page: number;
         limit: number;
         results: Msg[];
+        next_cursor: string | null;
+        prev_cursor: string | null;
       };
       setItems(data.results);
       setTotalCount(data.count);
+      setNextCursor(data.next_cursor ?? null);
+      setPrevCursor(data.prev_cursor ?? null);
+      if (reset || !cursor) {
+        setPageIndex(1);
+      } else if (direction === "next") {
+        setPageIndex((prev) => prev + 1);
+      } else if (direction === "prev") {
+        setPageIndex((prev) => Math.max(1, prev - 1));
+      }
       setStatus("idle");
       setAuthMsg("");
     } catch (e: unknown) {
@@ -126,16 +150,9 @@ export default function BackofficePage() {
   }
 
   useEffect(() => {
-    const search = query.trim();
-    void load(page, search);
+    void load({ reset: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, query]);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+  }, [query]);
 
   function toggleSelected(id: number) {
     setSelectedIds((prev) => {
@@ -293,7 +310,7 @@ export default function BackofficePage() {
             </button>
             <button
               type="button"
-              onClick={() => load(page, query.trim())}
+              onClick={() => load({ reset: true })}
               className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
                          dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             >
@@ -326,7 +343,7 @@ export default function BackofficePage() {
               value={query}
               onChange={(e) => {
                 setQuery(e.currentTarget.value);
-                setPage(1);
+                setPageIndex(1);
               }}
               placeholder="Rechercher par nom, email ou sujet"
               className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
@@ -413,7 +430,7 @@ export default function BackofficePage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
-                    Page {safePage} / {totalPages} — {totalCount} message(s)
+                    Page {pageIndex} — {totalCount} message(s)
                     {selectedIds.size ? ` — ${selectedIds.size} sélectionné(s)` : ""}
                   </span>
                   <div className="flex items-center gap-2">
@@ -428,8 +445,8 @@ export default function BackofficePage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={safePage === 1}
+                      onClick={() => prevCursor && load({ cursor: prevCursor, direction: "prev" })}
+                      disabled={!prevCursor}
                       className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
                                  dark:border-neutral-800"
                     >
@@ -437,8 +454,8 @@ export default function BackofficePage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={safePage === totalPages}
+                      onClick={() => nextCursor && load({ cursor: nextCursor, direction: "next" })}
+                      disabled={!nextCursor}
                       className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
                                  dark:border-neutral-800"
                     >
@@ -456,7 +473,7 @@ export default function BackofficePage() {
         open={openLogin}
         onClose={() => {
           setOpenLogin(false);
-          void load(page, query.trim());
+          void load({ reset: true });
         }}
       />
 

@@ -1,5 +1,10 @@
-from rest_framework import generics, permissions, status
+import base64
+import json
+
 from django.db import models
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -33,29 +38,55 @@ class ContactMessageListAdminView(generics.ListAPIView):
         return qs
 
     def list(self, request, *args, **kwargs):
-        qs = self.get_queryset()
+        base_qs = self.get_queryset()
+        qs = base_qs
 
         raw_limit = request.query_params.get("limit", "50")
-        raw_page = request.query_params.get("page", "1")
+        raw_cursor = request.query_params.get("cursor")
+        direction = (request.query_params.get("direction") or "next").lower()
         try:
             limit = int(raw_limit)
         except ValueError:
             limit = 50
-        try:
-            page = int(raw_page)
-        except ValueError:
-            page = 1
 
         limit = max(1, min(limit, 200))
-        page = max(1, page)
 
         total = qs.count()
-        start = (page - 1) * limit
-        end = start + limit
 
-        serializer = self.get_serializer(qs[start:end], many=True)
+        cursor = _decode_cursor(raw_cursor) if raw_cursor else None
+        if cursor and direction == "prev":
+            qs = qs.filter(_newer_than(cursor))
+            qs = qs.order_by("created_at", "id")[:limit]
+            results = list(qs)[::-1]
+        elif cursor:
+            qs = qs.filter(_older_than(cursor))
+            results = list(qs.order_by("-created_at", "-id")[:limit])
+        else:
+            results = list(qs.order_by("-created_at", "-id")[:limit])
+
+        next_cursor = None
+        prev_cursor = None
+        if results:
+            first = results[0]
+            last = results[-1]
+
+            has_newer = base_qs.filter(_newer_than({"created_at": first.created_at, "id": first.id})).exists()
+            if has_newer:
+                prev_cursor = _encode_cursor(first)
+
+            has_older = base_qs.filter(_older_than({"created_at": last.created_at, "id": last.id})).exists()
+            if has_older:
+                next_cursor = _encode_cursor(last)
+
+        serializer = self.get_serializer(results, many=True)
         return Response(
-            {"count": total, "page": page, "limit": limit, "results": serializer.data},
+            {
+                "count": total,
+                "limit": limit,
+                "results": serializer.data,
+                "next_cursor": next_cursor,
+                "prev_cursor": prev_cursor,
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -80,3 +111,37 @@ class ContactMessageDeleteAdminView(APIView):
 
         deleted, _ = ContactMessage.objects.filter(id__in=ids).delete()
         return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+def _encode_cursor(msg: ContactMessage) -> str:
+    payload = {"created_at": msg.created_at.isoformat(), "id": msg.id}
+    raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii")
+
+
+def _decode_cursor(value: str) -> dict | None:
+    try:
+        raw = base64.urlsafe_b64decode(value.encode("ascii"))
+        payload = json.loads(raw.decode("utf-8"))
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+    dt = parse_datetime(payload.get("created_at") or "")
+    if dt and timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    cid = payload.get("id")
+    if not dt or not cid:
+        return None
+    return {"created_at": dt, "id": cid}
+
+
+def _older_than(cursor: dict) -> models.Q:
+    dt = cursor.get("created_at")
+    cid = cursor.get("id")
+    return models.Q(created_at__lt=dt) | (models.Q(created_at=dt) & models.Q(id__lt=cid))
+
+
+def _newer_than(cursor: dict) -> models.Q:
+    dt = cursor.get("created_at")
+    cid = cursor.get("id")
+    return models.Q(created_at__gt=dt) | (models.Q(created_at=dt) & models.Q(id__gt=cid))

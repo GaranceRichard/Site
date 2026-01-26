@@ -91,13 +91,21 @@ class ContactApiTests(APITestCase):
 
         token = token_res.data["access"]
         res = self.client.get(
-            "/api/contact/messages/admin?page=2&limit=2",
+            "/api/contact/messages/admin?limit=2",
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data.get("count"), 3)
-        self.assertEqual(len(res.data.get("results", [])), 1)
+        self.assertEqual(len(res.data.get("results", [])), 2)
+        self.assertIsNotNone(res.data.get("next_cursor"))
+
+        res2 = self.client.get(
+            f"/api/contact/messages/admin?limit=2&cursor={res.data.get('next_cursor')}&direction=next",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(res2.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res2.data.get("results", [])), 1)
 
     def test_contact_throttling(self):
         payload = {
