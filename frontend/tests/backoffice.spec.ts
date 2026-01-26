@@ -157,3 +157,41 @@ test("search filters messages by name, email, or subject", async ({ page }) => {
     await expect(page.getByText(/Page \d+ \/ \d+ —/)).toBeVisible();
   }
 });
+
+test("select and delete messages", async ({ page }) => {
+  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Accès back-office" }).click();
+  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
+  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+
+  const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
+  await checkbox.check();
+
+  const deleteButton = page.getByRole("button", { name: "Supprimer" });
+  await expect(deleteButton).toBeEnabled();
+  await deleteButton.click();
+
+  await expect(deleteButton).toBeDisabled();
+});
+
+test("delete button is disabled when nothing is selected", async ({ page }) => {
+  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Accès back-office" }).click();
+  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
+  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+
+  const deleteButton = page.getByRole("button", { name: "Supprimer" });
+  await expect(deleteButton).toBeDisabled();
+});

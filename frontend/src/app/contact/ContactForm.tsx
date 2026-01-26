@@ -38,7 +38,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   function onConsentChange(e: ChangeEvent<HTMLInputElement>) {
-    setForm((prev) => ({ ...prev, consent: e.currentTarget.checked }));
+    setForm((prev) => ({ ...prev, consent: e.target.checked }));
   }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {

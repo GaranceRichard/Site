@@ -29,6 +29,7 @@ export default function BackofficePage() {
   const [selected, setSelected] = useState<Msg | null>(null);
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const PAGE_SIZE = 8;
 
@@ -126,6 +127,74 @@ export default function BackofficePage() {
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * PAGE_SIZE;
   const visibleItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    if (!apiBase) {
+      setStatus("error");
+      setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
+      return;
+    }
+
+    if (selectedIds.size === 0) return;
+
+    let token: string | null = null;
+    try {
+      token = sessionStorage.getItem("access_token");
+    } catch {
+      token = null;
+    }
+
+    if (!token) {
+      setAuthMsg("Connexion requise pour acceder au backoffice.");
+      setOpenLogin(true);
+      return;
+    }
+
+    setStatus("loading");
+
+    try {
+      const res = await fetch(`${apiBase}/api/contact/messages/admin/delete`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setStatus("idle");
+        clearTokens();
+        setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
+        setOpenLogin(true);
+        return;
+      }
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Erreur API (${res.status})`);
+      }
+
+      setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
+      setSelectedIds(new Set());
+      setStatus("idle");
+    } catch (e: unknown) {
+      setStatus("error");
+      setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+    }
+  }
 
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
@@ -260,7 +329,8 @@ export default function BackofficePage() {
 
             {items.length > 0 ? (
               <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-                <div className="grid grid-cols-[1.2fr_1.4fr_1.4fr_0.7fr] gap-3 border-b border-neutral-200 pb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
+                <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
+                  <span />
                   <span>Nom</span>
                   <span>Email</span>
                   <span>Sujet</span>
@@ -269,20 +339,29 @@ export default function BackofficePage() {
                 <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
                   {visibleItems.map((m) => (
                     <li key={m.id} className="py-3">
-                      <button
-                        type="button"
-                        onClick={() => setSelected(m)}
-                        className="grid w-full grid-cols-[1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-left"
-                      >
-                        <span className="truncate font-semibold">{m.name}</span>
-                        <span className="truncate text-neutral-600 dark:text-neutral-300">{m.email}</span>
-                        <span className="truncate text-neutral-600 dark:text-neutral-300">
-                          {m.subject || "—"}
-                        </span>
-                        <span className="text-right text-xs text-neutral-500 dark:text-neutral-400">
-                          {new Date(m.created_at).toLocaleDateString()}
-                        </span>
-                      </button>
+                      <div className="grid w-full grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-left">
+                        <input
+                          type="checkbox"
+                          aria-label={`Selectionner ${m.name}`}
+                          checked={selectedIds.has(m.id)}
+                          onChange={() => toggleSelected(m.id)}
+                          className="h-4 w-4 accent-neutral-900 dark:accent-neutral-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSelected(m)}
+                          className="contents"
+                        >
+                          <span className="truncate font-semibold">{m.name}</span>
+                          <span className="truncate text-neutral-600 dark:text-neutral-300">{m.email}</span>
+                          <span className="truncate text-neutral-600 dark:text-neutral-300">
+                            {m.subject || "—"}
+                          </span>
+                          <span className="text-right text-xs text-neutral-500 dark:text-neutral-400">
+                            {new Date(m.created_at).toLocaleDateString()}
+                          </span>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -290,8 +369,18 @@ export default function BackofficePage() {
                 <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
                     Page {safePage} / {totalPages} — {filteredItems.length} message(s)
+                    {selectedIds.size ? ` — ${selectedIds.size} sélectionné(s)` : ""}
                   </span>
                   <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={deleteSelected}
+                      disabled={selectedIds.size === 0}
+                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold text-red-700 disabled:opacity-50
+                                 dark:border-neutral-800 dark:text-red-300"
+                    >
+                      Supprimer
+                    </button>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}

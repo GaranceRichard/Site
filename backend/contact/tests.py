@@ -44,6 +44,18 @@ class ContactApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(ContactMessage.objects.count(), 1)
 
+    def test_contact_creates_message_without_subject(self):
+        payload = {
+            "name": "Test",
+            "email": "test@example.com",
+            "message": "Test message",
+            "consent": True,
+            "source": "tests",
+        }
+        res = self.client.post(self.url, payload, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ContactMessage.objects.count(), 1)
+
     def test_contact_throttling(self):
         payload = {
             "name": "Throttle",
@@ -171,6 +183,126 @@ class AuthJwtTests(APITestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_admin_list_requires_auth(self):
+        res = self.client.get(self.admin_list_url)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_delete_messages_requires_admin_and_removes_records(self):
+        msg1 = ContactMessage.objects.create(
+            name="A",
+            email="a@example.com",
+            subject="S1",
+            message="M1",
+            consent=True,
+            source="tests",
+        )
+        msg2 = ContactMessage.objects.create(
+            name="B",
+            email="b@example.com",
+            subject="S2",
+            message="M2",
+            consent=True,
+            source="tests",
+        )
+
+        token_res = self.client.post(
+            self.token_url,
+            {"username": self.username, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        delete_res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": [msg1.id, msg2.id]},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(delete_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(delete_res.data.get("deleted"), 2)
+        self.assertEqual(ContactMessage.objects.count(), 0)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_delete_messages_allows_partial_ids(self):
+        msg = ContactMessage.objects.create(
+            name="A",
+            email="a@example.com",
+            subject="S1",
+            message="M1",
+            consent=True,
+            source="tests",
+        )
+
+        token_res = self.client.post(
+            self.token_url,
+            {"username": self.username, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        delete_res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": [msg.id, 999999]},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(delete_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(delete_res.data.get("deleted"), 1)
+        self.assertEqual(ContactMessage.objects.count(), 0)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_delete_messages_rejects_invalid_payload(self):
+        token_res = self.client.post(
+            self.token_url,
+            {"username": self.username, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        delete_res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": "nope"},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(delete_res.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 @override_settings(

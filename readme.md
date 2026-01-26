@@ -144,6 +144,11 @@ Notes :
 - consent doit être true (validation backend)
 - anti-spam : honeypot côté front + throttling côté API
 
+
+## API ? Backoffice
+- GET /api/contact/messages/admin (liste, admin uniquement)
+- POST /api/contact/messages/admin/delete (supprime une liste d?IDs, admin uniquement)
+
 ## Tests (socle minimal)
 ### Backend (Django)
 Depuis `backend/` :
@@ -171,6 +176,11 @@ $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
 ```
+
+
+Notes tests :
+- Les tests unitaires front ne scannent que `src/**/*.test.*`.
+- Les tests E2E n?cessitent un compte admin `is_staff` et un backend en cours d?ex?cution.
 
 ## Test rapide (curl)
 ### Windows PowerShell (2 lignes) :

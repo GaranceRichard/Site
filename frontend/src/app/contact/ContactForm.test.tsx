@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ContactForm from "./ContactForm";
@@ -13,6 +13,7 @@ describe("ContactForm", () => {
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    cleanup();
   });
 
   function fillRequiredFields() {
@@ -31,6 +32,30 @@ describe("ContactForm", () => {
       })
     );
   }
+
+  it("ignore le honeypot et affiche le succÃ¨s", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "";
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.change(screen.getByLabelText("Website"), {
+      target: { value: "bot" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Merci, votre message a bien été envoyé.")
+      ).toBeInTheDocument();
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 
   it("affiche une erreur si l'API n'est pas configurée", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
