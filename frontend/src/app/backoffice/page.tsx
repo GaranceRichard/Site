@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
+import ThemeToggle from "../components/ThemeToggle";
 
 type Msg = {
   id: number;
@@ -241,9 +242,12 @@ export default function BackofficePage() {
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       <div className="flex h-full">
         <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">Admin</p>
-            <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">Admin</p>
+              <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
+            </div>
+            <ThemeToggle className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:hover:bg-neutral-900" />
           </div>
 
           <div className="mt-8 space-y-2">
