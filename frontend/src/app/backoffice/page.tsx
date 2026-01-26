@@ -28,6 +28,7 @@ export default function BackofficePage() {
   const [authMsg, setAuthMsg] = useState<string>("");
   const [selected, setSelected] = useState<Msg | null>(null);
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
 
   const PAGE_SIZE = 8;
 
@@ -111,10 +112,20 @@ export default function BackofficePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const search = query.trim().toLowerCase();
+  const filteredItems = search
+    ? items.filter((m) => {
+        const name = m.name.toLowerCase();
+        const email = m.email.toLowerCase();
+        const subject = (m.subject || "").toLowerCase();
+        return name.includes(search) || email.includes(search) || subject.includes(search);
+      })
+    : items;
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIndex = (safePage - 1) * PAGE_SIZE;
-  const visibleItems = items.slice(startIndex, startIndex + PAGE_SIZE);
+  const visibleItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
 
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
@@ -195,6 +206,20 @@ export default function BackofficePage() {
             </div>
           </div>
 
+          <div className="mt-6">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.currentTarget.value);
+                setPage(1);
+              }}
+              placeholder="Rechercher par nom, email ou sujet"
+              className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
+                         dark:border-neutral-800 dark:bg-neutral-950"
+            />
+          </div>
+
           {status === "loading" ? (
             <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-300">Chargement…</p>
           ) : null}
@@ -264,7 +289,7 @@ export default function BackofficePage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
-                    Page {safePage} / {totalPages} — {items.length} message(s)
+                    Page {safePage} / {totalPages} — {filteredItems.length} message(s)
                   </span>
                   <div className="flex items-center gap-2">
                     <button
