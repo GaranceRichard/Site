@@ -33,8 +33,12 @@ export default function BackofficePage() {
   const [undoIds, setUndoIds] = useState<number[] | null>(null);
   const [undoItems, setUndoItems] = useState<Msg[]>([]);
   const undoTimerRef = useRef<number | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   const PAGE_SIZE = 8;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visibleItems = items;
 
   function clearTokens() {
     try {
@@ -54,10 +58,9 @@ export default function BackofficePage() {
     router.push("/");
   }
 
-  async function load() {
+  async function load(nextPage: number, search: string) {
     setErrorMsg("");
     setAuthMsg("");
-    setPage(1);
 
     if (!apiBase) {
       setStatus("error");
@@ -82,7 +85,12 @@ export default function BackofficePage() {
     setStatus("loading");
 
     try {
-      const res = await fetch(`${apiBase}/api/contact/messages/admin?limit=500`, {
+      const params = new URLSearchParams();
+      params.set("limit", String(PAGE_SIZE));
+      params.set("page", String(nextPage));
+      if (search) params.set("q", search);
+
+      const res = await fetch(`${apiBase}/api/contact/messages/admin?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -100,8 +108,14 @@ export default function BackofficePage() {
         throw new Error(txt || `Erreur API (${res.status})`);
       }
 
-      const data = (await res.json()) as Msg[];
-      setItems(data);
+      const data = (await res.json()) as {
+        count: number;
+        page: number;
+        limit: number;
+        results: Msg[];
+      };
+      setItems(data.results);
+      setTotalCount(data.count);
       setStatus("idle");
       setAuthMsg("");
     } catch (e: unknown) {
@@ -111,24 +125,16 @@ export default function BackofficePage() {
   }
 
   useEffect(() => {
-    load();
+    const search = query.trim();
+    void load(page, search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, query]);
 
-  const search = query.trim().toLowerCase();
-  const filteredItems = search
-    ? items.filter((m) => {
-        const name = m.name.toLowerCase();
-        const email = m.email.toLowerCase();
-        const subject = (m.subject || "").toLowerCase();
-        return name.includes(search) || email.includes(search) || subject.includes(search);
-      })
-    : items;
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const startIndex = (safePage - 1) * PAGE_SIZE;
-  const visibleItems = filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   function toggleSelected(id: number) {
     setSelectedIds((prev) => {
@@ -181,6 +187,7 @@ export default function BackofficePage() {
     const removed = items.filter((m) => selectedIds.has(m.id));
 
     setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
+    setTotalCount((prev) => Math.max(0, prev - ids.length));
     setSelectedIds(new Set());
     setUndoIds(ids);
     setUndoItems(removed);
@@ -225,6 +232,7 @@ export default function BackofficePage() {
     if (!undoIds || undoItems.length === 0) return;
     clearUndoTimer();
     setItems((prev) => [...undoItems, ...prev]);
+    setTotalCount((prev) => prev + undoItems.length);
     setUndoIds(null);
     setUndoItems([]);
   }
@@ -281,7 +289,7 @@ export default function BackofficePage() {
             </button>
             <button
               type="button"
-              onClick={load}
+              onClick={() => load(page, query.trim())}
               className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
                          dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             >
@@ -401,7 +409,7 @@ export default function BackofficePage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
                   <span>
-                    Page {safePage} / {totalPages} — {filteredItems.length} message(s)
+                    Page {safePage} / {totalPages} — {totalCount} message(s)
                     {selectedIds.size ? ` — ${selectedIds.size} sélectionné(s)` : ""}
                   </span>
                   <div className="flex items-center gap-2">
@@ -444,7 +452,7 @@ export default function BackofficePage() {
         open={openLogin}
         onClose={() => {
           setOpenLogin(false);
-          load();
+          void load(page, query.trim());
         }}
       />
 

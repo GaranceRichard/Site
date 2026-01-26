@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, status
+from django.db import models
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,15 +23,41 @@ class ContactMessageListAdminView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = ContactMessage.objects.all().order_by("-created_at")
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                models.Q(name__icontains=q)
+                | models.Q(email__icontains=q)
+                | models.Q(subject__icontains=q)
+            )
+        return qs
 
-        raw = self.request.query_params.get("limit", "200")
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+
+        raw_limit = request.query_params.get("limit", "50")
+        raw_page = request.query_params.get("page", "1")
         try:
-            limit = int(raw)
+            limit = int(raw_limit)
         except ValueError:
-            limit = 200
+            limit = 50
+        try:
+            page = int(raw_page)
+        except ValueError:
+            page = 1
 
-        limit = max(1, min(limit, 500))  # borne 1..500
-        return qs[:limit]
+        limit = max(1, min(limit, 200))
+        page = max(1, page)
+
+        total = qs.count()
+        start = (page - 1) * limit
+        end = start + limit
+
+        serializer = self.get_serializer(qs[start:end], many=True)
+        return Response(
+            {"count": total, "page": page, "limit": limit, "results": serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ContactMessageDeleteAdminView(APIView):

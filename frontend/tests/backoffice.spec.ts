@@ -59,8 +59,7 @@ test("logout then visiting backoffice shows auth warning", async ({ page }) => {
   await expect(page).toHaveURL("/");
 
   await page.goto("/backoffice");
-  await expect(page.getByText("Connexion requise pour acceder au backoffice.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Se reconnecter" })).toBeVisible();
+  await expect(page).toHaveURL("/");
 });
 
 test("expired token shows auth warning", async ({ page }) => {

@@ -56,6 +56,49 @@ class ContactApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(ContactMessage.objects.count(), 1)
 
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_list_pagination_returns_count_and_results(self):
+        for i in range(3):
+            ContactMessage.objects.create(
+                name=f"User {i}",
+                email=f"user{i}@example.com",
+                subject="Test",
+                message="Message",
+                consent=True,
+                source="tests",
+            )
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="admin-list",
+            password="admin-pass-456",
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": "admin-pass-456"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res = self.client.get(
+            "/api/contact/messages/admin?page=2&limit=2",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data.get("count"), 3)
+        self.assertEqual(len(res.data.get("results", [])), 1)
+
     def test_contact_throttling(self):
         payload = {
             "name": "Throttle",
