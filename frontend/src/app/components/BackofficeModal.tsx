@@ -73,7 +73,7 @@ export default function BackofficeModal({
       setMounted(false);
       closingRef.current = false;
     }, EXIT_MS);
-  }, [open, mounted]);
+  }, [open, mounted, backofficeEnabled]);
 
   useEffect(() => {
     if (!mounted) return;

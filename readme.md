@@ -100,6 +100,9 @@ DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
 DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000
 DJANGO_ENABLE_JWT=true
+# Throttling global (optionnel en dev, recommande en prod)
+DJANGO_GLOBAL_ANON_THROTTLE_RATE=120/min
+DJANGO_GLOBAL_USER_THROTTLE_RATE=600/min
 ```
 
 ### Frontend — frontend/.env.local (local)
@@ -126,6 +129,11 @@ Depannage (modal qui reapparait / 401 / 403) :
 - `DJANGO_ENABLE_JWT=true` + serveur backend redemarre.
 - Compte admin avec `is_staff` ou `is_superuser`.
 - `NEXT_PUBLIC_API_BASE_URL` correct (par defaut http://127.0.0.1:8000).
+
+Notes securite / configuration :
+- En production, `DJANGO_SECRET_KEY` est obligatoire.
+- En production, `REDIS_URL` est requis pour un throttling global coherent (sauf override explicite).
+- En developpement, CORS/CSRF sont limites aux origines locales par defaut.
 
 ## API — Contact
 Endpoint : POST /api/contact/messages
@@ -229,3 +237,8 @@ Ne pas committer :
 - DJANGO_ALLOWED_HOSTS et DJANGO_CORS_ALLOWED_ORIGINS alignés avec le domaine
 - Base de données de production (PostgreSQL recommandé)
 - HTTPS en frontal
+
+## Standards d'ingenierie (DoD)
+- Definition of Done stricte : `docs/Definition-of-Done.md`
+- Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
+- CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
