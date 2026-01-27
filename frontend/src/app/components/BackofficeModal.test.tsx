@@ -78,4 +78,14 @@ describe("BackofficeModal", () => {
     expect(sessionStorage.getItem("refresh_token")).toBe("token-b");
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("affiche le message désactivé quand le backoffice est off", () => {
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "false";
+
+    render(<BackofficeModal open={true} onClose={() => {}} />);
+
+    expect(
+      screen.getByText("Le back-office est désactivé pour cet environnement.")
+    ).toBeInTheDocument();
+  });
 });

@@ -4,6 +4,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { isBackofficeEnabled } from "../lib/backoffice";
+import BackofficeModalBackdrop from "./backoffice/BackofficeModalBackdrop";
+import BackofficeModalCard from "./backoffice/BackofficeModalCard";
+import BackofficeModalForm from "./backoffice/BackofficeModalForm";
+import BackofficeModalHeader from "./backoffice/BackofficeModalHeader";
 
 const EXIT_MS = 520;
 
@@ -173,85 +177,23 @@ export default function BackofficeModal({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center">
-      <button
-        type="button"
-        aria-label="Fermer"
-        onClick={requestClose}
-        className={[
-          "absolute inset-0",
-          "transition-[opacity,backdrop-filter,background-color]",
-          ease,
-          dur,
-          visible ?"opacity-100 bg-black/50 backdrop-blur-sm" : "opacity-0 bg-black/0 backdrop-blur-0",
-        ].join(" ")}
-      />
+      <BackofficeModalBackdrop visible={visible} ease={ease} dur={dur} onClose={requestClose} />
 
-      <div
-        className={[
-          "relative z-10 w-[min(420px,92vw)] rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl",
-          "dark:border-neutral-800 dark:bg-neutral-900",
-          "transition-[transform,opacity] will-change-transform",
-          ease,
-          dur,
-          visible ?"opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-[0.98]",
-        ].join(" ")}
-      >
-        <h2 className="text-lg font-semibold">Accès back-office</h2>
-
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-          {backofficeEnabled
-            ?"Authentification requise (compte admin)."
-            : "Le back-office est désactivé pour cet environnement."}
-        </p>
-
-        {/* ✅ Form => Entrée valide */}
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <input
-            name="username"
-            type="text"
-            placeholder="Identifiant"
-            value={email}
-            onChange={onEmailChange}
-            autoComplete="username"
-            disabled={!backofficeEnabled}
-            ref={usernameRef}
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-          />
-
-          <input
-            name="password"
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={onPasswordChange}
-            autoComplete="current-password"
-            disabled={!backofficeEnabled}
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-          />
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={requestClose}
-              className="rounded-xl border border-neutral-200 px-4 py-2 text-sm dark:border-neutral-800"
-            >
-              Annuler
-            </button>
-
-            <button
-              type="submit"
-              disabled={status === "sending" || !backofficeEnabled}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {status === "sending" ?"Connexion..." : "Se connecter"}
-            </button>
-          </div>
-
-          {status === "error" ?(
-            <p className="text-sm text-red-700">{errorMsg}</p>
-          ) : null}
-        </form>
-      </div>
+      <BackofficeModalCard visible={visible} ease={ease} dur={dur}>
+        <BackofficeModalHeader backofficeEnabled={backofficeEnabled} />
+        <BackofficeModalForm
+          backofficeEnabled={backofficeEnabled}
+          email={email}
+          password={password}
+          status={status}
+          errorMsg={errorMsg}
+          onSubmit={onSubmit}
+          onEmailChange={onEmailChange}
+          onPasswordChange={onPasswordChange}
+          onCancel={requestClose}
+          usernameRef={usernameRef}
+        />
+      </BackofficeModalCard>
     </div>
   );
 }

@@ -17,6 +17,9 @@ Site vitrine avec page de contact.
 garancerichard-site/
 - backend/ (Django + API REST)
 - frontend/ (Next.js)
+- frontend/src/app/backoffice/ (page, hook, composants UI)
+- frontend/src/app/components/backoffice/ (BackofficeModal d\u00e9coup\u00e9)
+- frontend/src/app/components/home/ (ReferenceModal d\u00e9coup\u00e9)
 
 ## Prérequis
 - Node.js (LTS recommandé)
