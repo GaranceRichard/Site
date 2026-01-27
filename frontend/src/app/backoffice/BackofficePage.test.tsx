@@ -306,7 +306,7 @@ describe("BackofficePage", () => {
 
     render(<BackofficePage />);
 
-    expect(screen.getByText("Chargement…")).toBeInTheDocument();
+    expect(screen.getByText(/Chargement/)).toBeInTheDocument();
 
     resolveFetch!({
       ok: true,
@@ -319,7 +319,7 @@ describe("BackofficePage", () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText("Chargement…")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Chargement/)).toBeNull();
     });
   });
 
@@ -382,6 +382,38 @@ describe("BackofficePage", () => {
     });
   });
 
+  it("n'affiche pas d'ellipses quand il y a peu de pages", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        count: 30,
+        page: 1,
+        limit: 10,
+        results: [
+          {
+            id: 1,
+            name: "Alice Doe",
+            email: "alice@example.com",
+            subject: "Budget",
+            message: "Hello",
+            consent: true,
+            source: "tests",
+            created_at: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(getPageCounter()).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("…")).toBeNull();
+    expect(screen.getByRole("button", { name: "Page 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Page 3" })).toBeInTheDocument();
+  });
   it("affiche l'écran de backoffice désactivé", async () => {
     process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "false";
 
@@ -410,6 +442,75 @@ describe("BackofficePage", () => {
     expect(window.sessionStorage.getItem("access_token")).toBeNull();
   });
 
+  it("demande la reconnexion si le token disparait avant suppression", async () => {
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(getPageCounter()).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+    fireEvent.click(checkbox);
+
+    window.sessionStorage.removeItem("access_token");
+    fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Connexion requise pour acceder au backoffice.")).toBeInTheDocument();
+    });
+    expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+  });
+
+  it("restaure les elements si la suppression differee echoue", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [
+            {
+              id: 1,
+              name: "Alice Doe",
+              email: "alice@example.com",
+              subject: "Budget",
+              message: "Hello",
+              consent: true,
+              source: "tests",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: vi.fn().mockResolvedValue("Server error"),
+      });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Alice Doe")).toBeInTheDocument();
+    });
+
+    vi.useFakeTimers();
+    try {
+      const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+      fireEvent.click(checkbox);
+      fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+
+      await vi.advanceTimersByTimeAsync(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText(/Erreur :/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText("Alice Doe")).toBeInTheDocument();
+  });
   it("permet de se reconnecter depuis l'alerte d'auth", async () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
@@ -531,4 +632,144 @@ describe("BackofficePage", () => {
     },
     10_000
   );
+  it("finalise la suppression apres delai et nettoie l'undo", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [
+            {
+              id: 1,
+              name: "Alice Doe",
+              email: "alice@example.com",
+              subject: "Budget",
+              message: "Hello",
+              consent: true,
+              source: "tests",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({ success: true }),
+      });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Alice Doe")).toBeInTheDocument();
+    });
+
+    vi.useFakeTimers();
+    try {
+      const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+      fireEvent.click(checkbox);
+      fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+
+      expect(screen.getByRole("button", { name: "Annuler" })).toBeInTheDocument();
+
+      await vi.advanceTimersByTimeAsync(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Annuler" })).toBeNull();
+    });
+
+    const deleteCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find((c) =>
+      String(c[0]).includes("/api/contact/messages/admin/delete")
+    );
+    expect(deleteCall?.[0]).toContain("/api/contact/messages/admin/delete");
+  });
+
+  it("recharge quand on ferme la modale d'auth", async () => {
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: vi.fn().mockResolvedValue("Unauthorized"),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [
+            {
+              id: 2,
+              name: "Bob Smith",
+              email: "bob@example.com",
+              subject: "Support",
+              message: "Ping",
+              consent: true,
+              source: "tests",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      });
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Session expiree ou acces refuse. Reconnectez-vous.")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Se reconnecter" }));
+
+    // The 401 flow clears tokens; restore one before triggering the reload on close.
+    window.sessionStorage.setItem("access_token", "token-restored");
+    fireEvent.click(await screen.findByRole("button", { name: "Annuler" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+    });
+    expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("redirige depuis l'ecran desactive via le bouton retour", () => {
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "false";
+
+    render(<BackofficePage />);
+    fireEvent.click(screen.getByRole("button", { name: /Retour/i }));
+
+    expect(pushMock).toHaveBeenCalledWith("/");
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "true";
+  });
+
+  it("gere un sessionStorage.getItem qui echoue pendant suppression", async () => {
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Alice Doe")).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+    fireEvent.click(checkbox);
+
+    const originalGetItem = window.sessionStorage.getItem;
+    window.sessionStorage.getItem = () => {
+      throw new Error("boom");
+    };
+
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+
+      await waitFor(() => {
+        expect(screen.getByText("Connexion requise pour acceder au backoffice.")).toBeInTheDocument();
+      });
+      expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+    } finally {
+      window.sessionStorage.getItem = originalGetItem;
+    }
+  });
+
 });

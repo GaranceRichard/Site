@@ -1,399 +1,81 @@
 // frontend/src/app/backoffice/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
-import ThemeToggle from "../components/ThemeToggle";
 import { isBackofficeEnabled } from "../lib/backoffice";
-
-type Msg = {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  consent: boolean;
-  source: string;
-  created_at: string;
-};
-
-type SortField = "created_at" | "name" | "email" | "subject";
-type SortDir = "asc" | "desc";
+import { clearAuthTokens } from "./logic";
+import AuthAlert from "./components/AuthAlert";
+import DisabledView from "./components/DisabledView";
+import MessageModal from "./components/MessageModal";
+import MessagesTable from "./components/MessagesTable";
+import Sidebar from "./components/Sidebar";
+import StatusBlocks from "./components/StatusBlocks";
+import UndoToast from "./components/UndoToast";
+import { useBackofficeMessages } from "./useBackofficeMessages";
+import type { BackofficeSection } from "./types";
 
 export default function BackofficePage() {
   const router = useRouter();
   const backofficeEnabled = isBackofficeEnabled();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [openLogin, setOpenLogin] = useState(false);
-  const [section, setSection] = useState<"messages" | "stats" | "settings">("messages");
-  const [items, setItems] = useState<Msg[]>([]);
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState<string>("");
-  const [authMsg, setAuthMsg] = useState<string>("");
-  const [selected, setSelected] = useState<Msg | null>(null);
-  const [page, setPage] = useState(1);
-  const [query, setQuery] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [undoIds, setUndoIds] = useState<number[] | null>(null);
-  const [undoItems, setUndoItems] = useState<Msg[]>([]);
-  const undoTimerRef = useRef<number | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [sortField, setSortField] = useState<SortField>("created_at");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [section, setSection] = useState<BackofficeSection>("messages");
 
-  const PAGE_SIZE = 10;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const visibleItems = items;
-
-  function clearTokens() {
-    try {
-      sessionStorage.removeItem("access_token");
-      sessionStorage.removeItem("refresh_token");
-    } catch {
-      // no-op
-    }
-  }
-
-  function logoutAndGoHome() {
-    clearTokens();
-    router.push("/");
-  }
+  const {
+    openLogin,
+    setOpenLogin,
+    status,
+    errorMsg,
+    authMsg,
+    selected,
+    setSelected,
+    page,
+    setPage,
+    query,
+    selectedIds,
+    undoIds,
+    totalCount,
+    totalPages,
+    visibleItems,
+    load,
+    toggleSelected,
+    changeSort,
+    getSortArrow,
+    deleteSelected,
+    undoDelete,
+    closeLoginModal,
+    onSearchChange,
+  } = useBackofficeMessages({
+    apiBase,
+    backofficeEnabled,
+    routerPush: router.push,
+  });
 
   function goHome() {
     router.push("/");
   }
 
-  async function load(nextPage: number) {
-    setErrorMsg("");
-    setAuthMsg("");
-    setSelectedIds(new Set());
-
-    if (!apiBase) {
-      setStatus("error");
-      setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
-      return;
-    }
-
-    let token: string | null = null;
-    try {
-      token = sessionStorage.getItem("access_token");
-    } catch {
-      token = null;
-    }
-
-    if (!token) {
-      setStatus("idle");
-      setItems([]);
-      setTotalCount(0);
-      router.push("/");
-      return;
-    }
-
-    setStatus("loading");
-
-    try {
-      const params = new URLSearchParams();
-      params.set("limit", String(PAGE_SIZE));
-      params.set("page", String(nextPage));
-      params.set("sort", sortField);
-      params.set("dir", sortDir);
-      const search = query.trim();
-      if (search) params.set("q", search);
-
-      const res = await fetch(`${apiBase}/api/contact/messages/admin?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 401 || res.status === 403) {
-        setStatus("idle");
-        setItems([]);
-        clearTokens();
-        setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
-        setOpenLogin(true);
-        return;
-      }
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `Erreur API (${res.status})`);
-      }
-
-      const data = (await res.json()) as {
-        count: number;
-        page: number;
-        limit: number;
-        results: Msg[];
-      };
-      setItems(data.results);
-      setTotalCount(data.count);
-      setPage(data.page);
-      setStatus("idle");
-      setAuthMsg("");
-    } catch (e: unknown) {
-      setStatus("error");
-      setErrorMsg(e instanceof Error ?e.message : "Erreur inattendue");
-    }
-  }
-
-  useEffect(() => {
-    if (!backofficeEnabled) {
-      router.push("/");
-      return;
-    }
-    void load(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, query, sortField, sortDir]);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
-
-  function toggleSelected(id: number) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  function changeSort(field: SortField) {
-    setPage(1);
-    if (field === sortField) {
-      setSortDir((prev) => (prev === "asc" ?"desc" : "asc"));
-      return;
-    }
-    setSortField(field);
-    setSortDir("asc");
-  }
-
-  function sortBadge(field: SortField) {
-    if (field !== sortField) return null;
-    const arrow = sortDir === "asc" ?"↑" : "↓";
-    return (
-      <span className="text-xs font-semibold text-neutral-400" aria-hidden="true">
-        {arrow}
-      </span>
-    );
-  }
-
-  function clearUndoTimer() {
-    if (undoTimerRef.current) {
-      window.clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = null;
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      clearUndoTimer();
-    };
-  }, []);
-
-  async function deleteSelected() {
-    if (!apiBase) {
-      setStatus("error");
-      setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
-      return;
-    }
-
-    if (selectedIds.size === 0) return;
-
-    let token: string | null = null;
-    try {
-      token = sessionStorage.getItem("access_token");
-    } catch {
-      token = null;
-    }
-
-    if (!token) {
-      setAuthMsg("Connexion requise pour acceder au backoffice.");
-      setOpenLogin(true);
-      return;
-    }
-
-    const ids = Array.from(selectedIds);
-    const removed = items.filter((m) => selectedIds.has(m.id));
-
-    const restoreRemoved = () => {
-      if (removed.length === 0) return;
-      setItems((prev) => [...removed, ...prev]);
-      setTotalCount((prev) => prev + removed.length);
-    };
-
-    setItems((prev) => prev.filter((m) => !selectedIds.has(m.id)));
-    setTotalCount((prev) => Math.max(0, prev - ids.length));
-    setSelectedIds(new Set());
-    setUndoIds(ids);
-    setUndoItems(removed);
-
-    clearUndoTimer();
-    undoTimerRef.current = window.setTimeout(async () => {
-      setStatus("loading");
-      try {
-        const res = await fetch(`${apiBase}/api/contact/messages/admin/delete`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ids }),
-        });
-
-        if (res.status === 401 || res.status === 403) {
-          setStatus("idle");
-          clearTokens();
-          setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
-          setOpenLogin(true);
-          restoreRemoved();
-          setUndoIds(null);
-          setUndoItems([]);
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Erreur API (${res.status})`);
-        }
-
-        setStatus("idle");
-        setUndoIds(null);
-        setUndoItems([]);
-      } catch (e: unknown) {
-        setStatus("error");
-        setErrorMsg(e instanceof Error ?e.message : "Erreur inattendue");
-        restoreRemoved();
-        setUndoIds(null);
-        setUndoItems([]);
-      }
-    }, 5000);
-  }
-
-  function undoDelete() {
-    if (!undoIds || undoItems.length === 0) return;
-    clearUndoTimer();
-    setItems((prev) => [...undoItems, ...prev]);
-    setTotalCount((prev) => prev + undoItems.length);
-    setUndoIds(null);
-    setUndoItems([]);
-  }
-
-  function buildPages(current: number, total: number) {
-    if (total <= 7) {
-      return Array.from({ length: total }, (_, i) => i + 1);
-    }
-
-    const pages: Array<number | "..."> = [1];
-    const left = Math.max(2, current - 1);
-    const right = Math.min(total - 1, current + 1);
-
-    if (left > 2) pages.push("...");
-    for (let i = left; i <= right; i += 1) pages.push(i);
-    if (right < total - 1) pages.push("...");
-    pages.push(total);
-
-    return pages;
+  function logoutAndGoHome() {
+    clearAuthTokens();
+    router.push("/");
   }
 
   if (!backofficeEnabled) {
-    return (
-      <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-6 py-16">
-          <h1 className="text-2xl font-semibold">Backoffice désactivé</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-300">
-            Cette page n’est pas disponible dans cet environnement.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="w-fit rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-neutral-50
-                       dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-          >
-            Retour à l’accueil
-          </button>
-        </div>
-      </main>
-    );
+    return <DisabledView onGoHome={goHome} />;
   }
 
   return (
     <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       <div className="flex h-full">
-        <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">Admin</p>
-              <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
-            </div>
-            <ThemeToggle className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:hover:bg-neutral-900" />
-          </div>
-
-          <div className="mt-8 space-y-2">
-            <button
-              type="button"
-              onClick={() => setSection("messages")}
-              className={[
-                "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-                section === "messages"
-                  ?"bg-neutral-900 text-white"
-                  : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-                "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-              ].join(" ")}
-            >
-              Messages contact
-            </button>
-            <button
-              type="button"
-              onClick={() => setSection("stats")}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
-              disabled
-            >
-              Statistiques (bientôt)
-            </button>
-            <button
-              type="button"
-              onClick={() => setSection("settings")}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
-              disabled
-            >
-              Réglages (bientôt)
-            </button>
-          </div>
-
-          <div className="mt-auto space-y-2 pt-6">
-            <button
-              type="button"
-              onClick={goHome}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-            >
-              Retour au site
-            </button>
-            <button
-              type="button"
-              onClick={() => load(page)}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-            >
-              Rafraîchir
-            </button>
-            <button
-              type="button"
-              onClick={logoutAndGoHome}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                         dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-            >
-              Se déconnecter
-            </button>
-          </div>
-        </aside>
+        <Sidebar
+          section={section}
+          onSelectSection={setSection}
+          onGoHome={goHome}
+          onRefresh={() => load(page)}
+          onLogout={logoutAndGoHome}
+        />
 
         <section className="flex min-w-0 flex-1 flex-col px-6 py-6">
           <div className="flex items-start justify-between gap-4">
@@ -409,260 +91,42 @@ export default function BackofficePage() {
             <input
               type="search"
               value={query}
-              onChange={(e) => {
-                setQuery(e.currentTarget.value);
-                setPage(1);
-              }}
+              onChange={(e) => onSearchChange(e.currentTarget.value)}
               placeholder="Rechercher par nom, email ou sujet"
               className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
                          dark:border-neutral-800 dark:bg-neutral-950"
             />
           </div>
 
-          {status === "loading" ?(
-            <p className="mt-6 text-sm text-neutral-600 dark:text-neutral-300">Chargement…</p>
-          ) : null}
-
-          {status === "error" ?(
-            <p className="mt-6 whitespace-pre-wrap text-sm text-red-700">Erreur : {errorMsg}</p>
-          ) : null}
-
-          {authMsg ?(
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              <p>{authMsg}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpenLogin(true)}
-                  className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
-                >
-                  Se reconnecter
-                </button>
-                <button
-                  type="button"
-                  onClick={logoutAndGoHome}
-                  className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold hover:bg-amber-100"
-                >
-                  Retour accueil
-                </button>
-              </div>
-            </div>
-          ) : null}
+          <AuthAlert message={authMsg} onReconnect={() => setOpenLogin(true)} onGoHome={logoutAndGoHome} />
 
           <div className="mt-6 flex-1">
-            {items.length === 0 && status === "idle" ?(
-              <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600
-                              dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">
-                Aucun message.
-              </div>
-            ) : null}
+            <StatusBlocks status={status} errorMsg={errorMsg} itemsLength={visibleItems.length} />
 
-            {items.length > 0 ?(
-              <div className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-                <div className="grid grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 border-b border-neutral-200 pb-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:border-neutral-800">
-                  <span className="flex items-center justify-center" />
-                  <button
-                    type="button"
-                    onClick={() => changeSort("name")}
-                    aria-label="Trier par nom"
-                    className="inline-flex w-full items-center justify-center gap-2"
-                  >
-                    <span>Nom</span>
-                    {sortBadge("name")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeSort("email")}
-                    aria-label="Trier par email"
-                    className="inline-flex w-full items-center justify-center gap-2"
-                  >
-                    <span>Email</span>
-                    {sortBadge("email")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeSort("subject")}
-                    aria-label="Trier par sujet"
-                    className="inline-flex w-full items-center justify-center gap-2"
-                  >
-                    <span>Sujet</span>
-                    {sortBadge("subject")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => changeSort("created_at")}
-                    aria-label="Trier par date"
-                    className="inline-flex w-full items-center justify-center gap-2"
-                  >
-                    <span>Date</span>
-                    {sortBadge("created_at")}
-                  </button>
-                </div>
-                <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
-                  {visibleItems.map((m) => (
-                    <li key={m.id} className="py-3">
-                      <div className="grid w-full grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-center">
-                        <input
-                          type="checkbox"
-                          aria-label={`Selectionner ${m.name}`}
-                          checked={selectedIds.has(m.id)}
-                          onChange={() => toggleSelected(m.id)}
-                          className="h-4 w-4 justify-self-center accent-neutral-900 dark:accent-neutral-100"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setSelected(m)}
-                          className="contents"
-                        >
-                          <span className="truncate font-semibold">{m.name}</span>
-                          <span className="truncate text-neutral-600 dark:text-neutral-300">{m.email}</span>
-                          <span className="truncate text-neutral-600 dark:text-neutral-300">
-                            {m.subject || "—"}
-                          </span>
-                          <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                            {new Date(m.created_at).toLocaleDateString()}
-                          </span>
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  <span>
-                    Page {page} / {totalPages} — {totalCount} message(s)
-                    {selectedIds.size ?` — ${selectedIds.size} sélectionné(s)` : ""}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={deleteSelected}
-                      disabled={selectedIds.size === 0}
-                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold text-red-700 disabled:opacity-50
-                                 dark:border-neutral-800 dark:text-red-300"
-                    >
-                      Supprimer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page <= 1}
-                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
-                                 dark:border-neutral-800"
-                    >
-                      Prev
-                    </button>
-                    {buildPages(page, totalPages).map((p, idx) =>
-                      p === "..." ?(
-                        <span key={`ellipsis-${idx}`} className="px-1">
-                          …
-                        </span>
-                      ) : (
-                        <button
-                          key={p}
-                          type="button"
-                          aria-label={`Page ${p}`}
-                          onClick={() => setPage(p)}
-                          className={[
-                            "rounded-lg border border-neutral-200 px-2 py-1 text-xs font-semibold",
-                            p === page
-                              ?"bg-neutral-900 text-white"
-                              : "bg-white text-neutral-700 hover:bg-neutral-50",
-                            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-                          ].join(" ")}
-                        >
-                          {p}
-                        </button>
-                      )
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page >= totalPages}
-                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50
-                                 dark:border-neutral-800"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
+            <MessagesTable
+              items={visibleItems}
+              selectedIds={selectedIds}
+              page={page}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              onToggleSelected={toggleSelected}
+              onSelectMessage={setSelected}
+              onDeleteSelected={deleteSelected}
+              onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
+              onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onSetPage={setPage}
+              onChangeSort={changeSort}
+              getSortArrow={getSortArrow}
+            />
           </div>
         </section>
       </div>
 
-      <BackofficeModal
-        open={openLogin}
-        onClose={() => {
-          setOpenLogin(false);
-          void load(page);
-        }}
-      />
+      <BackofficeModal open={openLogin} onClose={closeLoginModal} />
 
-      {undoIds ?(
-        <div className="fixed bottom-6 right-6 z-[150] rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
-          <div className="flex items-center gap-3">
-            <span>{undoIds.length} message(s) supprimé(s).</span>
-            <button
-              type="button"
-              onClick={undoDelete}
-              className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <UndoToast undoCount={undoIds?.length ?? 0} onUndo={undoDelete} />
 
-      {selected ?(
-        <div className="fixed inset-0 z-[140] flex items-center justify-center">
-          <button
-            type="button"
-            aria-label="Fermer"
-            onClick={() => setSelected(null)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          />
-          <div
-            data-testid="message-modal"
-            className="relative z-10 w-[min(620px,92vw)] rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl dark:border-neutral-800 dark:bg-neutral-900"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">Message de contact</h3>
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  {new Date(selected.created_at).toLocaleString()}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-3 text-sm break-words">
-              <p>
-                <span className="font-semibold">Nom :</span> {selected.name}
-              </p>
-              <p>
-                <span className="font-semibold">Email :</span> {selected.email}
-              </p>
-              <p>
-                <span className="font-semibold">Sujet :</span> {selected.subject || "—"}
-              </p>
-              <div>
-                <p className="font-semibold">Message :</p>
-                <p className="mt-2 whitespace-pre-wrap break-words text-neutral-700 dark:text-neutral-200">
-                  {selected.message}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <MessageModal message={selected} onClose={() => setSelected(null)} />
     </main>
   );
 }

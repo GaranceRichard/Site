@@ -102,4 +102,48 @@ describe("ContactForm", () => {
       })
     );
   });
+  it("affiche le detail JSON quand l'API repond en erreur", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({ detail: "Invalid payload" }),
+      text: vi.fn().mockResolvedValue(""),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Invalid payload/)).toBeInTheDocument();
+    });
+  });
+
+  it("fallback sur res.text() si res.json() echoue", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: vi.fn().mockRejectedValue(new Error("bad json")),
+      text: vi.fn().mockResolvedValue("Server exploded"),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Server exploded/)).toBeInTheDocument();
+    });
+  });
+
 });
