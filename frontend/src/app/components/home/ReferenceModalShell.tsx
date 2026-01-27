@@ -32,14 +32,18 @@ export default function ReferenceModalShell({
       ].join(" ")}
     >
       <div className="pointer-events-none absolute inset-0 z-0">
-        <Image
-          src={imageSrc}
-          alt=""
-          fill
-          sizes="(min-width: 768px) 980px, 95vw"
-          className="object-cover opacity-[0.22] dark:opacity-[0.16] blur-[6px]"
-          priority={false}
-        />
+        {imageSrc ? (
+          <Image
+            src={imageSrc}
+            alt=""
+            fill
+            sizes="(min-width: 768px) 980px, 95vw"
+            className="object-cover opacity-[0.22] dark:opacity-[0.16] blur-[6px]"
+            priority={false}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 opacity-[0.35]" />
+        )}
         <div className="absolute inset-0 bg-white/18 dark:bg-black/18" />
       </div>
 
@@ -47,4 +51,3 @@ export default function ReferenceModalShell({
     </div>
   );
 }
-

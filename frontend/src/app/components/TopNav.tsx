@@ -1,7 +1,7 @@
-// frontend/src/app/components/TopNav.tsx
+﻿// frontend/src/app/components/TopNav.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,7 @@ export default function TopNav({
   const backofficeEnabled = isBackofficeEnabled();
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
+  const [hasReferences, setHasReferences] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -33,32 +34,69 @@ export default function TopNav({
 
   // ✅ “Connecté” si token présent
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  const compute = () => {
-    try {
-      return Boolean(sessionStorage.getItem("access_token"));
-    } catch {
-      return false;
+    const compute = () => {
+      try {
+        return Boolean(sessionStorage.getItem("access_token"));
+      } catch {
+        return false;
+      }
+    };
+
+    const update = () => {
+      if (cancelled) return;
+      setIsLogged(compute());
+    };
+
+    if (typeof queueMicrotask === "function") {
+      queueMicrotask(update);
+    } else {
+      window.setTimeout(update, 0);
     }
-  };
 
-  const update = () => {
-    if (cancelled) return;
-    setIsLogged(compute());
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  if (typeof queueMicrotask === "function") {
-    queueMicrotask(update);
-  } else {
-    window.setTimeout(update, 0);
-  }
+  useEffect(() => {
+    let cancelled = false;
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
+    const loadReferences = async () => {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!apiBase) {
+        setHasReferences(false);
+        return;
+      }
 
+      try {
+        const res = await fetch(`${apiBase}/api/contact/references`);
+        if (!res.ok) {
+          setHasReferences(false);
+          return;
+        }
+        const data = (await res.json()) as unknown;
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setHasReferences(true);
+        } else if (!cancelled) {
+          setHasReferences(false);
+        }
+      } catch {
+        if (!cancelled) setHasReferences(false);
+      }
+    };
+
+    void loadReferences();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const navItems = useMemo(() => {
+    if (hasReferences) return nav;
+    return nav.filter((item) => !item.href.includes("references"));
+  }, [hasReferences, nav]);
 
   const NAV_PILL =
     "inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-neutral-200 bg-white px-2.5 py-1 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
@@ -103,43 +141,34 @@ export default function TopNav({
             type="button"
             onClick={onBrandClick}
             className="flex min-w-0 items-center gap-3 text-left"
-            aria-label={
-              isLogged && backofficeEnabled ?"Aller au backoffice" : "Aller à l’accueil"
-            }
-            title={isLogged && backofficeEnabled ?"Backoffice" : "Accueil"}
+            aria-label={isLogged && backofficeEnabled ? "Aller au backoffice" : "Aller à l’accueil"}
+            title={isLogged && backofficeEnabled ? "Backoffice" : "Accueil"}
           >
             <Image
               src="/brand/logo.png"
               alt="Garance Richard"
-              width={70}
-              height={70}
+              width={48}
+              height={48}
               priority
-              className="h-22 w-24 object-contain"
+              className="h-12 w-12 object-contain"
             />
 
             <div className="min-w-0 leading-tight">
               <p className="text-sm font-semibold">Garance Richard</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Coach Lean-Agile
-              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Coach Lean-Agile</p>
             </div>
           </button>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-3 md:flex">
-            <ScrollNav items={nav} className={NAV_PILL} />
+            <ScrollNav items={navItems} className={NAV_PILL} />
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
-              <a
-                href={bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={NAV_PILL}
-              >
+              <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className={NAV_PILL}>
                 Prendre rendez-vous
               </a>
 
@@ -168,11 +197,11 @@ export default function TopNav({
           id="mobile-menu"
           className={[
             "md:hidden overflow-hidden transition-[max-height,opacity] duration-200",
-            open ?"max-h-[620px] opacity-100 pb-4" : "max-h-0 opacity-0",
+            open ? "max-h-[620px] opacity-100 pb-4" : "max-h-0 opacity-0",
           ].join(" ")}
         >
           <div className="grid gap-2 pt-2">
-            <ScrollNav items={nav} className={NAV_PILL} onNavigate={closeMenu} />
+            <ScrollNav items={navItems} className={NAV_PILL} onNavigate={closeMenu} />
 
             <a
               href={bookingUrl}

@@ -163,6 +163,14 @@ Notes :
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
 - POST /api/contact/messages/admin/delete (supprime une liste d?IDs, admin uniquement)
+- Références (admin uniquement) :
+  - GET /api/contact/references (liste publique)
+  - POST /api/contact/references/admin/upload (upload image)
+  - GET /api/contact/references/admin (liste)
+  - POST /api/contact/references/admin (création)
+  - GET /api/contact/references/admin/<id> (détail)
+  - PUT /api/contact/references/admin/<id> (mise à jour)
+  - DELETE /api/contact/references/admin/<id> (suppression)
 
 ## Tests (socle minimal)
 ### Backend (Django)

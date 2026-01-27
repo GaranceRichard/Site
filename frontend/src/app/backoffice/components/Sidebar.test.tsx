@@ -29,11 +29,13 @@ describe("Sidebar", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Messages contact" }));
+    fireEvent.click(screen.getByRole("button", { name: "Références" }));
     fireEvent.click(screen.getByRole("button", { name: "Retour au site" }));
     fireEvent.click(screen.getByRole("button", { name: "Rafraîchir" }));
     fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
 
     expect(onSelectSection).toHaveBeenCalledWith("messages");
+    expect(onSelectSection).toHaveBeenCalledWith("references");
     expect(onGoHome).toHaveBeenCalled();
     expect(onRefresh).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();

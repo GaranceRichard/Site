@@ -1,4 +1,5 @@
 from pathlib import Path
+from io import BytesIO
 import os
 import sys
 import subprocess
@@ -6,13 +7,16 @@ import subprocess
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.utils import override_settings
 
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import ContactMessage
+from .models import ContactMessage, Reference
 from django.utils import timezone
+
+from PIL import Image
 
 
 class ContactApiTests(APITestCase):
@@ -517,6 +521,152 @@ class AuthJwtTests(APITestCase):
         )
 
         self.assertEqual(delete_res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+@override_settings(
+    REST_FRAMEWORK={
+        **settings.REST_FRAMEWORK,
+        "DEFAULT_AUTHENTICATION_CLASSES": (
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+        ),
+    }
+)
+class ReferenceApiTests(APITestCase):
+    def setUp(self):
+        self.list_url = "/api/contact/references/admin"
+        self.detail_url = None
+        self.username = "ref-admin"
+        self.password = "ref-pass-123"
+
+        User = get_user_model()
+        User.objects.create_user(
+            username=self.username,
+            password=self.password,
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": self.username, "password": self.password},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+        self.token = token_res.data["access"]
+
+    def test_reference_create_and_list(self):
+        payload = {
+            "reference": "Ref A",
+            "image": "https://example.com/image.png",
+            "icon": "https://example.com/icon.png",
+            "situation": "Situation A",
+            "tasks": ["Task 1"],
+            "actions": ["Action 1"],
+            "results": ["Result 1"],
+        }
+        res = self.client.post(
+            self.list_url,
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Reference.objects.count(), 1)
+
+        list_res = self.client.get(
+            self.list_url,
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+        self.assertEqual(list_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(list_res.data), 1)
+
+    def test_reference_update_and_delete(self):
+        ref = Reference.objects.create(
+            reference="Ref B",
+            image="",
+            icon="",
+            situation="Situation B",
+            tasks=[],
+            actions=[],
+            results=[],
+        )
+        self.detail_url = f"/api/contact/references/admin/{ref.id}"
+
+        update_res = self.client.put(
+            self.detail_url,
+            {
+                "reference": "Ref B+",
+                "image": "",
+                "icon": "",
+                "situation": "Situation B+",
+                "tasks": ["Task"],
+                "actions": [],
+                "results": [],
+            },
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+        self.assertEqual(update_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(update_res.data.get("reference"), "Ref B+")
+
+        delete_res = self.client.delete(
+            self.detail_url,
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+        self.assertIn(delete_res.status_code, [status.HTTP_204_NO_CONTENT, status.HTTP_200_OK])
+        self.assertEqual(Reference.objects.count(), 0)
+
+    def test_reference_image_upload(self):
+        image = Image.new("RGB", (2000, 1200), color=(255, 0, 0))
+        buffer = BytesIO()
+        image.save(buffer, format="JPEG")
+        buffer.seek(0)
+
+        upload = SimpleUploadedFile(
+            "ref.jpg",
+            buffer.read(),
+            content_type="image/jpeg",
+        )
+
+        res = self.client.post(
+            "/api/contact/references/admin/upload",
+            {"file": upload},
+            format="multipart",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertIn("url", res.data)
+
+
+class ReferencePublicApiTests(APITestCase):
+    def test_public_reference_list(self):
+        Reference.objects.create(
+            reference="Ref A",
+            image="https://example.test/a.png",
+            icon="https://example.test/icon-a.png",
+            situation="Situation A",
+            tasks=["T1"],
+            actions=["A1"],
+            results=["R1"],
+        )
+        Reference.objects.create(
+            reference="Ref B",
+            image="https://example.test/b.png",
+            icon="",
+            situation="Situation B",
+            tasks=["T2"],
+            actions=["A2"],
+            results=["R2"],
+        )
+
+        res = self.client.get("/api/contact/references")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+    def test_reference_requires_auth(self):
+        res = self.client.get("/api/contact/references/admin")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 @override_settings(

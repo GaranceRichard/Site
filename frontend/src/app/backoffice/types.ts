@@ -11,5 +11,15 @@ export type Msg = {
 
 export type SortField = "created_at" | "name" | "email" | "subject";
 export type SortDir = "asc" | "desc";
-export type BackofficeSection = "messages" | "stats" | "settings";
+export type BackofficeSection = "messages" | "references" | "stats" | "settings";
 
+export type Reference = {
+  id: number;
+  reference: string;
+  image: string;
+  icon: string;
+  situation: string;
+  tasks: string[];
+  actions: string[];
+  results: string[];
+};

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import ThemeToggle from "../../components/ThemeToggle";
 import type { BackofficeSection } from "../types";
 
@@ -21,11 +22,21 @@ export default function Sidebar({
   return (
     <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
-            Admin
-          </p>
+        <div className="flex items-start gap-3">
+          <Image
+            src="/brand/logo.png"
+            alt=""
+            width={34}
+            height={34}
+            className="mt-0.5 h-8 w-8 object-contain"
+            priority={false}
+          />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
+              Admin
+            </p>
           <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
+        </div>
         </div>
         <ThemeToggle className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:hover:bg-neutral-900" />
       </div>
@@ -43,6 +54,19 @@ export default function Sidebar({
           ].join(" ")}
         >
           Messages contact
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectSection("references")}
+          className={[
+            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+            section === "references"
+              ? "bg-neutral-900 text-white"
+              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+          ].join(" ")}
+        >
+          Références
         </button>
         <button
           type="button"

@@ -10,6 +10,7 @@ import AuthAlert from "./components/AuthAlert";
 import DisabledView from "./components/DisabledView";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
+import ReferencesManager from "./components/ReferencesManager";
 import Sidebar from "./components/Sidebar";
 import StatusBlocks from "./components/StatusBlocks";
 import UndoToast from "./components/UndoToast";
@@ -80,45 +81,61 @@ export default function BackofficePage() {
         <section className="flex min-w-0 flex-1 flex-col px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">Messages de contact</h2>
+              <h2 className="text-lg font-semibold">
+                {section === "references" ? "Références" : "Messages de contact"}
+              </h2>
               <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-                Vue condensée des messages les plus récents.
+                {section === "references"
+                  ? "Gestion des références visibles sur le site."
+                  : "Vue condensée des messages les plus récents."}
               </p>
             </div>
           </div>
 
-          <div className="mt-6">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => onSearchChange(e.currentTarget.value)}
-              placeholder="Rechercher par nom, email ou sujet"
-              className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
-                         dark:border-neutral-800 dark:bg-neutral-950"
-            />
-          </div>
+          {section === "messages" ? (
+            <>
+              <div className="mt-6">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => onSearchChange(e.currentTarget.value)}
+                  placeholder="Rechercher par nom, email ou sujet"
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
+                             dark:border-neutral-800 dark:bg-neutral-950"
+                />
+              </div>
 
-          <AuthAlert message={authMsg} onReconnect={() => setOpenLogin(true)} onGoHome={logoutAndGoHome} />
+              <AuthAlert
+                message={authMsg}
+                onReconnect={() => setOpenLogin(true)}
+                onGoHome={logoutAndGoHome}
+              />
 
-          <div className="mt-6 flex-1">
-            <StatusBlocks status={status} errorMsg={errorMsg} itemsLength={visibleItems.length} />
+              <div className="mt-6 flex-1">
+                <StatusBlocks status={status} errorMsg={errorMsg} itemsLength={visibleItems.length} />
 
-            <MessagesTable
-              items={visibleItems}
-              selectedIds={selectedIds}
-              page={page}
-              totalPages={totalPages}
-              totalCount={totalCount}
-              onToggleSelected={toggleSelected}
-              onSelectMessage={setSelected}
-              onDeleteSelected={deleteSelected}
-              onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
-              onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
-              onSetPage={setPage}
-              onChangeSort={changeSort}
-              getSortArrow={getSortArrow}
-            />
-          </div>
+                <MessagesTable
+                  items={visibleItems}
+                  selectedIds={selectedIds}
+                  page={page}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  onToggleSelected={toggleSelected}
+                  onSelectMessage={setSelected}
+                  onDeleteSelected={deleteSelected}
+                  onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
+                  onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onSetPage={setPage}
+                  onChangeSort={changeSort}
+                  getSortArrow={getSortArrow}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {section === "references" ? (
+            <ReferencesManager apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
+          ) : null}
         </section>
       </div>
 

@@ -1,10 +1,18 @@
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import models
+from io import BytesIO
 from rest_framework import generics, permissions, status
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from uuid import uuid4
 
-from .models import ContactMessage
-from .serializers import ContactMessageSerializer
+from PIL import Image
+
+from .models import ContactMessage, Reference
+from .serializers import ContactMessageSerializer, ReferenceSerializer
 from .throttles import ContactAnonRateThrottle
 
 
@@ -98,3 +106,55 @@ class ContactMessageDeleteAdminView(APIView):
 
         deleted, _ = ContactMessage.objects.filter(id__in=ids).delete()
         return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+class ReferenceListCreateAdminView(generics.ListCreateAPIView):
+    serializer_class = ReferenceSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Reference.objects.all().order_by("-updated_at", "-created_at")
+
+
+class ReferenceDetailAdminView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ReferenceSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Reference.objects.all()
+
+
+class ReferenceListPublicView(generics.ListAPIView):
+    serializer_class = ReferenceSerializer
+    permission_classes = [permissions.AllowAny]
+    queryset = Reference.objects.all().order_by("-updated_at", "-created_at")
+
+
+class ReferenceImageUploadAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file = request.FILES.get("file")
+        if not file:
+            return Response({"detail": "Aucun fichier fourni."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not (file.content_type or "").startswith("image/"):
+            return Response({"detail": "Format de fichier invalide."}, status=status.HTTP_400_BAD_REQUEST)
+
+        max_bytes = 10 * 1024 * 1024
+        if file.size > max_bytes:
+            return Response({"detail": "Fichier trop volumineux (max 10MB)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            image = Image.open(file)
+            image = image.convert("RGB")
+            image.thumbnail((1600, 900), Image.LANCZOS)
+
+            buffer = BytesIO()
+            image.save(buffer, format="WEBP", quality=82, method=6)
+            buffer.seek(0)
+        except Exception:
+            return Response({"detail": "Impossible de traiter l'image."}, status=status.HTTP_400_BAD_REQUEST)
+
+        filename = f"references/{uuid4().hex}.webp"
+        saved_path = default_storage.save(filename, ContentFile(buffer.read()))
+        url = request.build_absolute_uri(f"{settings.MEDIA_URL}{saved_path}")
+
+        return Response({"url": url}, status=status.HTTP_201_CREATED)
