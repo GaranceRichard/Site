@@ -87,7 +87,7 @@ export default function MessagesTable({
         </button>
       </div>
 
-      <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
+      <ul className="min-h-[440px] divide-y divide-neutral-200 text-sm dark:divide-neutral-800">
         {items.map((m) => (
           <li key={m.id} className="py-3">
             <div className="grid w-full grid-cols-[36px_1.2fr_1.4fr_1.4fr_0.7fr] items-center gap-3 text-center">
@@ -172,4 +172,3 @@ export default function MessagesTable({
     </div>
   );
 }
-
