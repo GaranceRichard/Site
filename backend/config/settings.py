@@ -41,10 +41,15 @@ def _int(name: str, default: int) -> int:
 # -------------------------------------------------
 # Sécurité de base
 # -------------------------------------------------
+ALLOW_INSECURE_SECRET_KEY = _bool("DJANGO_ALLOW_INSECURE_SECRET_KEY", default=False)
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "").strip()
 if not SECRET_KEY:
-    if IS_PROD:
-        raise RuntimeError("DJANGO_SECRET_KEY manquant en production.")
+    if IS_PROD or not (IS_TEST or ALLOW_INSECURE_SECRET_KEY):
+        raise RuntimeError(
+            "DJANGO_SECRET_KEY manquant. En dev uniquement, "
+            "vous pouvez deroger avec DJANGO_ALLOW_INSECURE_SECRET_KEY=True."
+        )
     SECRET_KEY = "dev-insecure-secret-key"
 
 DEBUG = _bool("DJANGO_DEBUG", default=not IS_PROD)
@@ -61,8 +66,21 @@ if not ALLOWED_HOSTS:
         raise RuntimeError("DJANGO_ALLOWED_HOSTS requis en production.")
     ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
+DEV_LOCAL_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 CORS_ALLOWED_ORIGINS = _csv("DJANGO_CORS_ALLOWED_ORIGINS")
 CSRF_TRUSTED_ORIGINS = _csv("DJANGO_CSRF_TRUSTED_ORIGINS")
+
+if not IS_PROD:
+    if not CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS = DEV_LOCAL_ORIGINS.copy()
+    if not CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS = DEV_LOCAL_ORIGINS.copy()
 
 
 def _validate_origins(label: str, origins: list[str], require_https: bool) -> None:
@@ -79,8 +97,28 @@ def _validate_origins(label: str, origins: list[str], require_https: bool) -> No
             raise RuntimeError(f"{label} doit être en HTTPS en production: {o}")
 
 
+def _validate_dev_local_origins(label: str, origins: list[str]) -> None:
+    """
+    En developpement, on restreint par defaut aux origines locales.
+    Un override explicite est possible via DJANGO_ALLOW_DEV_NONLOCAL_ORIGINS.
+    """
+    if IS_PROD or _bool("DJANGO_ALLOW_DEV_NONLOCAL_ORIGINS", default=False):
+        return
+
+    local_hosts = {"localhost", "127.0.0.1", "::1"}
+    for o in origins:
+        host = urlparse(o).hostname or ""
+        if host not in local_hosts:
+            raise RuntimeError(
+                f"{label} contient une origine non locale en dev: {o}. "
+                "Utiliser DJANGO_ALLOW_DEV_NONLOCAL_ORIGINS=True pour deroger."
+            )
+
+
 _validate_origins("DJANGO_CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS, require_https=IS_PROD)
 _validate_origins("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS, require_https=IS_PROD)
+_validate_dev_local_origins("DJANGO_CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS)
+_validate_dev_local_origins("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)
 
 CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOW_CREDENTIALS = False
@@ -217,10 +255,22 @@ if IS_TEST:
     CACHES = _locmem_cache()
 else:
     REDIS_URL = os.getenv("REDIS_URL", "").strip()
-    if IS_PROD and REDIS_URL:
+    ALLOW_LOC_MEM_CACHE_IN_PROD = _bool("DJANGO_ALLOW_LOC_MEM_CACHE_IN_PROD", default=False)
+
+    if IS_PROD and not REDIS_URL and not ALLOW_LOC_MEM_CACHE_IN_PROD:
+        raise RuntimeError(
+            "REDIS_URL requis en production pour un throttling global coherent. "
+            "Sinon, deroger explicitement via DJANGO_ALLOW_LOC_MEM_CACHE_IN_PROD=True."
+        )
+
+    if REDIS_URL:
         try:
             import django_redis  # noqa: F401
         except ImportError:
+            if IS_PROD and not ALLOW_LOC_MEM_CACHE_IN_PROD:
+                raise RuntimeError(
+                    "django-redis requis quand REDIS_URL est defini en production."
+                )
             logger.warning("django-redis non installé, LocMemCache en prod (non recommandé)")
             CACHES = _locmem_cache()
         else:
@@ -277,10 +327,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # -------------------------------------------------
 # DRF : throttling + auth
 # -------------------------------------------------
+GLOBAL_ANON_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_ANON_THROTTLE_RATE", "120/min")
+GLOBAL_USER_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_USER_THROTTLE_RATE", "600/min")
+
 CONTACT_THROTTLE_RATE = os.getenv("DJANGO_CONTACT_THROTTLE_RATE", "10/min")
 HEALTH_THROTTLE_RATE = os.getenv("DJANGO_HEALTH_THROTTLE_RATE", "60/min")
-ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "1000/hour")
-USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "5000/hour")
+ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "600/hour")
+USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "2400/hour")
 
 # JWT : off par défaut, on l’active quand il y a un vrai besoin
 ENABLE_JWT = _bool("DJANGO_ENABLE_JWT", default=False)
@@ -296,11 +349,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": auth_classes,
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_THROTTLE_CLASSES": (
+        "config.throttling.GlobalAnonRateThrottle",
+        "config.throttling.GlobalUserRateThrottle",
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
+        "global_anon": GLOBAL_ANON_THROTTLE_RATE,
+        "global_user": GLOBAL_USER_THROTTLE_RATE,
         "anon": ANON_THROTTLE_RATE,
         "user": USER_THROTTLE_RATE,
         "contact": CONTACT_THROTTLE_RATE,
