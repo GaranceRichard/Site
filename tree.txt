@@ -11783,22 +11783,26 @@ C:.
 |   |           views.cpython-312.pyc
 |   |           __init__.cpython-312.pyc
 |   |           
-|   \---htmlcov
-|           .gitignore
-|           class_index.html
-|           coverage_html_cb_497bf287.js
-|           favicon_32_cb_58284776.png
-|           function_index.html
-|           index.html
-|           keybd_closed_cb_ce680311.png
-|           status.json
-|           style_cb_718ce007.css
-|           z_1ea838694151cac8_settings_py.html
-|           z_1ea838694151cac8_urls_py.html
-|           z_1ea838694151cac8_views_py.html
-|           z_f983827ace0bff5a_models_py.html
-|           z_f983827ace0bff5a_views_py.html
-|           
+|   +---htmlcov
+|   |       .gitignore
+|   |       class_index.html
+|   |       coverage_html_cb_497bf287.js
+|   |       favicon_32_cb_58284776.png
+|   |       function_index.html
+|   |       index.html
+|   |       keybd_closed_cb_ce680311.png
+|   |       status.json
+|   |       style_cb_718ce007.css
+|   |       z_1ea838694151cac8_settings_py.html
+|   |       z_1ea838694151cac8_urls_py.html
+|   |       z_1ea838694151cac8_views_py.html
+|   |       z_f983827ace0bff5a_models_py.html
+|   |       z_f983827ace0bff5a_views_py.html
+|   |       
+|   \---templates
+|       \---admin
+|               base_site.html
+|               
 +---docs
 |       critical-paths.md
 |       Definition-of-Done.md
@@ -11892,7 +11896,7 @@ C:.
 |   |   |   |   |   
 |   |   |   |   +---images
 |   |   |   |   |   +---1NQlahJlkkTJ9U1tDDQk7GY12iqzWDkz5-Ky08RoK2c
-|   |   |   |   |   |       14400.1769537136800.iYW0u1TkZvBZSJJoqINu1Zrsad-q4p5x1kR4un0fpzw.Vy8iNDI1NS0xOWJjOGJhOTgwMSI.webp
+|   |   |   |   |   |       14400.1769556029803.iYW0u1TkZvBZSJJoqINu1Zrsad-q4p5x1kR4un0fpzw.Vy8iNDI1NS0xOWJjOGJhOTgwMSI.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---1TIWYXQO2JSpTiAHqq_cizLyMJZEaaM6Pz3IhFEAe-Y
 |   |   |   |   |   |       14400.1769551688639.uugM059we-7SxV_sap9uT1aNzQQfwYCczVSkn6X5SbU.Vy8iYjE5LTE5YmM4Y2Y0MWJiIg.webp
@@ -11907,22 +11911,22 @@ C:.
 |   |   |   |   |   |       14400.1769554613464.g-UxXPW7728srHVPIaNyjNBlitJYLc52lJgckuOv2KE.Vy8iM2U1MTktMTliY2U5ZDMyYmUi.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---BckthfCxCkblfcs45wgC8BR0QMqoOUFNwRTK4fAdMhU
-|   |   |   |   |   |       14400.1769537136775.x11WeN8hhCHQvC-4LQpAv-1LNSDuQ3_xoofqZKdBlwk.Vy8iMzgyNzAtMTliYzhiOTcxYWUi.webp
+|   |   |   |   |   |       14400.1769556029756.x11WeN8hhCHQvC-4LQpAv-1LNSDuQ3_xoofqZKdBlwk.Vy8iMzgyNzAtMTliYzhiOTcxYWUi.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---C7t2DuyEUj_kKenlPVmjR6_1NDFQVVW7_5eHxbSNaM8
-|   |   |   |   |   |       14400.1769537136781.uugM059we-7SxV_sap9uT1aNzQQfwYCczVSkn6X5SbU.Vy8iYjE5LTE5YmM4Y2Y0MWJiIg.webp
+|   |   |   |   |   |       14400.1769556029797.uugM059we-7SxV_sap9uT1aNzQQfwYCczVSkn6X5SbU.Vy8iYjE5LTE5YmM4Y2Y0MWJiIg.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---dP3UelGunta27Y8Il50I8KZD-9roUumEdFtz3SpxkJM
-|   |   |   |   |   |       14400.1769537136825.GATYi_Qm1DpF05HyRFtOwG41Meb0d3G7iwm2Sadff48.Vy8iMWI4Yy0xOWJjOGJhYzEyOCI.webp
+|   |   |   |   |   |       14400.1769556029809.GATYi_Qm1DpF05HyRFtOwG41Meb0d3G7iwm2Sadff48.Vy8iMWI4Yy0xOWJjOGJhYzEyOCI.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---EmJK51P_-cBUxubYCDumW50Wm_7G-hkgBGADelPblls
 |   |   |   |   |   |       14400.1769551688567.iYW0u1TkZvBZSJJoqINu1Zrsad-q4p5x1kR4un0fpzw.Vy8iNDI1NS0xOWJjOGJhOTgwMSI.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---eP6JoiQUKeMkY5sRJ3WHmcYxRcs0jaO-3-pF_IJ186E
-|   |   |   |   |   |       14400.1769537136826.ZMghf10jP3m52kk7Cehtqb5ZN-HfA2REpHGWNpgRI6Q.Vy8iZjNlNC0xOWJjOGJiMWZkNyI.webp
+|   |   |   |   |   |       14400.1769556029835.ZMghf10jP3m52kk7Cehtqb5ZN-HfA2REpHGWNpgRI6Q.Vy8iZjNlNC0xOWJjOGJiMWZkNyI.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---ixtFmcem5HLl9b2CFVz5HaThPq9VIsmw0iv0dapEF3Y
-|   |   |   |   |   |       14400.1769537136901.VuXdnP0XB16tMu5eIGdEECXkWZOC_36rYfj4PDqSEqU.Vy8iMTgxYzctMTliYzhiYjVlOTQi.webp
+|   |   |   |   |   |       14400.1769556029838.VuXdnP0XB16tMu5eIGdEECXkWZOC_36rYfj4PDqSEqU.Vy8iMTgxYzctMTliYzhiYjVlOTQi.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---lLzgxYX1kvp0rYKgVKytjxoM_abwBJcOGAUwDqUw92Q
 |   |   |   |   |   |       14400.1769551688557.zKBrNyUChLnNMgCgPh8LiiOczS0u7_F3yVyJ3EhuMm8.Vy8iMzgyNzAtMTliYzhiOTcxYWUi.webp
@@ -11934,7 +11938,7 @@ C:.
 |   |   |   |   |   |       14400.1769551688602.ZMghf10jP3m52kk7Cehtqb5ZN-HfA2REpHGWNpgRI6Q.Vy8iZjNlNC0xOWJjOGJiMWZkNyI.webp
 |   |   |   |   |   |       
 |   |   |   |   |   +---r1_f6u1v2eb7T0OcJjM1LG7yeY2MK79Gy9dVz5NsPYQ
-|   |   |   |   |   |       14400.1769537136780.QFKEIeLNRf729lnyJTm21qflpoF8OjS2B-WrM6yI8tc.Vy8iMjg1MDItMTliYzhjMTJlZWIi.webp
+|   |   |   |   |   |       14400.1769556029768.QFKEIeLNRf729lnyJTm21qflpoF8OjS2B-WrM6yI8tc.Vy8iMjg1MDItMTliYzhjMTJlZWIi.webp
 |   |   |   |   |   |       
 |   |   |   |   |   \---rjAc06Maz03n0njLpR-FYLGfKABc7HGqMZIZ97d0_2Q
 |   |   |   |   |           14400.1769551688327.p1VtIwhWfznmvfBUfGD5l5AFb6bnepvsDLszOU2TYHI.Vy8iM2U1MTktMTliY2U5ZDMyYmUi.webp
@@ -17301,6 +17305,192 @@ C:.
 |   |   |   |               00005428.meta
 |   |   |   |               00005429.meta
 |   |   |   |               00005430.meta
+|   |   |   |               00005431.sst
+|   |   |   |               00005432.sst
+|   |   |   |               00005433.sst
+|   |   |   |               00005434.meta
+|   |   |   |               00005435.meta
+|   |   |   |               00005436.meta
+|   |   |   |               00005437.sst
+|   |   |   |               00005438.sst
+|   |   |   |               00005439.sst
+|   |   |   |               00005440.meta
+|   |   |   |               00005441.meta
+|   |   |   |               00005442.meta
+|   |   |   |               00005443.sst
+|   |   |   |               00005444.sst
+|   |   |   |               00005445.sst
+|   |   |   |               00005446.meta
+|   |   |   |               00005447.meta
+|   |   |   |               00005448.meta
+|   |   |   |               00005449.sst
+|   |   |   |               00005450.sst
+|   |   |   |               00005451.sst
+|   |   |   |               00005452.meta
+|   |   |   |               00005453.meta
+|   |   |   |               00005454.meta
+|   |   |   |               00005455.sst
+|   |   |   |               00005456.sst
+|   |   |   |               00005457.sst
+|   |   |   |               00005458.meta
+|   |   |   |               00005459.meta
+|   |   |   |               00005460.meta
+|   |   |   |               00005461.sst
+|   |   |   |               00005462.sst
+|   |   |   |               00005463.sst
+|   |   |   |               00005464.meta
+|   |   |   |               00005465.meta
+|   |   |   |               00005466.meta
+|   |   |   |               00005467.sst
+|   |   |   |               00005468.sst
+|   |   |   |               00005469.sst
+|   |   |   |               00005470.meta
+|   |   |   |               00005471.meta
+|   |   |   |               00005472.meta
+|   |   |   |               00005473.sst
+|   |   |   |               00005474.sst
+|   |   |   |               00005475.sst
+|   |   |   |               00005476.meta
+|   |   |   |               00005477.meta
+|   |   |   |               00005478.meta
+|   |   |   |               00005479.sst
+|   |   |   |               00005480.sst
+|   |   |   |               00005481.sst
+|   |   |   |               00005482.meta
+|   |   |   |               00005483.meta
+|   |   |   |               00005484.meta
+|   |   |   |               00005485.sst
+|   |   |   |               00005486.sst
+|   |   |   |               00005487.sst
+|   |   |   |               00005488.meta
+|   |   |   |               00005489.meta
+|   |   |   |               00005490.meta
+|   |   |   |               00005491.sst
+|   |   |   |               00005492.sst
+|   |   |   |               00005493.sst
+|   |   |   |               00005494.meta
+|   |   |   |               00005495.meta
+|   |   |   |               00005496.meta
+|   |   |   |               00005497.sst
+|   |   |   |               00005498.sst
+|   |   |   |               00005499.sst
+|   |   |   |               00005500.meta
+|   |   |   |               00005501.meta
+|   |   |   |               00005502.meta
+|   |   |   |               00005503.sst
+|   |   |   |               00005504.sst
+|   |   |   |               00005505.sst
+|   |   |   |               00005506.meta
+|   |   |   |               00005507.meta
+|   |   |   |               00005508.meta
+|   |   |   |               00005509.sst
+|   |   |   |               00005510.sst
+|   |   |   |               00005511.sst
+|   |   |   |               00005512.meta
+|   |   |   |               00005513.meta
+|   |   |   |               00005514.meta
+|   |   |   |               00005515.sst
+|   |   |   |               00005516.sst
+|   |   |   |               00005517.sst
+|   |   |   |               00005518.meta
+|   |   |   |               00005519.meta
+|   |   |   |               00005520.meta
+|   |   |   |               00005521.sst
+|   |   |   |               00005522.sst
+|   |   |   |               00005523.sst
+|   |   |   |               00005524.meta
+|   |   |   |               00005525.meta
+|   |   |   |               00005526.meta
+|   |   |   |               00005527.sst
+|   |   |   |               00005528.sst
+|   |   |   |               00005529.sst
+|   |   |   |               00005530.meta
+|   |   |   |               00005531.meta
+|   |   |   |               00005532.meta
+|   |   |   |               00005533.sst
+|   |   |   |               00005534.sst
+|   |   |   |               00005535.sst
+|   |   |   |               00005536.meta
+|   |   |   |               00005537.meta
+|   |   |   |               00005538.meta
+|   |   |   |               00005539.sst
+|   |   |   |               00005540.sst
+|   |   |   |               00005541.sst
+|   |   |   |               00005542.meta
+|   |   |   |               00005543.meta
+|   |   |   |               00005544.meta
+|   |   |   |               00005545.sst
+|   |   |   |               00005546.sst
+|   |   |   |               00005547.sst
+|   |   |   |               00005548.meta
+|   |   |   |               00005549.meta
+|   |   |   |               00005550.meta
+|   |   |   |               00005551.sst
+|   |   |   |               00005552.sst
+|   |   |   |               00005553.sst
+|   |   |   |               00005554.meta
+|   |   |   |               00005555.meta
+|   |   |   |               00005556.meta
+|   |   |   |               00005557.sst
+|   |   |   |               00005558.sst
+|   |   |   |               00005559.sst
+|   |   |   |               00005560.meta
+|   |   |   |               00005561.meta
+|   |   |   |               00005562.meta
+|   |   |   |               00005563.sst
+|   |   |   |               00005564.sst
+|   |   |   |               00005565.sst
+|   |   |   |               00005566.meta
+|   |   |   |               00005567.meta
+|   |   |   |               00005568.meta
+|   |   |   |               00005569.sst
+|   |   |   |               00005570.sst
+|   |   |   |               00005571.sst
+|   |   |   |               00005572.meta
+|   |   |   |               00005573.meta
+|   |   |   |               00005574.meta
+|   |   |   |               00005575.sst
+|   |   |   |               00005576.sst
+|   |   |   |               00005577.sst
+|   |   |   |               00005578.meta
+|   |   |   |               00005579.meta
+|   |   |   |               00005580.meta
+|   |   |   |               00005581.sst
+|   |   |   |               00005582.sst
+|   |   |   |               00005583.sst
+|   |   |   |               00005584.meta
+|   |   |   |               00005585.meta
+|   |   |   |               00005586.meta
+|   |   |   |               00005587.sst
+|   |   |   |               00005588.sst
+|   |   |   |               00005589.sst
+|   |   |   |               00005590.meta
+|   |   |   |               00005591.meta
+|   |   |   |               00005592.meta
+|   |   |   |               00005593.sst
+|   |   |   |               00005594.sst
+|   |   |   |               00005595.sst
+|   |   |   |               00005596.meta
+|   |   |   |               00005597.meta
+|   |   |   |               00005598.meta
+|   |   |   |               00005599.sst
+|   |   |   |               00005600.sst
+|   |   |   |               00005601.sst
+|   |   |   |               00005602.meta
+|   |   |   |               00005603.meta
+|   |   |   |               00005604.meta
+|   |   |   |               00005605.sst
+|   |   |   |               00005606.sst
+|   |   |   |               00005607.sst
+|   |   |   |               00005608.meta
+|   |   |   |               00005609.meta
+|   |   |   |               00005610.meta
+|   |   |   |               00005611.sst
+|   |   |   |               00005612.sst
+|   |   |   |               00005613.sst
+|   |   |   |               00005614.meta
+|   |   |   |               00005615.meta
+|   |   |   |               00005616.meta
 |   |   |   |               CURRENT
 |   |   |   |               LOG
 |   |   |   |               
@@ -17896,28 +18086,28 @@ C:.
 |   |   |           500.html
 |   |   |           
 |   |   +---static
-|   |   |   +---chunks
-|   |   |   |       148383fe21583f53.js
-|   |   |   |       14fcb28a2ff0bfea.js
-|   |   |   |       249261e921aeebba.js
-|   |   |   |       2f1ab7f66933d77e.css
-|   |   |   |       46c6656e088f8ae4.js
-|   |   |   |       55b6594121be49c9.js
-|   |   |   |       5777bc08048e2edc.js
-|   |   |   |       70bebd794d0dc6e9.js
-|   |   |   |       7340adf74ff47ec0.js
-|   |   |   |       a6dad97d9634a72d.js
-|   |   |   |       a6dad97d9634a72d.js.map
-|   |   |   |       b59dbbc902069349.js
-|   |   |   |       e4f73816b6086d5c.js
-|   |   |   |       fd05e2ccb40a4e2b.js
-|   |   |   |       ff1a16fafef87110.js
-|   |   |   |       turbopack-3527178e944ecf89.js
+|   |   |   +---6ahQTt88DTOEIm4jj_Npi
+|   |   |   |       _buildManifest.js
+|   |   |   |       _clientMiddlewareManifest.json
+|   |   |   |       _ssgManifest.js
 |   |   |   |       
-|   |   |   \---IcOECS9mdL6CPPozfFp_e
-|   |   |           _buildManifest.js
-|   |   |           _clientMiddlewareManifest.json
-|   |   |           _ssgManifest.js
+|   |   |   \---chunks
+|   |   |           148383fe21583f53.js
+|   |   |           14fcb28a2ff0bfea.js
+|   |   |           249261e921aeebba.js
+|   |   |           46c6656e088f8ae4.js
+|   |   |           5777bc08048e2edc.js
+|   |   |           70bebd794d0dc6e9.js
+|   |   |           7340adf74ff47ec0.js
+|   |   |           865f783b530bc6f3.css
+|   |   |           8e2c5d9b36ddd242.js
+|   |   |           a6dad97d9634a72d.js
+|   |   |           a6dad97d9634a72d.js.map
+|   |   |           b59dbbc902069349.js
+|   |   |           e4f73816b6086d5c.js
+|   |   |           fd05e2ccb40a4e2b.js
+|   |   |           ff1a16fafef87110.js
+|   |   |           turbopack-3527178e944ecf89.js
 |   |   |           
 |   |   \---types
 |   |           routes.d.ts
@@ -25429,6 +25619,22 @@ C:.
 |   |   |               SetLike.mjs
 |   |   |               SetLike.mjs.map
 |   |   |               
+|   |   +---dotenv
+|   |   |   |   CHANGELOG.md
+|   |   |   |   config.d.ts
+|   |   |   |   config.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README-es.md
+|   |   |   |   README.md
+|   |   |   |   SECURITY.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           cli-options.js
+|   |   |           env-options.js
+|   |   |           main.d.ts
+|   |   |           main.js
+|   |   |           
 |   |   +---dunder-proto
 |   |   |   |   .eslintrc
 |   |   |   |   .nycrc

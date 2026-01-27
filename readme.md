@@ -206,6 +206,12 @@ $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
 ```
+ - Alternative locale (sans retaper) :
+   Créer `frontend/.env.e2e.local` (non versionné) :
+ ```ini
+ E2E_ADMIN_USER=votre_admin
+ E2E_ADMIN_PASS=votre_mdp
+ ```
  - Couverture E2E (Chromium uniquement) :
 ```powershell
 $env:E2E_COVERAGE="true"
