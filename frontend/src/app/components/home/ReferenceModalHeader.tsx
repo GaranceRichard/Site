@@ -9,7 +9,7 @@ type ReferenceModalHeaderProps = {
   badgeSrc?: string | null;
   badgeAlt: string;
   onClose: () => void;
-  closeButtonRef: React.RefObject<HTMLButtonElement>;
+  closeButtonRef: React.RefObject<HTMLButtonElement | null>;
 };
 
 export default function ReferenceModalHeader({
@@ -68,4 +68,3 @@ export default function ReferenceModalHeader({
     </div>
   );
 }
-

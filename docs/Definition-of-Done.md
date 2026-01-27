@@ -70,6 +70,7 @@ Sont toleres sans tests uniquement:
 - Les impacts et risques sont identifies dans la PR.
 - La PR explique clairement: quoi, pourquoi, comment tester.
 - Le README est mis a jour si une commande, une variable d'environnement ou un flux change.
+- Le fichier `tree.txt` est mis a jour si la structure du repo change.
 
 ---
 

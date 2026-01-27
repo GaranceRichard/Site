@@ -13,7 +13,7 @@ type BackofficeModalFormProps = {
   onEmailChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onPasswordChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onCancel: () => void;
-  usernameRef: RefObject<HTMLInputElement>;
+  usernameRef: RefObject<HTMLInputElement | null>;
 };
 
 export default function BackofficeModalForm({
@@ -75,4 +75,3 @@ export default function BackofficeModalForm({
     </form>
   );
 }
-
