@@ -2,14 +2,58 @@ import { expect, test } from "./fixtures";
 
 const adminUser = process.env.E2E_ADMIN_USER;
 const adminPass = process.env.E2E_ADMIN_PASS;
+const debugE2E = process.env.E2E_DEBUG === "true";
+
+function attachNetworkDebug(page: import("@playwright/test").Page) {
+  if (!debugE2E) return;
+
+  page.on("console", (msg) => {
+    console.log("[E2E][console]", msg.type(), msg.text());
+  });
+
+  page.on("pageerror", (err) => {
+    console.log("[E2E][pageerror]", err.message);
+  });
+
+  page.on("requestfailed", (req) => {
+    console.log("[E2E][requestfailed]", req.method(), req.url(), req.failure()?.errorText);
+  });
+
+  page.on("response", async (res) => {
+    const url = res.url();
+    if (!url.includes("/api/auth/token/") && !url.includes("/api/contact/messages/admin")) return;
+
+    let bodyPreview = "";
+    try {
+      const text = await res.text();
+      bodyPreview = text.slice(0, 200);
+    } catch {
+      bodyPreview = "<unreadable>";
+    }
+
+    console.log("[E2E][response]", res.status(), url, bodyPreview);
+  });
+}
+
+async function debugSessionStorage(page: import("@playwright/test").Page, label: string) {
+  if (!debugE2E) return;
+  const snapshot = await page.evaluate(() => ({
+    access: sessionStorage.getItem("access_token"),
+    refresh: sessionStorage.getItem("refresh_token"),
+    url: window.location.href,
+  }));
+  console.log("[E2E][session]", label, snapshot);
+}
 
 test("backoffice login fails with invalid credentials", async ({ page }) => {
+  attachNetworkDebug(page);
   await page.goto("/");
 
   await page.getByRole("button", { name: "Accès back-office" }).click();
   await page.getByPlaceholder("Identifiant").fill("invalid-user");
   await page.getByPlaceholder("Mot de passe").fill("wrong-pass");
   await page.getByRole("button", { name: "Se connecter" }).click();
+  await debugSessionStorage(page, "after-invalid-login");
 
   await expect(page.getByText("Identifiant ou mot de passe invalide.")).toBeVisible();
 });
@@ -17,12 +61,14 @@ test("backoffice login fails with invalid credentials", async ({ page }) => {
 test("backoffice login succeeds and reaches admin page", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
+  attachNetworkDebug(page);
   await page.goto("/");
 
   await page.getByRole("button", { name: "Accès back-office" }).click();
   await page.getByPlaceholder("Identifiant").fill(adminUser as string);
   await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
   await page.getByRole("button", { name: "Se connecter" }).click();
+  await debugSessionStorage(page, "after-valid-login");
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
 });

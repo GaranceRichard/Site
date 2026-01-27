@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReferenceItem } from "../../content/references";
 
 const EXIT_MS = 520;
@@ -20,20 +20,63 @@ export default function ReferenceModal({
   const closingRef = useRef(false);
   const rafRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const forcedCloseRef = useRef<number | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  const beginClose = useCallback(
+    (notifyParent: boolean) => {
+      if (closingRef.current) return;
+      closingRef.current = true;
+
+      setOpen(false);
+
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = window.setTimeout(() => {
+        setMountedItem(null);
+        closingRef.current = false;
+        const previousFocus = previousFocusRef.current;
+        if (previousFocus && document.contains(previousFocus)) {
+          previousFocus.focus();
+        }
+        if (notifyParent) onClose();
+      }, EXIT_MS);
+    },
+    [onClose],
+  );
+
+  const requestClose = useCallback(() => beginClose(true), [beginClose]);
 
   useEffect(() => {
-    if (!item) return;
+    if (!item) {
+      // Parent forced close: animate out but do not call onClose again.
+      if (mountedItem && !closingRef.current) {
+        if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
+        forcedCloseRef.current = window.setTimeout(() => beginClose(false), 0);
+      }
+      return;
+    }
 
+    const activeEl = document.activeElement;
+    previousFocusRef.current = activeEl instanceof HTMLElement ? activeEl : null;
+
+    // This local state is intentionally driven by a prop change to enable exit animations.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMountedItem(item);
     closingRef.current = false;
 
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => setOpen(true));
+    rafRef.current = requestAnimationFrame(() => {
+      setOpen(true);
+      // Focus a safe control once visible.
+      window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    });
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
     };
-  }, [item]);
+  }, [item, mountedItem, beginClose]);
 
   useEffect(() => {
     if (!mountedItem) return;
@@ -50,29 +93,15 @@ export default function ReferenceModal({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mountedItem]);
+  }, [mountedItem, requestClose]);
 
   useEffect(() => {
     return () => {
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
     };
   }, []);
-
-  function requestClose() {
-    if (closingRef.current) return;
-    closingRef.current = true;
-
-    setOpen(false);
-
-    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(() => {
-      setMountedItem(null);
-      closingRef.current = false;
-      onClose();
-    }, EXIT_MS);
-  }
 
   if (!mountedItem) return null;
 
@@ -162,6 +191,7 @@ export default function ReferenceModal({
 
             <button
               type="button"
+              ref={closeButtonRef}
               onClick={requestClose}
               className="rounded-xl border border-neutral-200/70 bg-white/60 px-3 py-2 text-sm font-semibold text-neutral-900 backdrop-blur-sm hover:bg-white/80
                          focus:outline-none focus:ring-2 focus:ring-neutral-400/40

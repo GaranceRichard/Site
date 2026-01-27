@@ -122,6 +122,7 @@ _validate_dev_local_origins("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)
 
 CORS_URLS_REGEX = r"^/api/.*$"
 CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_ALL_ORIGINS = _bool("DJANGO_CORS_ALLOW_ALL_ORIGINS", default=False)
 CORS_ALLOW_HEADERS = [
     "accept",
     "authorization",
@@ -129,6 +130,10 @@ CORS_ALLOW_HEADERS = [
     "origin",
     "x-requested-with",
 ]
+
+# In E2E mode, allow all origins to avoid CORS-related flakiness.
+if _bool("DJANGO_E2E_MODE", default=False):
+    CORS_ALLOW_ALL_ORIGINS = True
 
 
 # -------------------------------------------------
@@ -334,6 +339,15 @@ CONTACT_THROTTLE_RATE = os.getenv("DJANGO_CONTACT_THROTTLE_RATE", "10/min")
 HEALTH_THROTTLE_RATE = os.getenv("DJANGO_HEALTH_THROTTLE_RATE", "60/min")
 ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "600/hour")
 USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "2400/hour")
+
+# E2E mode: relax throttling to avoid flaky end-to-end suites.
+if _bool("DJANGO_E2E_MODE", default=False):
+    GLOBAL_ANON_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_ANON_THROTTLE_RATE", "10000/min")
+    GLOBAL_USER_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_USER_THROTTLE_RATE", "20000/min")
+    CONTACT_THROTTLE_RATE = os.getenv("DJANGO_CONTACT_THROTTLE_RATE", "600/min")
+    HEALTH_THROTTLE_RATE = os.getenv("DJANGO_HEALTH_THROTTLE_RATE", "600/min")
+    ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "10000/hour")
+    USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "20000/hour")
 
 # JWT : off par défaut, on l’active quand il y a un vrai besoin
 ENABLE_JWT = _bool("DJANGO_ENABLE_JWT", default=False)

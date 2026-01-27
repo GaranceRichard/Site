@@ -98,8 +98,11 @@ Créer un fichier backend/.env (non versionné) avec :
 DJANGO_SECRET_KEY=dev-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000
+DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DJANGO_ENABLE_JWT=true
+# Mode E2E: relaxe le throttling pour eviter les faux positifs.
+DJANGO_E2E_MODE=false
 # Throttling global (optionnel en dev, recommande en prod)
 DJANGO_GLOBAL_ANON_THROTTLE_RATE=120/min
 DJANGO_GLOBAL_USER_THROTTLE_RATE=600/min
@@ -188,6 +191,11 @@ Depuis `frontend/` :
 - Installer les navigateurs (une seule fois) :
 ```powershell
 npx playwright install
+```
+- Pre-requis backend (dans `backend/.env`) :
+```ini
+DJANGO_ENABLE_JWT=true
+DJANGO_E2E_MODE=true
 ```
 - Lancer les tests E2E :
 ```powershell
