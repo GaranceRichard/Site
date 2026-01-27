@@ -6,6 +6,9 @@ import FlashToast from "./components/FlashToast";
 export const metadata: Metadata = {
   title: "Mon site",
   description: "Coach Lean/Agile",
+  icons: {
+    icon: "/brand/logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -11764,6 +11764,14 @@ C:.
 |   |   |           0001_initial.cpython-312.pyc
 |   |   |           __init__.cpython-312.pyc
 |   |   |           
+|   |   +---static
+|   |   |   \---brand
+|   |   |           logo.png
+|   |   |           
+|   |   +---templates
+|   |   |   \---admin
+|   |   |           base_site.html
+|   |   |           
 |   |   \---__pycache__
 |   |           admin.cpython-312.pyc
 |   |           apps.cpython-312.pyc
@@ -17079,6 +17087,12 @@ C:.
 |   |   |   |               00005214.meta
 |   |   |   |               00005215.meta
 |   |   |   |               00005216.meta
+|   |   |   |               00005217.sst
+|   |   |   |               00005218.sst
+|   |   |   |               00005219.sst
+|   |   |   |               00005220.meta
+|   |   |   |               00005221.meta
+|   |   |   |               00005222.meta
 |   |   |   |               CURRENT
 |   |   |   |               LOG
 |   |   |   |               
