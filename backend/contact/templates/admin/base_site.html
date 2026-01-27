@@ -3,7 +3,11 @@
 
 {% block extrahead %}
   {{ block.super }}
-  <link rel="icon" href="{% static 'brand/logo.png' %}" />
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'brand/logo-16.png' %}" />
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'brand/logo-32.png' %}" />
+  <link rel="icon" type="image/png" sizes="48x48" href="{% static 'brand/logo-48.png' %}" />
+  <link rel="icon" type="image/png" sizes="64x64" href="{% static 'brand/logo-64.png' %}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'brand/logo-180.png' %}" />
 {% endblock %}
 
 {% block title %}
@@ -17,4 +21,3 @@
     </a>
   </h1>
 {% endblock %}
-

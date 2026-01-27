@@ -7,8 +7,15 @@ export const metadata: Metadata = {
   title: "Mon site",
   description: "Coach Lean/Agile",
   icons: {
-    icon: "/brand/logo.png",
+    icon: [
+      { url: "/brand/logo-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/logo-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/logo-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/brand/logo-64.png", sizes: "64x64", type: "image/png" },
+    ],
+    apple: "/brand/logo-180.png",
   },
+  manifest: "/brand/site.webmanifest",
 };
 
 export default function RootLayout({
