@@ -40,6 +40,7 @@ export function useBackofficeMessages({
   const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const pageRef = useRef(page);
 
   const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -143,6 +144,10 @@ export function useBackofficeMessages({
   }, [page, totalPages]);
 
   useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
     return () => {
       clearUndoTimer();
     };
@@ -236,6 +241,7 @@ export function useBackofficeMessages({
         setStatus("idle");
         setUndoIds(null);
         setUndoItems([]);
+        await load(pageRef.current);
       } catch (e: unknown) {
         setStatus("error");
         setErrorMsg(normalizeUnknownError(e));
@@ -244,7 +250,7 @@ export function useBackofficeMessages({
         setUndoItems([]);
       }
     }, 5000);
-  }, [apiBase, clearUndoTimer, items, selectedIds]);
+  }, [apiBase, clearUndoTimer, items, load, selectedIds]);
 
   const undoDelete = useCallback(() => {
     if (!undoIds || undoItems.length === 0) return;
@@ -294,4 +300,3 @@ export function useBackofficeMessages({
     onSearchChange,
   };
 }
-

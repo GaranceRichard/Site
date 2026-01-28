@@ -689,6 +689,95 @@ describe("BackofficePage", () => {
     expect(deleteCall?.[0]).toContain("/api/contact/messages/admin/delete");
   });
 
+  it("recharge la page courante apres suppression differee", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/contact/messages/admin/delete")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: vi.fn().mockResolvedValue({ success: true }),
+        });
+      }
+
+      if (url.includes("page=2")) {
+        return Promise.resolve({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            count: 21,
+            page: 2,
+            limit: 10,
+            results: [
+              {
+                id: 11,
+                name: "Page Two",
+                email: "page2@example.com",
+                subject: "Follow-up",
+                message: "Hello",
+                consent: true,
+                source: "tests",
+                created_at: new Date().toISOString(),
+              },
+            ],
+          }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          count: 21,
+          page: 1,
+          limit: 10,
+          results: [
+            {
+              id: 1,
+              name: "Alice Doe",
+              email: "alice@example.com",
+              subject: "Budget",
+              message: "Hello",
+              consent: true,
+              source: "tests",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        }),
+      });
+    });
+
+    global.fetch = fetchMock as typeof global.fetch;
+
+    render(<BackofficePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Alice Doe")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Page Two")).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getAllByRole("checkbox", { name: /Selectionner/i })[0];
+    fireEvent.click(checkbox);
+
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+      await vi.advanceTimersByTimeAsync(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    await waitFor(() => {
+      const page2Calls = (fetchMock.mock.calls || []).filter((call) =>
+        String(call[0]).includes("page=2")
+      );
+      expect(page2Calls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it("recharge quand on ferme la modale d'auth", async () => {
     (global.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
