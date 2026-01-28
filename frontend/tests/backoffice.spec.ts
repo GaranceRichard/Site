@@ -3,6 +3,30 @@ import { expect, test } from "./fixtures";
 const adminUser = process.env.E2E_ADMIN_USER;
 const adminPass = process.env.E2E_ADMIN_PASS;
 const debugE2E = process.env.E2E_DEBUG === "true";
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
+async function seedContactMessages(
+  request: import("@playwright/test").APIRequestContext,
+  count = 1
+) {
+  const stamp = Date.now();
+  const names: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const name = `E2E ${stamp}-${i}`;
+    names.push(name);
+    await request.post(`${apiBase}/api/contact/messages`, {
+      data: {
+        name,
+        email: `e2e-${stamp}-${i}@example.com`,
+        subject: `Sujet ${stamp}-${i}`,
+        message: `Message ${stamp}-${i}`,
+        consent: true,
+        source: "e2e",
+      },
+    });
+  }
+  return names;
+}
 
 function attachNetworkDebug(page: import("@playwright/test").Page) {
   if (!debugE2E) return;
@@ -203,8 +227,10 @@ test("search filters messages by name, email, or subject", async ({ page }) => {
   }
 });
 
-test("select and delete messages", async ({ page }) => {
+test("select and delete messages", async ({ page, request }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  const [seedName] = await seedContactMessages(request, 1);
 
   await page.goto("/");
 
@@ -214,6 +240,7 @@ test("select and delete messages", async ({ page }) => {
   await page.getByRole("button", { name: "Se connecter" }).click();
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await expect(page.getByText(seedName)).toBeVisible();
 
   const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
   await checkbox.check();
@@ -225,8 +252,10 @@ test("select and delete messages", async ({ page }) => {
   await expect(deleteButton).toBeDisabled();
 });
 
-test("delete button is disabled when nothing is selected", async ({ page }) => {
+test("delete button is disabled when nothing is selected", async ({ page, request }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  const [seedName] = await seedContactMessages(request, 1);
 
   await page.goto("/");
 
@@ -236,13 +265,16 @@ test("delete button is disabled when nothing is selected", async ({ page }) => {
   await page.getByRole("button", { name: "Se connecter" }).click();
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await expect(page.getByText(seedName)).toBeVisible();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
   await expect(deleteButton).toBeDisabled();
 });
 
-test("delete shows undo toast and restore on cancel", async ({ page }) => {
+test("delete shows undo toast and restore on cancel", async ({ page, request }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  const [seedName] = await seedContactMessages(request, 1);
 
   await page.goto("/");
 
@@ -252,6 +284,7 @@ test("delete shows undo toast and restore on cancel", async ({ page }) => {
   await page.getByRole("button", { name: "Se connecter" }).click();
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await expect(page.getByText(seedName)).toBeVisible();
 
   const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
   await checkbox.check();
