@@ -294,3 +294,4 @@ Ne pas committer :
 - Definition of Done stricte : `docs/Definition-of-Done.md`
 - Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
+- Guide de contribution : `CONTRIBUTING.md`
