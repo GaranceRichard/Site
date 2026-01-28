@@ -261,6 +261,14 @@ Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
 - Les tests E2E n?cessitent un compte admin `is_staff` et un backend en cours d?ex?cution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
+- Couverture E2E : backoffice, references, formulaire de contact.
+
+## Maintenance
+Nettoyer les medias orphelins des references :
+```powershell
+cd backend
+python manage.py cleanup_reference_media
+```
 
 ## Test rapide (curl)
 ### Windows PowerShell (2 lignes) :
