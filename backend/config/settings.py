@@ -433,7 +433,7 @@ LOGGING = {
 # Monitoring (Sentry)
 # -------------------------------------------------
 SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
-if IS_PROD and SENTRY_DSN:
+if not DEBUG and SENTRY_DSN:
     try:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration

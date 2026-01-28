@@ -144,6 +144,7 @@ Créer un fichier frontend/.env.local (non versionné) avec :
 ```ini
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_BACKOFFICE_ENABLED=true
+NEXT_PUBLIC_SENTRY_DSN=
 ```
 
 ### Backoffice (JWT + comptes admin)

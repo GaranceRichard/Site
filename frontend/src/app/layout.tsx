@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import FlashToast from "./components/FlashToast";
+import SentryInit from "./components/SentryInit";
 
 export const metadata: Metadata = {
   title: "Mon site",
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
+        <SentryInit />
         <Script
           id="theme-init"
           strategy="beforeInteractive"
