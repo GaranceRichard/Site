@@ -83,12 +83,14 @@ Backend :
 - `python manage.py test`
 - `coverage run --rcfile=.coveragerc manage.py test`
 - `coverage report -m`
+  - Vérifier que le seuil est >= 80%
 
 Frontend :
 - `npm test`
 - `npm run lint`
 - `npm run build`
 - `npm run test:coverage`
+  - Vérifier que le seuil est >= 80%
 
 E2E :
 - `npm run test:e2e`

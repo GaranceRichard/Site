@@ -295,3 +295,4 @@ Ne pas committer :
 - Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`
+- Hooks pre-commit : `.pre-commit-config.yaml`
