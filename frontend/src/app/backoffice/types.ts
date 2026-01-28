@@ -16,6 +16,8 @@ export type BackofficeSection = "messages" | "references" | "stats" | "settings"
 export type Reference = {
   id: number;
   reference: string;
+  reference_short: string;
+  order_index: number;
   image: string;
   icon: string;
   situation: string;

@@ -1,7 +1,7 @@
 // frontend/src/app/backoffice/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
 import { isBackofficeEnabled } from "../lib/backoffice";
@@ -22,7 +22,25 @@ export default function BackofficePage() {
   const backofficeEnabled = isBackofficeEnabled();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [section, setSection] = useState<BackofficeSection>("messages");
+  const [section, setSection] = useState<BackofficeSection>(() => {
+    try {
+      const saved = window.localStorage.getItem("backoffice_section");
+      if (saved === "messages" || saved === "references" || saved === "stats" || saved === "settings") {
+        return saved;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return "messages";
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("backoffice_section", section);
+    } catch {
+      // ignore storage errors
+    }
+  }, [section]);
 
   const {
     openLogin,

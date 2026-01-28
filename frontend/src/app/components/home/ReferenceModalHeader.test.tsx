@@ -21,12 +21,10 @@ afterEach(() => {
 });
 
 describe("ReferenceModalHeader", () => {
-  it("rend le label et le badge quand fournis", () => {
+  it("rend le titre et le badge quand fournis", () => {
     render(
       <ReferenceModalHeader
-        label="Label"
         nameExpanded="Titre"
-        missionTitle="Mission"
         badgeSrc="/badge.png"
         badgeAlt="Badge"
         onClose={() => {}}
@@ -34,16 +32,14 @@ describe("ReferenceModalHeader", () => {
       />,
     );
 
-    expect(screen.getByText("Label")).toBeInTheDocument();
+    expect(screen.getByText("Titre")).toBeInTheDocument();
     expect(screen.getByAltText("Badge")).toBeInTheDocument();
   });
 
   it("n'affiche pas le badge si badgeSrc est absent", () => {
     render(
       <ReferenceModalHeader
-        label={null}
         nameExpanded="Titre"
-        missionTitle="Mission"
         badgeSrc={null}
         badgeAlt="Badge"
         onClose={() => {}}

@@ -23,14 +23,21 @@ export default function Sidebar({
     <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <Image
-            src="/brand/logo.png"
-            alt=""
-            width={34}
-            height={34}
-            className="mt-0.5 h-8 w-8 object-contain"
-            priority={false}
-          />
+          <button
+            type="button"
+            onClick={onGoHome}
+            aria-label="Retour au site (logo)"
+            className="rounded-lg p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          >
+            <Image
+              src="/brand/logo.png"
+              alt=""
+              width={34}
+              height={34}
+              className="h-8 w-8 object-contain"
+              priority={false}
+            />
+          </button>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
               Admin

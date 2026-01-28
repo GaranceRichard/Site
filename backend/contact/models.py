@@ -15,6 +15,8 @@ class ContactMessage(models.Model):
 
 class Reference(models.Model):
     reference = models.CharField(max_length=160)
+    reference_short = models.CharField(max_length=120, blank=True, default="")
+    order_index = models.IntegerField(default=0, db_index=True)
     image = models.URLField(max_length=500, blank=True)
     icon = models.URLField(max_length=500, blank=True)
     situation = models.TextField()

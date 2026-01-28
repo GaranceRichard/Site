@@ -125,9 +125,7 @@ export default function ReferenceModal({
 
       <ReferenceModalShell imageSrc={mountedItem.imageSrc} open={open} ease={ease} dur={dur}>
         <ReferenceModalHeader
-          label={mountedItem.label}
           nameExpanded={mountedItem.nameExpanded}
-          missionTitle={mountedItem.missionTitle}
           badgeSrc={badgeSrc}
           badgeAlt={badgeAlt}
           onClose={requestClose}

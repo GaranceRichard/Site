@@ -130,7 +130,7 @@ test("return to site keeps session and footer icon reopens backoffice", async ({
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Retour au site" }).click();
+  await page.getByRole("button", { name: "Retour au site", exact: true }).click();
   await expect(page).toHaveURL("/");
 
   await page.getByRole("button", { name: "Back-office (connecté)" }).click();

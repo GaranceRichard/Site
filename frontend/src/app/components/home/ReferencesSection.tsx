@@ -10,6 +10,8 @@ import ReferenceModal from "./ReferenceModal";
 type ApiReference = {
   id: number;
   reference: string;
+  reference_short: string;
+  order_index: number;
   image: string;
   icon: string;
   situation: string;
@@ -19,13 +21,13 @@ type ApiReference = {
 };
 
 function pickMissionTitle(item: ApiReference): string {
-  return item.tasks?.[0] ?? item.actions?.[0] ?? item.results?.[0] ?? "";
+  return item.results?.[0] ?? "";
 }
 
 function toReferenceItem(item: ApiReference): ReferenceItem {
   return {
     id: `ref-${item.id}`,
-    nameCollapsed: item.reference,
+    nameCollapsed: item.reference_short?.trim() ? item.reference_short : item.reference,
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
@@ -61,7 +63,8 @@ export default function ReferencesSection() {
       if (!res.ok) throw new Error(`Erreur API (${res.status})`);
       const data = (await res.json()) as ApiReference[];
       if (Array.isArray(data)) {
-        setItems(data.map(toReferenceItem));
+        const ordered = data.slice().sort((a, b) => a.order_index - b.order_index);
+        setItems(ordered.map(toReferenceItem));
       }
       setApiError(null);
     } catch (error: unknown) {

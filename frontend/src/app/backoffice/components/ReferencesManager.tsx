@@ -11,6 +11,7 @@ type ReferencesManagerProps = {
 
 type FormState = {
   reference: string;
+  referenceShort: string;
   image: string;
   icon: string;
   situation: string;
@@ -21,6 +22,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   reference: "",
+  referenceShort: "",
   image: "",
   icon: "",
   situation: "",
@@ -48,10 +50,12 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalError, setModalError] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const iconInputRef = useRef<HTMLInputElement | null>(null);
+  const didInitRef = useRef(false);
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
   const hasSelection = selectedIds.size > 0;
@@ -59,6 +63,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
   const resetForm = useCallback(() => {
     setEditingId(null);
     setForm(emptyForm);
+    setModalError("");
   }, []);
 
   const getToken = useCallback(() => {
@@ -69,11 +74,23 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
     }
   }, []);
 
+  const reportError = useCallback(
+    (message: string) => {
+      if (modalOpen) {
+        setModalError(message);
+        setStatus("idle");
+        return;
+      }
+      setStatus("error");
+      setErrorMsg(message);
+    },
+    [modalOpen],
+  );
+
   const requireAuth = useCallback(() => {
-    setStatus("error");
-    setErrorMsg("Connexion requise pour accéder aux références.");
+    reportError("Connexion requise pour accéder aux références.");
     onRequestLogin();
-  }, [onRequestLogin]);
+  }, [onRequestLogin, reportError]);
 
   const load = useCallback(async () => {
     setErrorMsg("");
@@ -106,7 +123,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
       }
 
       const data = (await res.json()) as Reference[];
-      setItems(data);
+      setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
       setStatus("idle");
     } catch (e: unknown) {
       setStatus("error");
@@ -115,6 +132,8 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
   }, [apiBase, getToken, requireAuth]);
 
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
     void load();
   }, [load]);
 
@@ -124,9 +143,11 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
   }, [resetForm]);
 
   const openEditModal = useCallback((item: Reference) => {
+    setModalError("");
     setEditingId(item.id);
     setForm({
       reference: item.reference,
+      referenceShort: item.reference_short || "",
       image: item.image || "",
       icon: item.icon || "",
       situation: item.situation || "",
@@ -162,6 +183,80 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
       openEditModal(item);
     },
     [openEditModal],
+  );
+
+  const moveItem = useCallback(
+    async (fromIndex: number, direction: "up" | "down") => {
+      if (!apiBase) {
+        setStatus("error");
+        setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
+        return;
+      }
+
+      const token = getToken();
+      if (!token) {
+        requireAuth();
+        return;
+      }
+
+      const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+      if (toIndex < 0 || toIndex >= items.length) return;
+
+      const current = items[fromIndex];
+      const other = items[toIndex];
+      if (!current || !other) return;
+
+      const currentOrder = current.order_index;
+      const otherOrder = other.order_index;
+
+      const next = [...items];
+      next[fromIndex] = { ...other, order_index: currentOrder };
+      next[toIndex] = { ...current, order_index: otherOrder };
+      setItems(next);
+
+      setStatus("loading");
+      setErrorMsg("");
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+        const resA = await fetch(`${apiBase}/api/contact/references/admin/${current.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ order_index: otherOrder }),
+        });
+        if (resA.status === 401 || resA.status === 403) {
+          requireAuth();
+          return;
+        }
+        if (!resA.ok) {
+          const txt = await resA.text();
+          throw new Error(txt || `Erreur API (${resA.status})`);
+        }
+
+        const resB = await fetch(`${apiBase}/api/contact/references/admin/${other.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ order_index: currentOrder }),
+        });
+        if (resB.status === 401 || resB.status === 403) {
+          requireAuth();
+          return;
+        }
+        if (!resB.ok) {
+          const txt = await resB.text();
+          throw new Error(txt || `Erreur API (${resB.status})`);
+        }
+
+        setStatus("idle");
+      } catch (e: unknown) {
+        setStatus("error");
+        setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+        void load();
+      }
+    },
+    [apiBase, getToken, items, load, requireAuth],
   );
 
   const onDeleteSelected = useCallback(async () => {
@@ -212,6 +307,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setErrorMsg("");
+      setModalError("");
 
       if (!apiBase) {
         setStatus("error");
@@ -227,6 +323,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
 
       const payload = {
         reference: form.reference.trim(),
+        reference_short: form.referenceShort.trim(),
         image: form.image.trim(),
         icon: form.icon.trim(),
         situation: form.situation.trim(),
@@ -236,8 +333,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
       };
 
       if (!payload.reference || !payload.situation) {
-        setStatus("error");
-        setErrorMsg("Référence et situation sont obligatoires.");
+        reportError("Référence et situation sont obligatoires.");
         return;
       }
 
@@ -270,20 +366,22 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
         const saved = (await res.json()) as Reference;
         setItems((prev) => {
           if (editingId) {
-            return prev.map((r) => (r.id === saved.id ? saved : r));
+            return prev
+              .map((r) => (r.id === saved.id ? saved : r))
+              .slice()
+              .sort((a, b) => a.order_index - b.order_index);
           }
-          return [saved, ...prev];
+          return [...prev, saved].slice().sort((a, b) => a.order_index - b.order_index);
         });
         setSelectedIds((prev) => new Set(prev).add(saved.id));
         setStatus("idle");
         setModalOpen(false);
         resetForm();
       } catch (e: unknown) {
-        setStatus("error");
-        setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+        reportError(e instanceof Error ? e.message : "Erreur inattendue");
       }
     },
-    [apiBase, editingId, form, getToken, requireAuth, resetForm],
+    [apiBase, editingId, form, getToken, reportError, requireAuth, resetForm],
   );
 
   const uploadFile = useCallback(
@@ -307,6 +405,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
       }
 
       setErrorMsg("");
+      setModalError("");
       try {
         const formData = new FormData();
         formData.append("file", file);
@@ -338,8 +437,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
           throw new Error("URL d'image manquante.");
         }
       } catch (e: unknown) {
-        setStatus("error");
-        setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
+        reportError(e instanceof Error ? e.message : "Erreur inattendue");
       } finally {
         if (target === "image") {
           setIsUploadingImage(false);
@@ -348,7 +446,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
         }
       }
     },
-    [apiBase, getToken, requireAuth],
+    [apiBase, getToken, reportError, requireAuth],
   );
 
   const onImageChange = useCallback(
@@ -426,12 +524,13 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
                     />
                   ) : null}
                 </th>
+                <th className="w-24 px-4 py-2">Ordre</th>
                 <th className="px-4 py-2">Référence</th>
-                <th className="px-4 py-2">Situation</th>
+                <th className="w-20 px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <tr
                   key={item.id}
                   className={[
@@ -451,17 +550,53 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
                       className="h-4 w-4 rounded border-neutral-300"
                     />
                   </td>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <span className="w-6 text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+                      {item.order_index}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 font-semibold text-neutral-900 dark:text-neutral-50">
                     {item.reference}
                   </td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">
-                    {item.situation}
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Monter ${item.reference}`}
+                        disabled={index === 0}
+                        onClick={() => moveItem(index, "up")}
+                        className={[
+                          "rounded border border-neutral-200 px-1.5 py-0.5 text-xs font-semibold",
+                          index === 0
+                            ? "cursor-not-allowed text-neutral-300"
+                            : "text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800",
+                          "dark:border-neutral-800",
+                        ].join(" ")}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Descendre ${item.reference}`}
+                        disabled={index === items.length - 1}
+                        onClick={() => moveItem(index, "down")}
+                        className={[
+                          "rounded border border-neutral-200 px-1.5 py-0.5 text-xs font-semibold",
+                          index === items.length - 1
+                            ? "cursor-not-allowed text-neutral-300"
+                            : "text-neutral-700 hover:bg-neutral-50 dark:text-neutral-200 dark:hover:bg-neutral-800",
+                          "dark:border-neutral-800",
+                        ].join(" ")}
+                      >
+                        ↓
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && status !== "loading" ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-sm text-neutral-500">
+                  <td colSpan={4} className="px-4 py-6 text-center text-sm text-neutral-500">
                     Aucune référence.
                   </td>
                 </tr>
@@ -479,7 +614,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
             onClick={() => setModalOpen(false)}
             className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
           />
-          <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
+          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
             <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
               <div>
                 <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
@@ -498,105 +633,128 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
               </button>
             </div>
 
-            <form onSubmit={onSubmit} className="grid gap-4 p-5 text-sm">
-              <label className="block">
-                <span className="font-semibold">Référence</span>
-                <input
-                  value={form.reference}
-                  onChange={(e) => setForm((prev) => ({ ...prev, reference: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                />
-              </label>
+            <form onSubmit={onSubmit} className="grid max-h-[75vh] gap-4 p-5 text-sm">
+              <div className="grid gap-4 overflow-auto pr-1 md:grid-cols-[1.05fr_1fr]">
+                <div className="grid gap-4">
+                  {modalError ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200">
+                      {modalError}
+                    </div>
+                  ) : null}
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
-                  <p className="text-xs font-semibold text-neutral-500">Image</p>
-                  <p className="mt-1 truncate text-xs text-neutral-400">
-                    {form.image ? form.image : "Aucune image"}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
-                    >
-                      Charger l’image
-                    </button>
-                    {isUploadingImage ? (
-                      <span className="text-xs text-neutral-500">Upload…</span>
-                    ) : null}
+                  <label className="block">
+                    <span className="font-semibold">Référence</span>
+                    <input
+                      value={form.reference}
+                      onChange={(e) => setForm((prev) => ({ ...prev, reference: e.target.value }))}
+                      className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="font-semibold">Titre court</span>
+                    <input
+                      value={form.referenceShort}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, referenceShort: e.target.value }))
+                      }
+                      className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+                      <p className="text-xs font-semibold text-neutral-500">Image</p>
+                      <p className="mt-1 truncate text-xs text-neutral-400">
+                        {form.image ? form.image : "Aucune image"}
+                      </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+                        >
+                          Charger l’image
+                        </button>
+                        {isUploadingImage ? (
+                          <span className="text-xs text-neutral-500">Upload…</span>
+                        ) : null}
+                      </div>
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={onImageChange}
+                        className="hidden"
+                      />
+                    </div>
+
+                    <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+                      <p className="text-xs font-semibold text-neutral-500">Icône</p>
+                      <p className="mt-1 truncate text-xs text-neutral-400">
+                        {form.icon ? form.icon : "Aucune icône"}
+                      </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => iconInputRef.current?.click()}
+                          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+                        >
+                          Charger l’icône
+                        </button>
+                        {isUploadingIcon ? (
+                          <span className="text-xs text-neutral-500">Upload…</span>
+                        ) : null}
+                      </div>
+                      <input
+                        ref={iconInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={onIconChange}
+                        className="hidden"
+                      />
+                    </div>
                   </div>
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={onImageChange}
-                    className="hidden"
-                  />
+
+                  <label className="block">
+                    <span className="font-semibold">Situation</span>
+                    <textarea
+                      value={form.situation}
+                      onChange={(e) => setForm((prev) => ({ ...prev, situation: e.target.value }))}
+                      className="mt-1 min-h-[110px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
-                  <p className="text-xs font-semibold text-neutral-500">Icône</p>
-                  <p className="mt-1 truncate text-xs text-neutral-400">
-                    {form.icon ? form.icon : "Aucune icône"}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => iconInputRef.current?.click()}
-                      className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
-                    >
-                      Charger l’icône
-                    </button>
-                    {isUploadingIcon ? (
-                      <span className="text-xs text-neutral-500">Upload…</span>
-                    ) : null}
-                  </div>
-                  <input
-                    ref={iconInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={onIconChange}
-                    className="hidden"
-                  />
+                <div className="grid gap-4">
+                  <label className="block">
+                    <span className="font-semibold">Tâches (1 par ligne)</span>
+                    <textarea
+                      value={form.tasks}
+                      onChange={(e) => setForm((prev) => ({ ...prev, tasks: e.target.value }))}
+                      className="mt-1 min-h-[120px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="font-semibold">Actions (1 par ligne)</span>
+                    <textarea
+                      value={form.actions}
+                      onChange={(e) => setForm((prev) => ({ ...prev, actions: e.target.value }))}
+                      className="mt-1 min-h-[120px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="font-semibold">Résultats (1 par ligne)</span>
+                    <textarea
+                      value={form.results}
+                      onChange={(e) => setForm((prev) => ({ ...prev, results: e.target.value }))}
+                      className="mt-1 min-h-[120px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                    />
+                  </label>
                 </div>
               </div>
-
-              <label className="block">
-                <span className="font-semibold">Situation</span>
-                <textarea
-                  value={form.situation}
-                  onChange={(e) => setForm((prev) => ({ ...prev, situation: e.target.value }))}
-                  className="mt-1 min-h-[90px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                />
-              </label>
-
-              <label className="block">
-                <span className="font-semibold">Tâches (1 par ligne)</span>
-                <textarea
-                  value={form.tasks}
-                  onChange={(e) => setForm((prev) => ({ ...prev, tasks: e.target.value }))}
-                  className="mt-1 min-h-[70px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                />
-              </label>
-
-              <label className="block">
-                <span className="font-semibold">Actions (1 par ligne)</span>
-                <textarea
-                  value={form.actions}
-                  onChange={(e) => setForm((prev) => ({ ...prev, actions: e.target.value }))}
-                  className="mt-1 min-h-[70px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                />
-              </label>
-
-              <label className="block">
-                <span className="font-semibold">Résultats (1 par ligne)</span>
-                <textarea
-                  value={form.results}
-                  onChange={(e) => setForm((prev) => ({ ...prev, results: e.target.value }))}
-                  className="mt-1 min-h-[70px] w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                />
-              </label>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

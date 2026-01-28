@@ -111,7 +111,7 @@ class ContactMessageDeleteAdminView(APIView):
 class ReferenceListCreateAdminView(generics.ListCreateAPIView):
     serializer_class = ReferenceSerializer
     permission_classes = [permissions.IsAdminUser]
-    queryset = Reference.objects.all().order_by("-updated_at", "-created_at")
+    queryset = Reference.objects.all().order_by("order_index", "id")
 
 
 class ReferenceDetailAdminView(generics.RetrieveUpdateDestroyAPIView):
@@ -123,7 +123,7 @@ class ReferenceDetailAdminView(generics.RetrieveUpdateDestroyAPIView):
 class ReferenceListPublicView(generics.ListAPIView):
     serializer_class = ReferenceSerializer
     permission_classes = [permissions.AllowAny]
-    queryset = Reference.objects.all().order_by("-updated_at", "-created_at")
+    queryset = Reference.objects.all().order_by("order_index", "id")
 
 
 class ReferenceImageUploadAdminView(APIView):
@@ -144,11 +144,15 @@ class ReferenceImageUploadAdminView(APIView):
 
         try:
             image = Image.open(file)
-            image = image.convert("RGB")
+            has_alpha = "A" in image.getbands() or image.mode in ("RGBA", "LA", "PA")
+            image = image.convert("RGBA" if has_alpha else "RGB")
             image.thumbnail((1600, 900), Image.LANCZOS)
 
             buffer = BytesIO()
-            image.save(buffer, format="WEBP", quality=82, method=6)
+            if has_alpha:
+                image.save(buffer, format="WEBP", lossless=True, method=6)
+            else:
+                image.save(buffer, format="WEBP", quality=82, method=6)
             buffer.seek(0)
         except Exception:
             return Response({"detail": "Impossible de traiter l'image."}, status=status.HTTP_400_BAD_REQUEST)
