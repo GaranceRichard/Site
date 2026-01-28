@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test.utils import override_settings
 from django.test import SimpleTestCase
 
@@ -22,6 +23,7 @@ from django.utils import timezone
 from PIL import Image
 import importlib
 import tempfile
+from io import StringIO
 from django.urls import clear_url_caches
 
 
@@ -1040,6 +1042,75 @@ class ReferenceMediaCleanupTests(APITestCase):
 
                 self.assertFalse(default_storage.exists(image_path))
                 self.assertFalse(default_storage.exists(icon_path))
+
+
+class MediaCleanupUnitTests(APITestCase):
+    def test_media_relative_path_variants(self):
+        from contact.media_cleanup import media_relative_path
+
+        self.assertIsNone(media_relative_path(""))
+        self.assertIsNone(media_relative_path("http://example.com"))
+        self.assertIsNone(media_relative_path("https://example.com/other.png"))
+        self.assertEqual(
+            media_relative_path("http://testserver/media/references/a.webp"),
+            "references/a.webp",
+        )
+        self.assertEqual(
+            media_relative_path("/media/references/b.webp"),
+            "references/b.webp",
+        )
+        self.assertEqual(media_relative_path("references/c.webp"), "references/c.webp")
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_cleanup_orphan_reference_media_handles_missing_dir(self):
+        from contact.media_cleanup import cleanup_orphan_reference_media
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                self.assertEqual(cleanup_orphan_reference_media(), 0)
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_cleanup_orphan_reference_media_removes_unused(self):
+        from contact.media_cleanup import cleanup_orphan_reference_media
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                orphan_path = default_storage.save(
+                    "references/orphan.webp", ContentFile(b"orphan")
+                )
+                keep_path = default_storage.save(
+                    "references/keep.webp", ContentFile(b"keep")
+                )
+
+                Reference.objects.create(
+                    reference="Ref keep",
+                    image=f"http://testserver/media/{keep_path}",
+                    icon="",
+                    situation="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                deleted = cleanup_orphan_reference_media()
+
+                self.assertEqual(deleted, 1)
+                self.assertFalse(default_storage.exists(orphan_path))
+                self.assertTrue(default_storage.exists(keep_path))
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_cleanup_reference_media_command(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                orphan_path = default_storage.save(
+                    "references/orphan.webp", ContentFile(b"orphan")
+                )
+
+                out = StringIO()
+                call_command("cleanup_reference_media", stdout=out)
+
+                self.assertIn("Fichiers supprimes: 1", out.getvalue())
+                self.assertFalse(default_storage.exists(orphan_path))
 
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_cleans_orphaned_media(self):

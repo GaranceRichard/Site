@@ -35,7 +35,6 @@ export function useBackofficeMessages({
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [undoIds, setUndoIds] = useState<number[] | null>(null);
-  const [undoItems, setUndoItems] = useState<Msg[]>([]);
   const undoTimerRef = useRef<number | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [sortField, setSortField] = useState<SortField>("created_at");
@@ -300,7 +299,6 @@ export function useBackofficeMessages({
     setTotalCount((prev) => Math.max(0, prev - removedIds.length));
     setSelectedIds(new Set());
     setUndoIds(removedIds);
-    setUndoItems(removed);
     void loadWithExcluded(removedIds);
 
     clearUndoTimer();
@@ -323,7 +321,6 @@ export function useBackofficeMessages({
           setOpenLogin(true);
           restoreRemoved();
           setUndoIds(null);
-          setUndoItems([]);
           return;
         }
 
@@ -334,14 +331,12 @@ export function useBackofficeMessages({
 
         setStatus("idle");
         setUndoIds(null);
-        setUndoItems([]);
         await load(pageRef.current);
       } catch (e: unknown) {
         setStatus("error");
         setErrorMsg(normalizeUnknownError(e));
         restoreRemoved();
         setUndoIds(null);
-        setUndoItems([]);
       }
     }, 5000);
   }, [apiBase, clearUndoTimer, items, load, loadWithExcluded, selectedIds]);
@@ -350,7 +345,6 @@ export function useBackofficeMessages({
     if (!undoIds) return;
     clearUndoTimer();
     setUndoIds(null);
-    setUndoItems([]);
     void load(pageRef.current);
   }, [clearUndoTimer, load, undoIds]);
 
