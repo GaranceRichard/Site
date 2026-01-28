@@ -327,7 +327,11 @@ if IS_PROD:
     else:
         if "whitenoise.middleware.WhiteNoiseMiddleware" not in MIDDLEWARE:
             MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
-        STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        STORAGES = {
+            "staticfiles": {
+                "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            }
+        }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
