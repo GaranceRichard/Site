@@ -67,6 +67,19 @@ Exemples :
 Types usuels :
 `feat`, `fix`, `test`, `docs`, `refactor`, `chore`.
 
+## Pre-commit (hooks)
+
+Installation (une fois) :
+```powershell
+python -m pip install pre-commit
+pre-commit install
+```
+
+Exécution manuelle :
+```powershell
+pre-commit run --all-files
+```
+
 ## Checklist PR
 
 - [ ] Description claire du besoin / du bug
