@@ -172,6 +172,99 @@ export function useBackofficeMessages({
     [sortDir, sortField]
   );
 
+  const loadWithExcluded = useCallback(
+    async (excludedIds: number[]) => {
+      setErrorMsg("");
+      setAuthMsg("");
+      setSelectedIds(new Set());
+
+      if (!apiBase) {
+        setStatus("error");
+        setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
+        return;
+      }
+
+      let token: string | null = null;
+      try {
+        token = sessionStorage.getItem("access_token");
+      } catch {
+        token = null;
+      }
+
+      if (!token) {
+        setStatus("idle");
+        setItems([]);
+        setTotalCount(0);
+        routerPush("/");
+        return;
+      }
+
+      setStatus("loading");
+
+      const excluded = new Set(excludedIds);
+      const merged: Msg[] = [];
+      let pageNum = pageRef.current;
+      let total = 0;
+
+      try {
+        while (merged.length < pageSize) {
+          const queryString = buildAdminMessagesQuery({
+            pageSize,
+            page: pageNum,
+            sortField,
+            sortDir,
+            query,
+          });
+
+          const res = await fetch(`${apiBase}/api/contact/messages/admin?${queryString}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (isAuthErrorStatus(res.status)) {
+            setStatus("idle");
+            setItems([]);
+            clearAuthTokens();
+            setAuthMsg("Session expiree ou acces refuse. Reconnectez-vous.");
+            setOpenLogin(true);
+            return;
+          }
+
+          if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(buildApiErrorMessage(res.status, txt));
+          }
+
+          const data = (await res.json()) as {
+            count: number;
+            page: number;
+            limit: number;
+            results: Msg[];
+          };
+
+          total = data.count;
+          merged.push(...data.results.filter((item) => !excluded.has(item.id)));
+
+          const totalPagesForQuery = Math.max(1, Math.ceil(total / pageSize));
+          if (pageNum >= totalPagesForQuery) {
+            break;
+          }
+
+          pageNum += 1;
+        }
+
+        setItems(merged.slice(0, pageSize));
+        setTotalCount(Math.max(0, total - excluded.size));
+        setPage(pageRef.current);
+        setStatus("idle");
+        setAuthMsg("");
+      } catch (e: unknown) {
+        setStatus("error");
+        setErrorMsg(normalizeUnknownError(e));
+      }
+    },
+    [apiBase, pageSize, query, routerPush, sortDir, sortField]
+  );
+
   const deleteSelected = useCallback(async () => {
     if (!apiBase) {
       setStatus("error");
@@ -208,6 +301,7 @@ export function useBackofficeMessages({
     setSelectedIds(new Set());
     setUndoIds(removedIds);
     setUndoItems(removed);
+    void loadWithExcluded(removedIds);
 
     clearUndoTimer();
     undoTimerRef.current = window.setTimeout(async () => {
@@ -250,16 +344,15 @@ export function useBackofficeMessages({
         setUndoItems([]);
       }
     }, 5000);
-  }, [apiBase, clearUndoTimer, items, load, selectedIds]);
+  }, [apiBase, clearUndoTimer, items, load, loadWithExcluded, selectedIds]);
 
   const undoDelete = useCallback(() => {
-    if (!undoIds || undoItems.length === 0) return;
+    if (!undoIds) return;
     clearUndoTimer();
-    setItems((prev) => [...undoItems, ...prev]);
-    setTotalCount((prev) => prev + undoItems.length);
     setUndoIds(null);
     setUndoItems([]);
-  }, [clearUndoTimer, undoIds, undoItems]);
+    void load(pageRef.current);
+  }, [clearUndoTimer, load, undoIds]);
 
   const closeLoginModal = useCallback(() => {
     setOpenLogin(false);
