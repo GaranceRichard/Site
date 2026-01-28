@@ -1041,6 +1041,35 @@ class ReferenceMediaCleanupTests(APITestCase):
                 self.assertFalse(default_storage.exists(image_path))
                 self.assertFalse(default_storage.exists(icon_path))
 
+    @override_settings(MEDIA_URL="/media/")
+    def test_reference_delete_cleans_orphaned_media(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                orphan_path = default_storage.save(
+                    "references/orphan.webp", ContentFile(b"orphan")
+                )
+                kept_path = default_storage.save(
+                    "references/keep.webp", ContentFile(b"keep")
+                )
+
+                ref = Reference.objects.create(
+                    reference="Ref keep",
+                    image=f"http://testserver/media/{kept_path}",
+                    icon="",
+                    situation="Situation",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                self.assertTrue(default_storage.exists(orphan_path))
+                self.assertTrue(default_storage.exists(kept_path))
+
+                ref.delete()
+
+                self.assertFalse(default_storage.exists(orphan_path))
+                self.assertFalse(default_storage.exists(kept_path))
+
 
 class ConfigUrlsTests(SimpleTestCase):
     @override_settings(ENABLE_JWT=True, DEBUG=False)

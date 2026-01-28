@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
-import { isBackofficeEnabled } from "../lib/backoffice";
+import { isAccessTokenValid, isBackofficeEnabled } from "../lib/backoffice";
 
 type NavItem = { label: string; href: string };
 
@@ -38,7 +38,7 @@ export default function TopNav({
 
     const compute = () => {
       try {
-        return Boolean(sessionStorage.getItem("access_token"));
+        return isAccessTokenValid(sessionStorage.getItem("access_token"));
       } catch {
         return false;
       }
@@ -111,7 +111,7 @@ export default function TopNav({
     // Re-check au clic (au cas où le token vient d’être posé)
     let logged = false;
     try {
-      logged = Boolean(sessionStorage.getItem("access_token"));
+      logged = isAccessTokenValid(sessionStorage.getItem("access_token"));
       setIsLogged(logged);
     } catch {
       logged = false;

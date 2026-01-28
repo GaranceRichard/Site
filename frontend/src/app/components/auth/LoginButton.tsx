@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../BackofficeModal";
-import { isBackofficeEnabled } from "../../lib/backoffice";
+import { isAccessTokenValid, isBackofficeEnabled } from "../../lib/backoffice";
 
 export default function LoginButton({
   size = 28,
@@ -24,7 +24,7 @@ export default function LoginButton({
 
   const compute = () => {
     try {
-      return Boolean(sessionStorage.getItem("access_token"));
+      return isAccessTokenValid(sessionStorage.getItem("access_token"));
     } catch {
       return false;
     }
@@ -48,10 +48,20 @@ export default function LoginButton({
 
   function onClick() {
     if (!backofficeEnabled) return;
-    if (isLogged) {
+    let logged = false;
+    try {
+      logged = isAccessTokenValid(sessionStorage.getItem("access_token"));
+      setIsLogged(logged);
+    } catch {
+      logged = false;
+      setIsLogged(false);
+    }
+
+    if (logged) {
       router.push("/backoffice");
       return;
     }
+
     setOpen(true);
   }
 
