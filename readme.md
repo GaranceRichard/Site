@@ -16,6 +16,7 @@ Site vitrine avec page de contact.
 ## Structure du projet
 garancerichard-site/
 - docker-compose.yml (PostgreSQL + Redis pour dev)
+- Makefile (raccourcis commandes dev)
 - backend/ (Django + API REST)
 - frontend/ (Next.js)
 - frontend/src/app/backoffice/ (page, hook, composants UI)
@@ -111,6 +112,13 @@ Utiliser les tasks VS Code :
 1) Ouvrir la palette de commandes (Ctrl+Shift+P)
 2) "Tasks: Run Task"
 3) Choisir `dev:all`
+
+### Makefile (raccourcis)
+Depuis la racine du repo :
+- `make install` : installe les dépendances backend + frontend
+- `make test` : tests backend + frontend
+- `make dev` : docker-compose + dev-all
+- `make coverage` : couverture backend + frontend
 
 ## Configuration des variables d’environnement
 ### Backend — backend/.env (local)
