@@ -7,8 +7,11 @@ import subprocess
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.utils import override_settings
+from django.test import SimpleTestCase
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -17,6 +20,9 @@ from .models import ContactMessage, Reference
 from django.utils import timezone
 
 from PIL import Image
+import importlib
+import tempfile
+from django.urls import clear_url_caches
 
 
 class ContactApiTests(APITestCase):
@@ -522,6 +528,170 @@ class AuthJwtTests(APITestCase):
 
         self.assertEqual(delete_res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_admin_list_forbidden_for_non_staff(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="basic-user",
+            password="basic-pass-123",
+            is_staff=False,
+        )
+
+        token_res = self.client.post(
+            self.token_url,
+            {"username": user.username, "password": "basic-pass-123"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res = self.client.get(
+            self.admin_list_url,
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_reference_admin_requires_auth_for_all_methods(self):
+        list_url = "/api/contact/references/admin"
+        detail_url = "/api/contact/references/admin/1"
+        payload = {
+            "reference": "Ref X",
+            "image": "https://example.test/x.png",
+            "icon": "",
+            "situation": "",
+            "tasks": [],
+            "actions": [],
+            "results": [],
+        }
+
+        res_list = self.client.get(list_url)
+        res_create = self.client.post(list_url, payload, format="json")
+        res_detail = self.client.get(detail_url)
+        res_update = self.client.put(detail_url, payload, format="json")
+        res_delete = self.client.delete(detail_url)
+
+        self.assertEqual(res_list.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res_create.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res_detail.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res_update.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res_delete.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_reference_admin_forbidden_for_non_staff(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="basic-ref",
+            password="basic-ref-123",
+            is_staff=False,
+        )
+
+        token_res = self.client.post(
+            self.token_url,
+            {"username": user.username, "password": "basic-ref-123"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        payload = {
+            "reference": "Ref X",
+            "image": "https://example.test/x.png",
+            "icon": "",
+            "situation": "",
+            "tasks": [],
+            "actions": [],
+            "results": [],
+        }
+
+        res_list = self.client.get(
+            "/api/contact/references/admin",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        res_create = self.client.post(
+            "/api/contact/references/admin",
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res_list.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res_create.status_code, status.HTTP_403_FORBIDDEN)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_messages_admin_requires_auth(self):
+        res_list = self.client.get("/api/contact/messages/admin")
+        res_delete = self.client.post("/api/contact/messages/admin/delete", {"ids": [1]})
+        self.assertEqual(res_list.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res_delete.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_messages_admin_forbidden_for_non_staff(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="basic-msg",
+            password="basic-msg-123",
+            is_staff=False,
+        )
+
+        token_res = self.client.post(
+            self.token_url,
+            {"username": user.username, "password": "basic-msg-123"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+
+        token = token_res.data["access"]
+        res_list = self.client.get(
+            "/api/contact/messages/admin",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        res_delete = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": [1]},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res_list.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res_delete.status_code, status.HTTP_403_FORBIDDEN)
+
 
 @override_settings(
     REST_FRAMEWORK={
@@ -582,7 +752,7 @@ class ReferenceApiTests(APITestCase):
     def test_reference_update_and_delete(self):
         ref = Reference.objects.create(
             reference="Ref B",
-            image="",
+            image="https://example.test/b.png",
             icon="",
             situation="Situation B",
             tasks=[],
@@ -595,7 +765,7 @@ class ReferenceApiTests(APITestCase):
             self.detail_url,
             {
                 "reference": "Ref B+",
-                "image": "",
+                "image": "https://example.test/b.png",
                 "icon": "",
                 "situation": "Situation B+",
                 "tasks": ["Task"],
@@ -614,6 +784,156 @@ class ReferenceApiTests(APITestCase):
         )
         self.assertIn(delete_res.status_code, [status.HTTP_204_NO_CONTENT, status.HTTP_200_OK])
         self.assertEqual(Reference.objects.count(), 0)
+
+    def test_reference_update_deletes_old_media_files(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
+                old_path = default_storage.save(
+                    "references/old-image.webp", ContentFile(b"old")
+                )
+                new_path = default_storage.save(
+                    "references/new-image.webp", ContentFile(b"new")
+                )
+
+                ref = Reference.objects.create(
+                    reference="Ref C",
+                    image=f"http://example.test/media/{old_path}",
+                    icon="",
+                    situation="Situation C",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+                detail_url = f"/api/contact/references/admin/{ref.id}"
+
+                self.assertTrue(default_storage.exists(old_path))
+                self.assertTrue(default_storage.exists(new_path))
+
+                update_res = self.client.put(
+                    detail_url,
+                    {
+                        "reference": "Ref C",
+                        "image": f"http://example.test/media/{new_path}",
+                        "icon": "",
+                        "situation": "Situation C",
+                        "tasks": [],
+                        "actions": [],
+                        "results": [],
+                    },
+                    format="json",
+                    HTTP_AUTHORIZATION=f"Bearer {self.token}",
+                )
+
+                self.assertEqual(update_res.status_code, status.HTTP_200_OK, update_res.data)
+                self.assertFalse(default_storage.exists(old_path))
+                self.assertTrue(default_storage.exists(new_path))
+
+    def test_reference_update_deletes_old_icon_file(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media"):
+                image_path = default_storage.save(
+                    "references/ref-image.webp", ContentFile(b"image")
+                )
+                old_icon_path = default_storage.save(
+                    "references/old-icon.webp", ContentFile(b"old-icon")
+                )
+                new_icon_path = default_storage.save(
+                    "references/new-icon.webp", ContentFile(b"new-icon")
+                )
+
+                ref = Reference.objects.create(
+                    reference="Ref Icon",
+                    image=f"http://example.test/media/{image_path}",
+                    icon=f"http://example.test/media/{old_icon_path}",
+                    situation="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+                detail_url = f"/api/contact/references/admin/{ref.id}"
+
+                self.assertTrue(default_storage.exists(old_icon_path))
+                self.assertTrue(default_storage.exists(new_icon_path))
+
+                update_res = self.client.put(
+                    detail_url,
+                    {
+                        "reference": "Ref Icon",
+                        "image": f"http://example.test/media/{image_path}",
+                        "icon": f"http://example.test/media/{new_icon_path}",
+                        "situation": "",
+                        "tasks": [],
+                        "actions": [],
+                        "results": [],
+                    },
+                    format="json",
+                    HTTP_AUTHORIZATION=f"Bearer {self.token}",
+                )
+
+                self.assertEqual(update_res.status_code, status.HTTP_200_OK)
+                self.assertFalse(default_storage.exists(old_icon_path))
+                self.assertTrue(default_storage.exists(new_icon_path))
+
+    def test_reference_patch_keeps_media_files(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
+                image_path = default_storage.save(
+                    "references/ref-image.webp", ContentFile(b"image")
+                )
+                icon_path = default_storage.save(
+                    "references/ref-icon.webp", ContentFile(b"icon")
+                )
+
+                ref = Reference.objects.create(
+                    reference="Ref Patch",
+                    image=f"http://example.test/media/{image_path}",
+                    icon=f"http://example.test/media/{icon_path}",
+                    situation="Situation",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+                detail_url = f"/api/contact/references/admin/{ref.id}"
+
+                patch_res = self.client.patch(
+                    detail_url,
+                    {"reference": "Ref Patch+"},
+                    format="json",
+                    HTTP_AUTHORIZATION=f"Bearer {self.token}",
+                )
+
+                self.assertEqual(patch_res.status_code, status.HTTP_200_OK)
+                self.assertTrue(default_storage.exists(image_path))
+                self.assertTrue(default_storage.exists(icon_path))
+
+    def test_reference_update_ignores_external_media_url(self):
+        ref = Reference.objects.create(
+            reference="Ref External",
+            image="https://example.com/old.png",
+            icon="",
+            situation="",
+            tasks=[],
+            actions=[],
+            results=[],
+        )
+        detail_url = f"/api/contact/references/admin/{ref.id}"
+
+        update_res = self.client.put(
+            detail_url,
+            {
+                "reference": "Ref External",
+                "image": "https://example.com/new.png",
+                "icon": "",
+                "situation": "",
+                "tasks": [],
+                "actions": [],
+                "results": [],
+            },
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+
+        self.assertEqual(update_res.status_code, status.HTTP_200_OK)
 
     def test_reference_image_upload(self):
         image = Image.new("RGB", (2000, 1200), color=(255, 0, 0))
@@ -689,3 +1009,76 @@ class SecurityGlobalThrottleTests(APITestCase):
 
         self.assertIsNotNone(last)
         self.assertEqual(last.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+class ReferenceMediaCleanupTests(APITestCase):
+    @override_settings(MEDIA_URL="/media/")
+    def test_reference_delete_removes_media_files(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                image_path = default_storage.save(
+                    "references/test-image.webp", ContentFile(b"image")
+                )
+                icon_path = default_storage.save(
+                    "references/test-icon.webp", ContentFile(b"icon")
+                )
+
+                ref = Reference.objects.create(
+                    reference="Ref cleanup",
+                    image=f"http://testserver/media/{image_path}",
+                    icon=f"/media/{icon_path}",
+                    situation="Situation",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                self.assertTrue(default_storage.exists(image_path))
+                self.assertTrue(default_storage.exists(icon_path))
+
+                ref.delete()
+
+                self.assertFalse(default_storage.exists(image_path))
+                self.assertFalse(default_storage.exists(icon_path))
+
+
+class ConfigUrlsTests(SimpleTestCase):
+    @override_settings(ENABLE_JWT=True, DEBUG=False)
+    def test_urls_include_jwt_routes_when_enabled(self):
+        import config.urls as urls
+
+        importlib.reload(urls)
+        clear_url_caches()
+        names = {
+            pattern.name
+            for pattern in urls.urlpatterns
+            if getattr(pattern, "name", None)
+        }
+
+        self.assertIn("token_obtain_pair", names)
+        self.assertIn("token_refresh", names)
+
+    @override_settings(ENABLE_JWT=False, DEBUG=False)
+    def test_urls_exclude_jwt_routes_when_disabled(self):
+        import config.urls as urls
+
+        importlib.reload(urls)
+        clear_url_caches()
+        names = {
+            pattern.name
+            for pattern in urls.urlpatterns
+            if getattr(pattern, "name", None)
+        }
+
+        self.assertNotIn("token_obtain_pair", names)
+        self.assertNotIn("token_refresh", names)
+
+    @override_settings(ENABLE_JWT=False, DEBUG=True, MEDIA_URL="/media/")
+    def test_urls_include_static_media_when_debug(self):
+        import config.urls as urls
+
+        importlib.reload(urls)
+        clear_url_caches()
+        patterns = [str(pattern.pattern) for pattern in urls.urlpatterns]
+
+        self.assertTrue(any("media" in pattern for pattern in patterns))

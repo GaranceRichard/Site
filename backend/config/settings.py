@@ -148,7 +148,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "contact",
+    "contact.apps.ContactConfig",
 ]
 
 MIDDLEWARE = [
@@ -424,6 +424,7 @@ LOGGING = {
     "loggers": {
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "PIL": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }
 

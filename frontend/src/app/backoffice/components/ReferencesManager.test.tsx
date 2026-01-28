@@ -87,11 +87,17 @@ describe("ReferencesManager", () => {
       .mockResolvedValueOnce({
         ok: true,
         json: vi.fn().mockResolvedValue({
+          url: "http://example.test/media/references/ref.webp",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
           id: 1,
           reference: "Ref A",
-            reference_short: "",
-            order_index: 1,
-          image: "",
+          reference_short: "",
+          order_index: 1,
+          image: "http://example.test/media/references/ref.webp",
           icon: "",
           situation: "Situation A",
           tasks: [],
@@ -109,6 +115,15 @@ describe("ReferencesManager", () => {
     });
 
     fireEvent.click(screen.getAllByRole("button", { name: "Ajouter" })[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Charger l’image" }));
+    const inputs = document.querySelectorAll("input[type='file']");
+    const file = new File(["img"], "image.png", { type: "image/png" });
+    fireEvent.change(inputs[0], { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Aucune image")).not.toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText("Référence"), {
       target: { value: "Ref A" },
@@ -257,7 +272,7 @@ describe("ReferencesManager", () => {
           reference: "Ref A",
           reference_short: "",
           order_index: 1,
-          image: "",
+          image: "http://example.test/media/references/ref.webp",
           icon: "",
           situation: "Situation A",
           tasks: [],
@@ -377,7 +392,65 @@ describe("ReferencesManager", () => {
     fireEvent.change(inputs[1], { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("http://example.test/media/references/icon.webp")).toBeInTheDocument();
+      expect(screen.queryByText("Aucune icône")).not.toBeInTheDocument();
+    });
+  });
+
+  it("permet de supprimer l'icône d'une référence", async () => {
+    const store = setupSessionStorage();
+    store.set("access_token", "token");
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            reference: "Ref A",
+            reference_short: "",
+            order_index: 1,
+            image: "http://example.test/media/references/ref.webp",
+            icon: "http://example.test/media/references/icon.webp",
+            situation: "Situation A",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+        ]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 1,
+          reference: "Ref A",
+          reference_short: "",
+          order_index: 1,
+          image: "http://example.test/media/references/ref.webp",
+          icon: "",
+          situation: "Situation A",
+          tasks: [],
+          actions: [],
+          results: [],
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ReferencesManager apiBase="http://example.test" onRequestLogin={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Ref A")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Ref A"));
+    fireEvent.click(screen.getByRole("button", { name: "Supprimer l’icône" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://example.test/api/contact/references/admin/1",
+        expect.objectContaining({ method: "PUT" }),
+      );
     });
   });
 
@@ -453,7 +526,7 @@ describe("ReferencesManager", () => {
     fireEvent.change(inputs[0], { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByText("http://example.test/media/references/ref.webp")).toBeInTheDocument();
+      expect(screen.queryByText("Aucune image")).not.toBeInTheDocument();
     });
   });
 
@@ -559,6 +632,12 @@ describe("ReferencesManager", () => {
         json: vi.fn().mockResolvedValue([]),
       })
       .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          url: "http://example.test/media/references/ref.webp",
+        }),
+      })
+      .mockResolvedValueOnce({
         ok: false,
         status: 500,
         text: vi.fn().mockResolvedValue("Create failed"),
@@ -573,6 +652,15 @@ describe("ReferencesManager", () => {
     });
 
     fireEvent.click(screen.getAllByRole("button", { name: "Ajouter" })[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Charger l’image" }));
+    const inputs = document.querySelectorAll("input[type='file']");
+    const file = new File(["img"], "image.png", { type: "image/png" });
+    fireEvent.change(inputs[0], { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Aucune image")).not.toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText("Référence"), {
       target: { value: "Ref A" },
@@ -966,7 +1054,7 @@ describe("ReferencesManager", () => {
           reference: "Ref A",
           reference_short: "",
           order_index: 1,
-          image: "",
+          image: "http://example.test/media/references/ref.webp",
           icon: "",
           situation: "Situation A",
           tasks: [],
@@ -1261,7 +1349,7 @@ describe("ReferencesManager", () => {
     });
   });
 
-  it("affiche une erreur si la référence ou la situation manque", async () => {
+  it("affiche une erreur si la référence ou l'image manque", async () => {
     const store = setupSessionStorage();
     store.set("access_token", "token");
 
@@ -1282,7 +1370,7 @@ describe("ReferencesManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Référence et situation sont obligatoires\./)).toBeInTheDocument();
+      expect(screen.getByText(/Référence et image sont obligatoires\./)).toBeInTheDocument();
     });
   });
 
@@ -1398,7 +1486,7 @@ describe("ReferencesManager", () => {
             reference: "Ref A",
             reference_short: "",
             order_index: 1,
-            image: "",
+            image: "http://example.test/media/references/ref.webp",
             icon: "",
             situation: "Situation A",
             tasks: [],
@@ -1414,7 +1502,7 @@ describe("ReferencesManager", () => {
           reference: "Ref A+",
             reference_short: "",
             order_index: 1,
-          image: "",
+          image: "http://example.test/media/references/ref.webp",
           icon: "",
           situation: "Situation A",
           tasks: [],
@@ -1539,6 +1627,12 @@ describe("ReferencesManager", () => {
         json: vi.fn().mockResolvedValue([]),
       })
       .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          url: "http://example.test/media/references/ref.webp",
+        }),
+      })
+      .mockResolvedValueOnce({
         ok: false,
         status: 401,
         text: vi.fn().mockResolvedValue("Unauthorized"),
@@ -1553,6 +1647,15 @@ describe("ReferencesManager", () => {
     });
 
     fireEvent.click(screen.getAllByRole("button", { name: "Ajouter" })[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Charger l’image" }));
+    const inputs = document.querySelectorAll("input[type='file']");
+    const file = new File(["img"], "image.png", { type: "image/png" });
+    fireEvent.change(inputs[0], { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Aucune image")).not.toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByLabelText("Référence"), {
       target: { value: "Ref A" },

@@ -332,8 +332,8 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
         results: textToList(form.results),
       };
 
-      if (!payload.reference || !payload.situation) {
-        reportError("Référence et situation sont obligatoires.");
+      if (!payload.reference || !payload.image) {
+        reportError("Référence et image sont obligatoires.");
         return;
       }
 
@@ -611,7 +611,12 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
           <button
             type="button"
             aria-label="Fermer"
-            onClick={() => setModalOpen(false)}
+            onClick={() => {
+              if (isEditing) {
+                setModalOpen(false);
+              }
+            }}
+            disabled={!isEditing}
             className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
           />
           <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
@@ -665,14 +670,14 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
                       <p className="text-xs font-semibold text-neutral-500">Image</p>
-                      <p className="mt-1 truncate text-xs text-neutral-400">
-                        {form.image ? form.image : "Aucune image"}
-                      </p>
-                      <div className="mt-3 flex items-center gap-2">
+                      {!form.image ? (
+                        <p className="mt-1 truncate text-xs text-neutral-400">Aucune image</p>
+                      ) : null}
+                      <div className="mt-3 flex items-center justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => imageInputRef.current?.click()}
-                          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+                          className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
                         >
                           Charger l’image
                         </button>
@@ -689,16 +694,26 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
                       />
                     </div>
 
-                    <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
+                    <div className="relative rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">
                       <p className="text-xs font-semibold text-neutral-500">Icône</p>
-                      <p className="mt-1 truncate text-xs text-neutral-400">
-                        {form.icon ? form.icon : "Aucune icône"}
-                      </p>
-                      <div className="mt-3 flex items-center gap-2">
+                      {!form.icon ? (
+                        <p className="mt-1 truncate text-xs text-neutral-400">Aucune icône</p>
+                      ) : null}
+                      {form.icon ? (
+                        <button
+                          type="button"
+                          aria-label="Supprimer l’icône"
+                          onClick={() => setForm((prev) => ({ ...prev, icon: "" }))}
+                          className="absolute right-2 top-2 h-6 w-6 rounded-full border border-neutral-200 text-[11px] font-semibold text-neutral-500 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                        >
+                          ×
+                        </button>
+                      ) : null}
+                      <div className="mt-3 flex items-center justify-center gap-2">
                         <button
                           type="button"
                           onClick={() => iconInputRef.current?.click()}
-                          className="rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
+                          className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
                         >
                           Charger l’icône
                         </button>

@@ -168,7 +168,7 @@ export default function ReferencesSection() {
                             {isActive ? r.nameExpanded : r.nameCollapsed}
                           </p>
 
-                          {/* Ligne 2 : mission (1 ligne, hauteur fixe) */}
+                          {/* Ligne 2 : situation (1 ligne, hauteur fixe) */}
                           <div className="h-5 overflow-hidden">
                             <p
                               className={[
@@ -177,7 +177,7 @@ export default function ReferencesSection() {
                                 isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
                               ].join(" ")}
                             >
-                              {r.missionTitle}
+                              {r.situation}
                             </p>
                           </div>
 
@@ -190,7 +190,7 @@ export default function ReferencesSection() {
                                 isActive ? "opacity-100" : "opacity-0",
                               ].join(" ")}
                             >
-                              Voir la mission →
+                              Cliquer pour les détails →
                             </div>
                           </div>
                         </div>
@@ -242,10 +242,10 @@ export default function ReferencesSection() {
                           {r.nameExpanded}
                         </p>
                         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-                          {r.missionTitle}
+                          {r.situation}
                         </p>
                         <p className="mt-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-                          Voir la mission →
+                          Cliquer pour les détails →
                         </p>
                       </div>
                     </button>

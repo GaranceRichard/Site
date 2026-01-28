@@ -24,7 +24,7 @@ export default function ReferenceModalBody({
         </div>
 
         <div className="rounded-2xl border border-neutral-200/70 bg-white/60 p-5 backdrop-blur-sm dark:border-neutral-800/70 dark:bg-neutral-950/35">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">TÃ¢ches</p>
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Tâches</p>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-neutral-700 dark:text-neutral-200">
             {tasks.map((p) => (
               <li key={p}>{p}</li>
@@ -42,7 +42,7 @@ export default function ReferenceModalBody({
         </div>
 
         <div className="rounded-2xl border border-neutral-200/70 bg-white/60 p-5 backdrop-blur-sm dark:border-neutral-800/70 dark:bg-neutral-950/35">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">RÃ©sultats</p>
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Résultats</p>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-neutral-700 dark:text-neutral-200">
             {results.map((p) => (
               <li key={p}>{p}</li>

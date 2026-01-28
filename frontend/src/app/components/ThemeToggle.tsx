@@ -1,7 +1,7 @@
 // frontend/src/app/components/ThemeToggle.tsx
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 const KEY = "theme";
@@ -38,6 +38,15 @@ export default function ThemeToggle({ className }: { className?: string }) {
     () => getThemeFromDom(),
     () => "light"
   );
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(KEY);
+      if (stored === "light" || stored === "dark") {
+        applyTheme(stored);
+      }
+    } catch {}
+  }, []);
 
   function toggle() {
     const next: Theme = theme === "dark" ?"light" : "dark";
