@@ -15,6 +15,7 @@ Site vitrine avec page de contact.
 
 ## Structure du projet
 garancerichard-site/
+- docker-compose.yml (PostgreSQL + Redis pour dev)
 - backend/ (Django + API REST)
 - frontend/ (Next.js)
 - frontend/src/app/backoffice/ (page, hook, composants UI)
@@ -27,6 +28,24 @@ garancerichard-site/
 - Git
 
 ## Démarrage rapide (développement)
+### Docker Compose (PostgreSQL + Redis)
+Depuis la racine du repo :
+```powershell
+docker compose up -d
+```
+
+Puis dans `backend/.env`, ajouter :
+```ini
+DATABASE_URL=postgresql://dev:dev@127.0.0.1:5432/garancerichard_dev
+REDIS_URL=redis://127.0.0.1:6379/0
+```
+
+Ensuite lancer les migrations :
+```powershell
+cd backend
+python manage.py migrate
+```
+
 ### Backend (Django)
 - Dans un terminal :
 ```powershell
