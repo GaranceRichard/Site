@@ -4,8 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 
-import redis
-
 
 class HealthAnonThrottle(AnonRateThrottle):
     # ✅ rate déterminé par un setting Django (pas par REST_FRAMEWORK)
@@ -67,6 +65,8 @@ def _check_dependencies() -> dict:
         redis_ok = True
         redis_error = ""
         try:
+            import redis  # lazy import to avoid hard dependency in minimal envs
+
             client = redis.Redis.from_url(redis_url, socket_connect_timeout=1, socket_timeout=1)
             client.ping()
         except Exception as exc:  # pragma: no cover - defensive
