@@ -196,10 +196,10 @@ test("messages list shows single-line columns and pagination", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
 
-  await expect(page.getByText("Nom")).toBeVisible();
-  await expect(page.getByText("Email")).toBeVisible();
-  await expect(page.getByText("Sujet")).toBeVisible();
-  await expect(page.getByText("Date")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Trier par nom" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Trier par email" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Trier par sujet" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Trier par date" })).toBeVisible();
 
   await expect(page.getByText(/Page 1 \/ \d+ — \d+ message/)).toBeVisible();
 });

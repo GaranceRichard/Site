@@ -139,6 +139,9 @@ DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DJANGO_ENABLE_JWT=true
 # Mode E2E: relaxe le throttling pour eviter les faux positifs.
 DJANGO_E2E_MODE=false
+# (Optionnel) Headers de sÃ©curitÃ©
+# DJANGO_SECURITY_CSP=default-src 'self'; ...
+# DJANGO_PERMISSIONS_POLICY=geolocation=(), camera=(), microphone=(), ...
 # Throttling global (optionnel en dev, recommande en prod)
 DJANGO_GLOBAL_ANON_THROTTLE_RATE=120/min
 DJANGO_GLOBAL_USER_THROTTLE_RATE=600/min
@@ -296,6 +299,7 @@ Ne pas committer :
 - DJANGO_CORS_ALLOWED_ORIGINS + DJANGO_CSRF_TRUSTED_ORIGINS alignés avec le domaine
 - DATABASE_URL configurée (PostgreSQL recommandé)
 - REDIS_URL configuré (throttling global cohérent)
+- CSP + Permissions-Policy configurées
 - HTTPS en frontal + DJANGO_SECURE_SSL_REDIRECT=True
 - Sauvegardes DB + logs centralisés
 - (Optionnel) SENTRY_DSN pour monitoring

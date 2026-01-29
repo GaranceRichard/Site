@@ -153,6 +153,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "config.middleware.SecurityHeadersMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -412,6 +413,31 @@ if IS_PROD:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = "DENY"
     SECURE_REFERRER_POLICY = "same-origin"
+
+# -------------------------------------------------
+# Security headers (CSP / Permissions-Policy)
+# -------------------------------------------------
+SECURITY_CSP = os.getenv(
+    "DJANGO_SECURITY_CSP",
+    (
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "img-src 'self' data:; "
+        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "form-action 'self'"
+    ),
+).strip()
+
+SECURITY_PERMISSIONS_POLICY = os.getenv(
+    "DJANGO_PERMISSIONS_POLICY",
+    (
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), "
+        "magnetometer=(), microphone=(), payment=(), usb=()"
+    ),
+).strip()
 
 
 # -------------------------------------------------

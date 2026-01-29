@@ -12068,6 +12068,7 @@ C:.
 |   |           
 |   +---config
 |   |   |   asgi.py
+|   |   |   middleware.py
 |   |   |   settings.py
 |   |   |   throttling.py
 |   |   |   urls.py
@@ -12076,6 +12077,7 @@ C:.
 |   |   |   __init__.py
 |   |   |   
 |   |   \---__pycache__
+|   |           middleware.cpython-312.pyc
 |   |           settings.cpython-312.pyc
 |   |           throttling.cpython-312.pyc
 |   |           urls.cpython-312.pyc
@@ -13066,6 +13068,82 @@ C:.
 |   |   |   |       |       00001040.meta
 |   |   |   |       |       00001041.meta
 |   |   |   |       |       00001042.meta
+|   |   |   |       |       00001043.sst
+|   |   |   |       |       00001044.sst
+|   |   |   |       |       00001045.sst
+|   |   |   |       |       00001046.meta
+|   |   |   |       |       00001047.meta
+|   |   |   |       |       00001048.meta
+|   |   |   |       |       00001049.sst
+|   |   |   |       |       00001050.sst
+|   |   |   |       |       00001051.sst
+|   |   |   |       |       00001052.meta
+|   |   |   |       |       00001053.meta
+|   |   |   |       |       00001054.meta
+|   |   |   |       |       00001055.sst
+|   |   |   |       |       00001056.sst
+|   |   |   |       |       00001057.sst
+|   |   |   |       |       00001058.meta
+|   |   |   |       |       00001059.meta
+|   |   |   |       |       00001060.meta
+|   |   |   |       |       00001061.sst
+|   |   |   |       |       00001062.sst
+|   |   |   |       |       00001063.sst
+|   |   |   |       |       00001064.meta
+|   |   |   |       |       00001065.meta
+|   |   |   |       |       00001066.meta
+|   |   |   |       |       00001067.sst
+|   |   |   |       |       00001068.sst
+|   |   |   |       |       00001069.sst
+|   |   |   |       |       00001070.meta
+|   |   |   |       |       00001071.meta
+|   |   |   |       |       00001072.meta
+|   |   |   |       |       00001073.sst
+|   |   |   |       |       00001074.sst
+|   |   |   |       |       00001075.sst
+|   |   |   |       |       00001076.meta
+|   |   |   |       |       00001077.meta
+|   |   |   |       |       00001078.meta
+|   |   |   |       |       00001079.sst
+|   |   |   |       |       00001080.sst
+|   |   |   |       |       00001081.sst
+|   |   |   |       |       00001082.meta
+|   |   |   |       |       00001083.meta
+|   |   |   |       |       00001084.meta
+|   |   |   |       |       00001085.sst
+|   |   |   |       |       00001086.sst
+|   |   |   |       |       00001087.sst
+|   |   |   |       |       00001088.meta
+|   |   |   |       |       00001089.meta
+|   |   |   |       |       00001090.meta
+|   |   |   |       |       00001091.sst
+|   |   |   |       |       00001092.sst
+|   |   |   |       |       00001093.sst
+|   |   |   |       |       00001094.meta
+|   |   |   |       |       00001095.meta
+|   |   |   |       |       00001096.meta
+|   |   |   |       |       00001097.sst
+|   |   |   |       |       00001098.sst
+|   |   |   |       |       00001099.sst
+|   |   |   |       |       00001100.sst
+|   |   |   |       |       00001101.sst
+|   |   |   |       |       00001102.meta
+|   |   |   |       |       00001103.meta
+|   |   |   |       |       00001104.meta
+|   |   |   |       |       00001105.meta
+|   |   |   |       |       00001106.meta
+|   |   |   |       |       00001107.sst
+|   |   |   |       |       00001108.sst
+|   |   |   |       |       00001109.sst
+|   |   |   |       |       00001110.meta
+|   |   |   |       |       00001111.meta
+|   |   |   |       |       00001112.meta
+|   |   |   |       |       00001113.sst
+|   |   |   |       |       00001114.sst
+|   |   |   |       |       00001115.sst
+|   |   |   |       |       00001116.meta
+|   |   |   |       |       00001117.meta
+|   |   |   |       |       00001118.meta
 |   |   |   |       |       CURRENT
 |   |   |   |       |       LOG
 |   |   |   |       |       
@@ -22290,30 +22368,30 @@ C:.
 |   |   |           500.html
 |   |   |           
 |   |   +---static
-|   |   |   +---BulDifW356_s3quU2OI8e
-|   |   |   |       _buildManifest.js
-|   |   |   |       _clientMiddlewareManifest.json
-|   |   |   |       _ssgManifest.js
+|   |   |   +---chunks
+|   |   |   |       058ab54fd82a8423.css
+|   |   |   |       18742e4abe785207.js
+|   |   |   |       295d483fd0fe7058.js
+|   |   |   |       3744063cd98830e8.js
+|   |   |   |       75ebfcc4f327c662.js
+|   |   |   |       76c064224d953678.js
+|   |   |   |       7d6514a90169e63d.js
+|   |   |   |       864b2693703d34bc.js
+|   |   |   |       a6dad97d9634a72d.js
+|   |   |   |       a6dad97d9634a72d.js.map
+|   |   |   |       be6f7848e9d1a41e.js
+|   |   |   |       bfc620f62b67ef61.js
+|   |   |   |       d09145e934b5d82b.js
+|   |   |   |       d2be314c3ece3fbe.js
+|   |   |   |       d63e544f8f8f66c4.js
+|   |   |   |       fd05e2ccb40a4e2b.js
+|   |   |   |       ff1a16fafef87110.js
+|   |   |   |       turbopack-2081013bc96009dd.js
 |   |   |   |       
-|   |   |   \---chunks
-|   |   |           058ab54fd82a8423.css
-|   |   |           18742e4abe785207.js
-|   |   |           295d483fd0fe7058.js
-|   |   |           3744063cd98830e8.js
-|   |   |           75ebfcc4f327c662.js
-|   |   |           76c064224d953678.js
-|   |   |           7d6514a90169e63d.js
-|   |   |           864b2693703d34bc.js
-|   |   |           a6dad97d9634a72d.js
-|   |   |           a6dad97d9634a72d.js.map
-|   |   |           be6f7848e9d1a41e.js
-|   |   |           bfc620f62b67ef61.js
-|   |   |           d09145e934b5d82b.js
-|   |   |           d2be314c3ece3fbe.js
-|   |   |           d63e544f8f8f66c4.js
-|   |   |           fd05e2ccb40a4e2b.js
-|   |   |           ff1a16fafef87110.js
-|   |   |           turbopack-2081013bc96009dd.js
+|   |   |   \---_526ZmVUvhRR_lQG5eG9K
+|   |   |           _buildManifest.js
+|   |   |           _clientMiddlewareManifest.json
+|   |   |           _ssgManifest.js
 |   |   |           
 |   |   \---types
 |   |           routes.d.ts
