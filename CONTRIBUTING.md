@@ -73,6 +73,11 @@ Installation (une fois) :
 ```powershell
 python -m pip install pre-commit
 pre-commit install
+
+Le hook lance la suite complète (backend + frontend + E2E).
+Prérequis E2E : fichier rontend/.env.e2e.local avec E2E_ADMIN_USER et E2E_ADMIN_PASS.
+Note : le hook peut être long à exécuter.
+
 ```
 
 Exécution manuelle :
