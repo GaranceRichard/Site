@@ -201,6 +201,22 @@ Notes :
 - GET /api/health/ready : readiness explicite (mÃªme logique que /api/health)
 
 
+### Bonus : alerting
+Objectif : détecter rapidement les pannes partielles (app up mais DB/Redis down).
+
+- UptimeRobot : ping GET /api/health toutes les 5 min (alerte si 503).
+- Better Uptime : alerte si statut HTTP ? 200 ou si ok=false.
+- Datadog / New Relic : parser le JSON pour extraire db.ok, redis.ok et créer des monitors.
+
+Exemple réponse :
+```json
+{
+  "ok": false,
+  "db": { "ok": true },
+  "redis": { "ok": false, "error": "Connection refused" }
+}
+```
+
 ## API ?Backoffice
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
