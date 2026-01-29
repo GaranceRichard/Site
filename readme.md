@@ -1,4 +1,5 @@
 # GaranceRichard — Site (Frontend Next.js + Backend Django/DRF)
+![CI](https://github.com/GaranceRichard/Site/actions/workflows/ci.yml/badge.svg)
 
 Site vitrine avec page de contact.
 - Frontend : Next.js (App Router)
@@ -22,6 +23,11 @@ garancerichard-site/
 - frontend/src/app/backoffice/ (page, hook, composants UI)
 - frontend/src/app/components/backoffice/ (BackofficeModal d\u00e9coup\u00e9)
 - frontend/src/app/components/home/ (ReferenceModal d\u00e9coup\u00e9)
+
+## CI (GitHub Actions)
+- PR et main : tests unitaires backend + frontend + lint + build front
+- Nightly (02:00 UTC) : E2E Playwright
+- main seulement : build des images Docker (sans push registry)
 
 ## Prérequis
 - Node.js (LTS recommandé)
@@ -289,6 +295,7 @@ Ne pas committer :
 - DJANGO_ALLOWED_HOSTS configuré (domaines réels)
 - DJANGO_CORS_ALLOWED_ORIGINS + DJANGO_CSRF_TRUSTED_ORIGINS alignés avec le domaine
 - DATABASE_URL configurée (PostgreSQL recommandé)
+- REDIS_URL configuré (throttling global cohérent)
 - HTTPS en frontal + DJANGO_SECURE_SSL_REDIRECT=True
 - Sauvegardes DB + logs centralisés
 - (Optionnel) SENTRY_DSN pour monitoring
@@ -298,6 +305,7 @@ Ne pas committer :
 - DJANGO_SECRET_KEY fort
 - DJANGO_ALLOWED_HOSTS et DJANGO_CORS_ALLOWED_ORIGINS alignés avec le domaine
 - Base de données de production (PostgreSQL recommandé)
+- Redis en production (recommandé pour le throttling)
 - HTTPS en frontal
 
 ## Standards d'ingenierie (DoD)
