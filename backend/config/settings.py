@@ -88,13 +88,15 @@ def _validate_origins(label: str, origins: list[str], require_https: bool) -> No
         if IS_PROD:
             raise RuntimeError(f"{label} vide en production.")
         return
+    allow_insecure_in_prod = _bool("DJANGO_ALLOW_INSECURE_ORIGINS_IN_PROD", default=False)
     for o in origins:
         if o == "*" or o.endswith("://*"):
             raise RuntimeError(f"{label} ne doit pas contenir de wildcard. Valeur: {o}")
         if not (o.startswith("http://") or o.startswith("https://")):
             raise RuntimeError(f"{label} invalide: {o} (attendu http:// ou https://)")
         if require_https and not o.startswith("https://"):
-            raise RuntimeError(f"{label} doit être en HTTPS en production: {o}")
+            if not allow_insecure_in_prod:
+                raise RuntimeError(f"{label} doit être en HTTPS en production: {o}")
 
 
 def _validate_dev_local_origins(label: str, origins: list[str]) -> None:
@@ -496,3 +498,4 @@ if not IS_TEST and _bool("DJANGO_STARTUP_BANNER", default=not IS_PROD):
         cache_backend,
         "✓" if auth_classes else "✗",
     )
+
