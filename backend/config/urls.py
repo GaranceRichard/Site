@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from config.views import HealthView
+from config.views import HealthLiveView, HealthReadyView, HealthView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -11,6 +11,8 @@ urlpatterns = [
 
     # ✅ Health check (DRF) — utile prod + tests throttling
     path("api/health", HealthView.as_view(), name="api-health"),
+    path("api/health/live", HealthLiveView.as_view(), name="api-health-live"),
+    path("api/health/ready", HealthReadyView.as_view(), name="api-health-ready"),
 ]
 
 if settings.ENABLE_JWT:

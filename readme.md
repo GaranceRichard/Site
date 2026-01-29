@@ -195,6 +195,11 @@ Notes :
 - consent doit être true (validation backend)
 - anti-spam : honeypot côté front + throttling côté API
 
+## Health checks
+- GET /api/health : readiness (DB + Redis si configuré) → 200 ou 503
+- GET /api/health/live : liveness (app up) → 200
+- GET /api/health/ready : readiness explicite (même logique que /api/health)
+
 
 ## API ?Backoffice
 - GET /api/contact/messages/admin (liste, admin uniquement)
