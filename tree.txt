@@ -54223,4 +54223,5 @@ C:.
         dev-all.ps1
         pre-commit-full.ps1
         pre-commit-full.sh
+        verify-all.ps1
         
