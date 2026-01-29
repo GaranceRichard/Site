@@ -222,6 +222,8 @@ jobs:
       DJANGO_DEBUG: "false"
       DJANGO_SECRET_KEY: ci-secret-key
       DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      DJANGO_CORS_ALLOWED_ORIGINS: https://ci.local
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://ci.local
       DATABASE_URL: postgresql://ci_user:ci_pass@127.0.0.1:5432/ci_db
       REDIS_URL: redis://127.0.0.1:6379/0
     steps:
