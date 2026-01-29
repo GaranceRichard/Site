@@ -189,7 +189,7 @@ jobs:
         run: npm run test:e2e
 
   backend_integration:
-    name: Backend (Integration: Postgres)
+    name: "Backend (Integration: Postgres)"
     runs-on: ubuntu-latest
     defaults:
       run:
