@@ -439,9 +439,9 @@ SECURITY_CSP = os.getenv(
         "base-uri 'self'; "
         "frame-ancestors 'none'; "
         "object-src 'none'; "
-        "img-src 'self' data:; "
-        "style-src 'self' 'unsafe-inline'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
         "form-action 'self'"
     ),
 ).strip()
