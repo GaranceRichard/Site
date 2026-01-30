@@ -67,6 +67,27 @@ jobs:
         id: image_prefix
         run: echo "value=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
+      - name: Validate staging secrets
+        run: |
+          missing=0
+          for v in STAGING_HOST STAGING_USER STAGING_SSH_KEY STAGING_PATH STAGING_BASE_URL REGISTRY_USER REGISTRY_TOKEN; do
+            if [ -z "${!v}" ]; then
+              echo "Missing secret: $v"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH }}
+          STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+
       - name: Upload compose + nginx config
         uses: appleboy/scp-action@v0.1.7
         with:
