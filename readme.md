@@ -195,6 +195,17 @@ Notes :
 - consent doit être true (validation backend)
 - anti-spam : honeypot côté front + throttling côté API
 
+## Documentation API (OpenAPI)
+- Swagger UI: http://127.0.0.1:8000/api/docs/
+- Redoc: http://127.0.0.1:8000/api/redoc/
+- OpenAPI schema (JSON): http://127.0.0.1:8000/api/schema/
+
+Schema validation (CI / local):
+```powershell
+cd backend
+python manage.py spectacular --validate --fail-on-warn
+```
+
 ## Health checks
 - GET /api/health : readiness (DB + Redis si configuré) → 200 ou 503
 - GET /api/health/live : liveness (app up) → 200

@@ -35,6 +35,7 @@ try {
   Push-Location $backendDir
   python -m coverage run manage.py test
   python -m coverage report --fail-under=80
+  python manage.py spectacular --validate --fail-on-warn
   Pop-Location
 
   Write-Host "==> Frontend lint + unit tests + coverage + build"

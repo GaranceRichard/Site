@@ -149,6 +149,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "drf_spectacular",
     "corsheaders",
     "contact.apps.ContactConfig",
 ]
@@ -375,6 +376,7 @@ if ENABLE_JWT:
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": auth_classes,
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": (
         "config.throttling.GlobalAnonRateThrottle",
         "config.throttling.GlobalUserRateThrottle",
@@ -394,6 +396,14 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         *(() if IS_PROD else ("rest_framework.renderers.BrowsableAPIRenderer",)),
     ),
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Mon site API",
+    "DESCRIPTION": "Documentation OpenAPI pour l'API du site.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 
