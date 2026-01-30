@@ -3,16 +3,25 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import models
 from io import BytesIO
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from uuid import uuid4
 
+from drf_spectacular.utils import extend_schema, inline_serializer
+
 from PIL import Image
 
 from .models import ContactMessage, Reference
-from .serializers import ContactMessageSerializer, ReferenceSerializer
+from .serializers import (
+    ContactMessageDeleteSerializer,
+    ContactMessageSerializer,
+    DeleteCountSerializer,
+    ImageUploadResponseSerializer,
+    ReferenceImageUploadSerializer,
+    ReferenceSerializer,
+)
 from .throttles import ContactAnonRateThrottle
 
 
@@ -89,6 +98,16 @@ class ContactMessageListAdminView(generics.ListAPIView):
 class ContactMessageDeleteAdminView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
+    @extend_schema(
+        request=ContactMessageDeleteSerializer,
+        responses={
+            200: DeleteCountSerializer,
+            400: inline_serializer(
+                name="DeleteError",
+                fields={"detail": serializers.CharField()},
+            ),
+        },
+    )
     def post(self, request):
         raw_ids = request.data.get("ids", [])
         if not isinstance(raw_ids, list):
@@ -130,6 +149,16 @@ class ReferenceImageUploadAdminView(APIView):
     permission_classes = [permissions.IsAdminUser]
     parser_classes = [MultiPartParser, FormParser]
 
+    @extend_schema(
+        request=ReferenceImageUploadSerializer,
+        responses={
+            201: ImageUploadResponseSerializer,
+            400: inline_serializer(
+                name="UploadError",
+                fields={"detail": serializers.CharField()},
+            ),
+        },
+    )
     def post(self, request):
         file = request.FILES.get("file")
         if not file:

@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.db import connection
+from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 
+from drf_spectacular.utils import extend_schema, inline_serializer
 
 class HealthAnonThrottle(AnonRateThrottle):
     # ✅ rate déterminé par un setting Django (pas par REST_FRAMEWORK)
@@ -16,6 +18,16 @@ class HealthView(APIView):
     permission_classes = ()
     throttle_classes = [HealthAnonThrottle]
 
+    @extend_schema(
+        responses=inline_serializer(
+            name="HealthStatus",
+            fields={
+                "ok": serializers.BooleanField(),
+                "db": serializers.JSONField(),
+                "redis": serializers.JSONField(),
+            },
+        )
+    )
     def get(self, request):
         status = _check_dependencies()
         http_status = 200 if status["ok"] else 503
@@ -27,6 +39,15 @@ class HealthLiveView(APIView):
     permission_classes = ()
     throttle_classes = [HealthAnonThrottle]
 
+    @extend_schema(
+        responses=inline_serializer(
+            name="HealthLiveStatus",
+            fields={
+                "ok": serializers.BooleanField(),
+                "live": serializers.BooleanField(),
+            },
+        )
+    )
     def get(self, request):
         return Response({"ok": True, "live": True}, status=200)
 
@@ -36,6 +57,17 @@ class HealthReadyView(APIView):
     permission_classes = ()
     throttle_classes = [HealthAnonThrottle]
 
+    @extend_schema(
+        responses=inline_serializer(
+            name="HealthReadyStatus",
+            fields={
+                "ok": serializers.BooleanField(),
+                "ready": serializers.BooleanField(),
+                "db": serializers.JSONField(),
+                "redis": serializers.JSONField(),
+            },
+        )
+    )
     def get(self, request):
         status = _check_dependencies()
         status["ready"] = status["ok"]

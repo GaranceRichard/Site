@@ -81,3 +81,19 @@ class ReferenceSerializer(serializers.ModelSerializer):
                     default_storage.delete(rel_path)
 
         return super().update(instance, validated_data)
+
+
+class ContactMessageDeleteSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
+
+
+class DeleteCountSerializer(serializers.Serializer):
+    deleted = serializers.IntegerField()
+
+
+class ReferenceImageUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()
+
+
+class ImageUploadResponseSerializer(serializers.Serializer):
+    url = serializers.URLField()

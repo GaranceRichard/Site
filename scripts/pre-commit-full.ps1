@@ -10,6 +10,8 @@ $frontendErr = Join-Path $root "frontend-server.err.log"
 
 $backendProc = $null
 $frontendProc = $null
+$backendPython = Join-Path $backendDir ".venv\\Scripts\\python.exe"
+if (-not (Test-Path $backendPython)) { $backendPython = "python" }
 
 function Stop-Proc($proc) {
   if ($null -ne $proc -and -not $proc.HasExited) {
@@ -33,9 +35,9 @@ function Wait-Url([string]$url, [int]$timeoutSec = 60) {
 try {
   Write-Host "==> Backend tests + coverage"
   Push-Location $backendDir
-  python -m coverage run manage.py test
-  python -m coverage report --fail-under=80
-  python manage.py spectacular --validate --fail-on-warn
+  & $backendPython -m coverage run manage.py test
+  & $backendPython -m coverage report --fail-under=80
+  & $backendPython manage.py spectacular --validate --fail-on-warn
   Pop-Location
 
   Write-Host "==> Frontend lint + unit tests + coverage + build"
@@ -76,7 +78,7 @@ try {
 
   Write-Host "==> Start backend server"
   Push-Location $backendDir
-  python manage.py migrate
+  & $backendPython manage.py migrate
   $adminScript = Join-Path $backendDir ".tmp_e2e_admin.py"
   @'
 import os
@@ -95,9 +97,9 @@ user.set_password(os.environ["E2E_ADMIN_PASS"])
 user.save()
 print("E2E admin ready:", user.username)
 '@ | Set-Content -Path $adminScript -Encoding ASCII
-  python $adminScript
+  & $backendPython $adminScript
   Remove-Item $adminScript -Force
-  $backendProc = Start-Process -FilePath "python" -ArgumentList "manage.py runserver 127.0.0.1:8000" -RedirectStandardOutput $backendLog -RedirectStandardError $backendErr -PassThru
+  $backendProc = Start-Process -FilePath $backendPython -ArgumentList "manage.py runserver 127.0.0.1:8000" -RedirectStandardOutput $backendLog -RedirectStandardError $backendErr -PassThru
   Pop-Location
 
   Write-Host "==> Start frontend server"
