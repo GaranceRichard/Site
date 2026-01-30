@@ -31,7 +31,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set image prefix (lowercase)
-        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+        id: image_prefix
+        run: echo "value=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
       - name: Build & push backend
         uses: docker/build-push-action@v5
@@ -40,8 +41,8 @@ jobs:
           file: ./backend/Dockerfile.prod
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-backend:latest
-            ${{ env.IMAGE_PREFIX }}-backend:${{ github.sha }}
+            ${{ steps.image_prefix.outputs.value }}-backend:latest
+            ${{ steps.image_prefix.outputs.value }}-backend:${{ github.sha }}
 
       - name: Build & push frontend
         uses: docker/build-push-action@v5
@@ -50,8 +51,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-frontend:latest
-            ${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}
+            ${{ steps.image_prefix.outputs.value }}-frontend:latest
+            ${{ steps.image_prefix.outputs.value }}-frontend:${{ github.sha }}
 
   deploy_staging:
     name: Deploy to staging
@@ -63,7 +64,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set image prefix (lowercase)
-        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+        id: image_prefix
+        run: echo "value=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
       - name: Upload compose + nginx config
         uses: appleboy/scp-action@v0.1.7
@@ -86,8 +88,8 @@ jobs:
             set -e
             cd "${{ secrets.STAGING_PATH }}"
             docker login ghcr.io -u "${{ secrets.REGISTRY_USER }}" -p "${{ secrets.REGISTRY_TOKEN }}"
-            export BACKEND_IMAGE="${{ env.IMAGE_PREFIX }}-backend:${{ github.sha }}"
-            export FRONTEND_IMAGE="${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}"
+            export BACKEND_IMAGE="${{ steps.image_prefix.outputs.value }}-backend:${{ github.sha }}"
+            export FRONTEND_IMAGE="${{ steps.image_prefix.outputs.value }}-frontend:${{ github.sha }}"
             docker compose -f docker-compose.prod.yml --env-file .env.prod pull
             docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
