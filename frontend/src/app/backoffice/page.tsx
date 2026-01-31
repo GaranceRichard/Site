@@ -1,7 +1,7 @@
 // frontend/src/app/backoffice/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
 import { isBackofficeEnabled } from "../lib/backoffice";
@@ -15,32 +15,23 @@ import Sidebar from "./components/Sidebar";
 import StatusBlocks from "./components/StatusBlocks";
 import UndoToast from "./components/UndoToast";
 import { useBackofficeMessages } from "./useBackofficeMessages";
-import type { BackofficeSection } from "./types";
+import {
+  getBackofficeSection,
+  getBackofficeSectionServer,
+  setBackofficeSection,
+  subscribeBackofficeSection,
+} from "./sectionStore";
 
 export default function BackofficePage() {
   const router = useRouter();
   const backofficeEnabled = isBackofficeEnabled();
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [section, setSection] = useState<BackofficeSection>(() => {
-    try {
-      const saved = window.localStorage.getItem("backoffice_section");
-      if (saved === "messages" || saved === "references" || saved === "stats" || saved === "settings") {
-        return saved;
-      }
-    } catch {
-      // ignore storage errors
-    }
-    return "messages";
-  });
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("backoffice_section", section);
-    } catch {
-      // ignore storage errors
-    }
-  }, [section]);
+  const section = useSyncExternalStore(
+    subscribeBackofficeSection,
+    getBackofficeSection,
+    getBackofficeSectionServer,
+  );
 
   const {
     openLogin,
@@ -90,7 +81,7 @@ export default function BackofficePage() {
       <div className="flex h-full">
         <Sidebar
           section={section}
-          onSelectSection={setSection}
+          onSelectSection={setBackofficeSection}
           onGoHome={goHome}
           onRefresh={() => load(page)}
           onLogout={logoutAndGoHome}

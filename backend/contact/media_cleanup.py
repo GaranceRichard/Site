@@ -6,7 +6,14 @@ from django.core.files.storage import default_storage
 from .models import Reference
 
 
-def media_relative_path(url: str) -> str | None:
+def _as_str(value) -> str:
+    if value is None:
+        return ""
+    return str(getattr(value, "name", value) or "")
+
+
+def media_relative_path(url) -> str | None:
+    url = _as_str(url)
     if not url:
         return None
 
@@ -32,8 +39,8 @@ def media_relative_path(url: str) -> str | None:
 
 def referenced_media_paths() -> set[str]:
     paths: set[str] = set()
-    for ref in Reference.objects.all().only("image", "icon"):
-        for url in (ref.image, ref.icon):
+    for ref in Reference.objects.all().only("image", "image_thumb", "icon"):
+        for url in (ref.image, ref.image_thumb, ref.icon):
             rel_path = media_relative_path(url)
             if rel_path:
                 paths.add(rel_path)
@@ -41,19 +48,24 @@ def referenced_media_paths() -> set[str]:
 
 
 def cleanup_orphan_reference_media() -> int:
-    try:
-        _, files = default_storage.listdir("references")
-    except Exception:
-        return 0
-
-    if not files:
-        return 0
-
     used = referenced_media_paths()
     deleted = 0
-    for name in files:
-        path = f"references/{name}"
-        if path not in used:
-            default_storage.delete(path)
-            deleted += 1
+
+    def _cleanup_dir(prefix: str) -> int:
+        try:
+            _, files = default_storage.listdir(prefix)
+        except Exception:
+            return 0
+        if not files:
+            return 0
+        removed = 0
+        for name in files:
+            path = f"{prefix}/{name}"
+            if path not in used:
+                default_storage.delete(path)
+                removed += 1
+        return removed
+
+    deleted += _cleanup_dir("references")
+    deleted += _cleanup_dir("references/thumbs")
     return deleted

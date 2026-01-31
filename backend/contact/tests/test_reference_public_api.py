@@ -8,7 +8,7 @@ class ReferencePublicApiTests(APITestCase):
     def test_public_reference_list(self):
         Reference.objects.create(
             reference="Ref A",
-            image="https://example.test/a.png",
+            image="references/a.webp",
             icon="https://example.test/icon-a.png",
             situation="Situation A",
             tasks=["T1"],
@@ -17,7 +17,7 @@ class ReferencePublicApiTests(APITestCase):
         )
         Reference.objects.create(
             reference="Ref B",
-            image="https://example.test/b.png",
+            image="references/b.webp",
             icon="",
             situation="Situation B",
             tasks=["T2"],

@@ -150,6 +150,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_spectacular",
+    "storages",
     "corsheaders",
     "contact.apps.ContactConfig",
 ]
@@ -323,6 +324,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# -------------------------------------------------
+# Media storage (S3 optional)
+# -------------------------------------------------
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "").strip()
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "").strip() or None
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "").strip() or None
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "").strip() or None
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN", "").strip() or None
+AWS_QUERYSTRING_AUTH = _bool("AWS_QUERYSTRING_AUTH", default=False)
+
+if AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+    else:
+        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/"
+
 if IS_PROD:
     try:
         import whitenoise  # noqa: F401
@@ -333,7 +351,10 @@ if IS_PROD:
             MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
         STORAGES = {
             "default": {
-                "BACKEND": "django.core.files.storage.FileSystemStorage",
+                "BACKEND": globals().get(
+                    "DEFAULT_FILE_STORAGE",
+                    "django.core.files.storage.FileSystemStorage",
+                ),
             },
             "staticfiles": {
                 "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",

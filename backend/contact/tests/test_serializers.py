@@ -24,7 +24,7 @@ class ReferenceSerializerTests(TestCase):
     def test_order_index_auto_increments(self):
         payload = {
             "reference": "Ref A",
-            "image": "https://example.test/a.png",
+            "image": "/media/references/a.webp",
             "icon": "",
             "situation": "",
             "tasks": [],
@@ -39,7 +39,7 @@ class ReferenceSerializerTests(TestCase):
 
         payload_b = {
             "reference": "Ref B",
-            "image": "https://example.test/b.png",
+            "image": "/media/references/b.webp",
             "icon": "",
             "situation": "",
             "tasks": [],
@@ -56,7 +56,7 @@ class ReferenceSerializerTests(TestCase):
     def test_order_index_preserves_explicit_value(self):
         payload = {
             "reference": "Ref C",
-            "image": "https://example.test/c.png",
+            "image": "/media/references/c.webp",
             "icon": "",
             "situation": "",
             "tasks": [],
@@ -69,3 +69,18 @@ class ReferenceSerializerTests(TestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         ref = serializer.save()
         self.assertEqual(ref.order_index, 7)
+
+    def test_rejects_external_image_url(self):
+        payload = {
+            "reference": "Ref External",
+            "image": "https://example.com/a.png",
+            "icon": "",
+            "situation": "",
+            "tasks": [],
+            "actions": [],
+            "results": [],
+        }
+
+        serializer = ReferenceSerializer(data=payload)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("image", serializer.errors)

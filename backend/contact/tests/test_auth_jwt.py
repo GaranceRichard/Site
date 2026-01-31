@@ -221,7 +221,7 @@ class AuthJwtTests(APITestCase):
         detail_url = "/api/contact/references/admin/1"
         payload = {
             "reference": "Ref X",
-            "image": "https://example.test/x.png",
+            "image": "/media/references/x.webp",
             "icon": "",
             "situation": "",
             "tasks": [],
@@ -267,7 +267,7 @@ class AuthJwtTests(APITestCase):
         token = token_res.data["access"]
         payload = {
             "reference": "Ref X",
-            "image": "https://example.test/x.png",
+            "image": "/media/references/x.webp",
             "icon": "",
             "situation": "",
             "tasks": [],

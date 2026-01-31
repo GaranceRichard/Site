@@ -13,6 +13,7 @@ type ApiReference = {
   reference_short: string;
   order_index: number;
   image: string;
+  image_thumb?: string;
   icon: string;
   situation: string;
   tasks: string[];
@@ -25,13 +26,14 @@ function pickMissionTitle(item: ApiReference): string {
 }
 
 function toReferenceItem(item: ApiReference): ReferenceItem {
+  const imageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
   return {
     id: `ref-${item.id}`,
     nameCollapsed: item.reference_short?.trim() ? item.reference_short : item.reference,
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
-    imageSrc: item.image || "",
+    imageSrc: imageSrc || "",
     badgeSrc: item.icon || undefined,
     badgeAlt: item.icon ? "Icône" : undefined,
     situation: item.situation || "",

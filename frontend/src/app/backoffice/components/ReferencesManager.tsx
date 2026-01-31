@@ -13,6 +13,7 @@ type FormState = {
   reference: string;
   referenceShort: string;
   image: string;
+  imageThumb: string;
   icon: string;
   situation: string;
   tasks: string;
@@ -24,6 +25,7 @@ const emptyForm: FormState = {
   reference: "",
   referenceShort: "",
   image: "",
+  imageThumb: "",
   icon: "",
   situation: "",
   tasks: "",
@@ -149,6 +151,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
       reference: item.reference,
       referenceShort: item.reference_short || "",
       image: item.image || "",
+      imageThumb: item.image_thumb || "",
       icon: item.icon || "",
       situation: item.situation || "",
       tasks: listToText(item.tasks),
@@ -325,6 +328,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
         reference: form.reference.trim(),
         reference_short: form.referenceShort.trim(),
         image: form.image.trim(),
+        image_thumb: form.imageThumb.trim() || undefined,
         icon: form.icon.trim(),
         situation: form.situation.trim(),
         tasks: textToList(form.tasks),
@@ -426,10 +430,14 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
           throw new Error(txt || `Erreur API (${res.status})`);
         }
 
-        const data = (await res.json()) as { url?: string };
+        const data = (await res.json()) as { url?: string; thumbnail_url?: string };
         if (data.url) {
           if (target === "image") {
-            setForm((prev) => ({ ...prev, image: data.url ?? "" }));
+            setForm((prev) => ({
+              ...prev,
+              image: data.url ?? "",
+              imageThumb: data.thumbnail_url ?? "",
+            }));
           } else {
             setForm((prev) => ({ ...prev, icon: data.url ?? "" }));
           }

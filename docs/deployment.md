@@ -33,6 +33,15 @@ Configurer dans Settings → Secrets → Actions:
 Le serveur doit contenir `docker-compose.prod.yml`, `nginx/prod.conf` et `.env.prod`.
 Le workflow copie automatiquement `docker-compose.prod.yml` et `nginx/prod.conf`.
 
+## CDN / stockage médias (S3 + CloudFront)
+Pour activer le stockage S3:
+1) Renseigner les variables AWS dans `.env.prod` (voir `docs/env.prod.example`).
+2) Optionnel: configurer un domaine CDN (CloudFront) via `AWS_S3_CUSTOM_DOMAIN`.
+3) Vérifier que `MEDIA_URL` pointe bien vers le CDN.
+
+## Antivirus (optionnel)
+Si nécessaire, ajoute un scan ClamAV côté serveur ou dans un service dédié avant d’accepter les uploads.
+
 ## Rollback
 1) Choisir un tag d’image stable (SHA précédent).
 2) Sur le serveur:
@@ -48,6 +57,13 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 Recommandé:
 - Healthcheck externe sur `GET /api/health` et `GET /api/health/ready`.
 - UptimeRobot / Better Uptime / Datadog (alerte si 5xx/timeout).
+
+## Cron cleanup médias
+Configurer un cron sur le serveur pour supprimer les médias orphelins:
+```bash
+# Tous les jours à 03:15
+15 3 * * * cd /chemin/vers/deploy/backend && docker compose -f /chemin/vers/deploy/docker-compose.prod.yml --env-file /chemin/vers/deploy/.env.prod exec -T backend python manage.py cleanup_reference_media
+```
 
 ## Smoke tests
 Après déploiement:

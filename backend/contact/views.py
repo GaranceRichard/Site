@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import models
@@ -167,22 +168,33 @@ class ReferenceImageUploadAdminView(APIView):
         if not (file.content_type or "").startswith("image/"):
             return Response({"detail": "Format de fichier invalide."}, status=status.HTTP_400_BAD_REQUEST)
 
-        max_bytes = 10 * 1024 * 1024
+        max_bytes = 5 * 1024 * 1024
         if file.size > max_bytes:
-            return Response({"detail": "Fichier trop volumineux (max 10MB)."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Fichier trop volumineux (max 5MB)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             image = Image.open(file)
+            if image.format not in ("JPEG", "PNG", "WEBP"):
+                return Response({"detail": "Format non supporté (JPEG, PNG, WebP)."}, status=status.HTTP_400_BAD_REQUEST)
             has_alpha = "A" in image.getbands() or image.mode in ("RGBA", "LA", "PA")
             image = image.convert("RGBA" if has_alpha else "RGB")
-            image.thumbnail((1600, 900), Image.LANCZOS)
+            image.thumbnail((1920, 1080), Image.LANCZOS)
 
             buffer = BytesIO()
             if has_alpha:
-                image.save(buffer, format="WEBP", lossless=True, method=6)
+                image.save(buffer, format="WEBP", quality=85, method=6)
             else:
-                image.save(buffer, format="WEBP", quality=82, method=6)
+                image.save(buffer, format="WEBP", quality=85, method=6)
             buffer.seek(0)
+
+            thumb = image.copy()
+            thumb.thumbnail((640, 360), Image.LANCZOS)
+            thumb_buf = BytesIO()
+            if has_alpha:
+                thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
+            else:
+                thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
+            thumb_buf.seek(0)
         except Exception:
             return Response({"detail": "Impossible de traiter l'image."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -190,4 +202,8 @@ class ReferenceImageUploadAdminView(APIView):
         saved_path = default_storage.save(filename, ContentFile(buffer.read()))
         url = request.build_absolute_uri(f"{settings.MEDIA_URL}{saved_path}")
 
-        return Response({"url": url}, status=status.HTTP_201_CREATED)
+        thumb_name = f"references/thumbs/{uuid4().hex}.webp"
+        thumb_path = default_storage.save(thumb_name, ContentFile(thumb_buf.read()))
+        thumb_url = request.build_absolute_uri(f"{settings.MEDIA_URL}{thumb_path}")
+
+        return Response({"url": url, "thumbnail_url": thumb_url}, status=status.HTTP_201_CREATED)

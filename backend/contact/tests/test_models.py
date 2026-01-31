@@ -24,7 +24,7 @@ class ReferenceModelTests(TestCase):
     def test_defaults(self):
         ref = Reference.objects.create(
             reference="Ref",
-            image="https://example.test/ref.png",
+            image="references/ref.webp",
             icon="",
         )
 

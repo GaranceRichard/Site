@@ -9,7 +9,7 @@ from .media_cleanup import media_relative_path
 
 @receiver(pre_delete, sender=Reference)
 def delete_reference_files(sender, instance: Reference, **kwargs):
-    for url in (instance.image, instance.icon):
+    for url in (instance.image, instance.image_thumb, instance.icon):
         rel_path = media_relative_path(url)
         if rel_path:
             default_storage.delete(rel_path)

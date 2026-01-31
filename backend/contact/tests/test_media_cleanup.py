@@ -1,4 +1,5 @@
 import tempfile
+import tempfile
 from io import StringIO
 
 from django.core.files.base import ContentFile
@@ -8,6 +9,8 @@ from django.test.utils import override_settings
 from rest_framework.test import APITestCase
 
 from contact.models import Reference
+
+
 class ReferenceMediaCleanupTests(APITestCase):
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_removes_media_files(self):
@@ -19,10 +22,14 @@ class ReferenceMediaCleanupTests(APITestCase):
                 icon_path = default_storage.save(
                     "references/test-icon.webp", ContentFile(b"icon")
                 )
+                thumb_path = default_storage.save(
+                    "references/thumbs/test-image.webp", ContentFile(b"thumb")
+                )
 
                 ref = Reference.objects.create(
                     reference="Ref cleanup",
-                    image=f"http://testserver/media/{image_path}",
+                    image=image_path,
+                    image_thumb=thumb_path,
                     icon=f"/media/{icon_path}",
                     situation="Situation",
                     tasks=[],
@@ -32,11 +39,13 @@ class ReferenceMediaCleanupTests(APITestCase):
 
                 self.assertTrue(default_storage.exists(image_path))
                 self.assertTrue(default_storage.exists(icon_path))
+                self.assertTrue(default_storage.exists(thumb_path))
 
                 ref.delete()
 
                 self.assertFalse(default_storage.exists(image_path))
                 self.assertFalse(default_storage.exists(icon_path))
+                self.assertFalse(default_storage.exists(thumb_path))
 class MediaCleanupUnitTests(APITestCase):
     def test_media_relative_path_variants(self):
         from contact.media_cleanup import media_relative_path
@@ -71,13 +80,20 @@ class MediaCleanupUnitTests(APITestCase):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")
                 )
+                orphan_thumb = default_storage.save(
+                    "references/thumbs/orphan.webp", ContentFile(b"orphan-thumb")
+                )
                 keep_path = default_storage.save(
                     "references/keep.webp", ContentFile(b"keep")
+                )
+                keep_thumb = default_storage.save(
+                    "references/thumbs/keep.webp", ContentFile(b"keep-thumb")
                 )
 
                 Reference.objects.create(
                     reference="Ref keep",
-                    image=f"http://testserver/media/{keep_path}",
+                    image=keep_path,
+                    image_thumb=keep_thumb,
                     icon="",
                     situation="",
                     tasks=[],
@@ -87,9 +103,11 @@ class MediaCleanupUnitTests(APITestCase):
 
                 deleted = cleanup_orphan_reference_media()
 
-                self.assertEqual(deleted, 1)
+                self.assertEqual(deleted, 2)
                 self.assertFalse(default_storage.exists(orphan_path))
+                self.assertFalse(default_storage.exists(orphan_thumb))
                 self.assertTrue(default_storage.exists(keep_path))
+                self.assertTrue(default_storage.exists(keep_thumb))
 
     @override_settings(MEDIA_URL="/media/")
     def test_cleanup_reference_media_command(self):
@@ -98,12 +116,16 @@ class MediaCleanupUnitTests(APITestCase):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")
                 )
+                orphan_thumb = default_storage.save(
+                    "references/thumbs/orphan.webp", ContentFile(b"orphan-thumb")
+                )
 
                 out = StringIO()
                 call_command("cleanup_reference_media", stdout=out)
 
-                self.assertIn("Fichiers supprimes: 1", out.getvalue())
+                self.assertIn("Fichiers supprimes: 2", out.getvalue())
                 self.assertFalse(default_storage.exists(orphan_path))
+                self.assertFalse(default_storage.exists(orphan_thumb))
 
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_cleans_orphaned_media(self):
@@ -112,13 +134,20 @@ class MediaCleanupUnitTests(APITestCase):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")
                 )
+                orphan_thumb = default_storage.save(
+                    "references/thumbs/orphan.webp", ContentFile(b"orphan-thumb")
+                )
                 kept_path = default_storage.save(
                     "references/keep.webp", ContentFile(b"keep")
+                )
+                kept_thumb = default_storage.save(
+                    "references/thumbs/keep.webp", ContentFile(b"keep-thumb")
                 )
 
                 ref = Reference.objects.create(
                     reference="Ref keep",
-                    image=f"http://testserver/media/{kept_path}",
+                    image=kept_path,
+                    image_thumb=kept_thumb,
                     icon="",
                     situation="Situation",
                     tasks=[],
@@ -127,9 +156,13 @@ class MediaCleanupUnitTests(APITestCase):
                 )
 
                 self.assertTrue(default_storage.exists(orphan_path))
+                self.assertTrue(default_storage.exists(orphan_thumb))
                 self.assertTrue(default_storage.exists(kept_path))
+                self.assertTrue(default_storage.exists(kept_thumb))
 
                 ref.delete()
 
                 self.assertFalse(default_storage.exists(orphan_path))
+                self.assertFalse(default_storage.exists(orphan_thumb))
                 self.assertFalse(default_storage.exists(kept_path))
+                self.assertFalse(default_storage.exists(kept_thumb))

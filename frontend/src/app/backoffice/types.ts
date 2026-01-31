@@ -19,6 +19,7 @@ export type Reference = {
   reference_short: string;
   order_index: number;
   image: string;
+  image_thumb?: string;
   icon: string;
   situation: string;
   tasks: string[];
