@@ -21,8 +21,8 @@ garancerichard-site/
 - backend/ (Django + API REST)
 - frontend/ (Next.js)
 - frontend/src/app/backoffice/ (page, hook, composants UI)
-- frontend/src/app/components/backoffice/ (BackofficeModal d\u00e9coup\u00e9)
-- frontend/src/app/components/home/ (ReferenceModal d\u00e9coup\u00e9)
+- frontend/src/app/components/backoffice/ (BackofficeModal découpe)
+- frontend/src/app/components/home/ (ReferenceModal découpe)
 
 ## CI (GitHub Actions)
 - PR et main : tests unitaires backend + frontend + lint + build front
@@ -224,13 +224,13 @@ python manage.py spectacular --validate --fail-on-warn
 
 
 ### Bonus : alerting
-Objectif : d�tecter rapidement les pannes partielles (app up mais DB/Redis down).
+Objectif : détecter rapidement les pannes partielles (app up mais DB/Redis down).
 
 - UptimeRobot : ping GET /api/health toutes les 5 min (alerte si 503).
-- Better Uptime : alerte si statut HTTP ? 200 ou si ok=false.
-- Datadog / New Relic : parser le JSON pour extraire db.ok, redis.ok et cr�er des monitors.
+- Better Uptime : alerte si statut HTTP != 200 ou si ok=false.
+- Datadog / New Relic : parser le JSON pour extraire db.ok, redis.ok et créer des monitors.
 
-Exemple r�ponse :
+Exemple réponse :
 ```json
 {
   "ok": false,
@@ -239,10 +239,10 @@ Exemple r�ponse :
 }
 ```
 
-## API ?Backoffice
+## API — Backoffice
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
-- POST /api/contact/messages/admin/delete (supprime une liste d?IDs, admin uniquement)
+- POST /api/contact/messages/admin/delete (supprime une liste d'IDs, admin uniquement)
 - Références (admin uniquement) :
   - GET /api/contact/references (liste publique)
   - POST /api/contact/references/admin/upload (upload image)
@@ -311,7 +311,7 @@ npm run test:e2e:coverage
 
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
-- Les tests E2E n?cessitent un compte admin `is_staff` et un backend en cours d?ex?cution.
+- Les tests E2E nécessitent un compte admin `is_staff` et un backend en cours d'exécution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
 - Couverture E2E : backoffice, references, formulaire de contact.
 
@@ -361,4 +361,3 @@ Ne pas committer :
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`
 - Hooks pre-commit : `.pre-commit-config.yaml`
-
