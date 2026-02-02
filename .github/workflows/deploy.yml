@@ -95,7 +95,7 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
-          source: "docker-compose.prod.yml,nginx/prod.conf"
+          source: "docker-compose.prod.yml,docker-compose.monitoring.yml,nginx/prod.conf,monitoring/prometheus/prometheus.yml,monitoring/grafana/provisioning/datasources/prometheus.yml"
           target: ${{ secrets.STAGING_PATH }}
 
       - name: Deploy via SSH
@@ -111,8 +111,8 @@ jobs:
             docker login ghcr.io -u "${{ secrets.REGISTRY_USER }}" -p "${{ secrets.REGISTRY_TOKEN }}"
             export BACKEND_IMAGE="${{ steps.image_prefix.outputs.value }}-backend:${{ github.sha }}"
             export FRONTEND_IMAGE="${{ steps.image_prefix.outputs.value }}-frontend:${{ github.sha }}"
-            docker compose -f docker-compose.prod.yml --env-file .env.prod pull
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+            docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod pull
+            docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod up -d
 
       - name: Smoke tests
         run: |

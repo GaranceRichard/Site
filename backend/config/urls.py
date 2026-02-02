@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/health", HealthView.as_view(), name="api-health"),
     path("api/health/live", HealthLiveView.as_view(), name="api-health-live"),
     path("api/health/ready", HealthReadyView.as_view(), name="api-health-ready"),
+    path("", include("django_prometheus.urls")),
 ]
 
 if settings.ENABLE_JWT:
