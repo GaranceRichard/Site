@@ -29,6 +29,17 @@ garancerichard-site/
 - Nightly (02:00 UTC) : E2E Playwright
 - main seulement : build des images Docker (sans push registry)
 
+
+## Quality & CI
+- Pull requests: lint + tests + coverage gates avant merge.
+- Front quality gate: npm run test:coverage avec seuil 80% (lines/statements/branches/functions) dans Vitest.
+- Back quality gate: coverage report --fail-under=80.
+- Sur main: tests/build puis build Docker backend + frontend.
+- Nightly (02:00 UTC): suite E2E Playwright complete.
+- Pull requests: E2E smoke rapide (contact + login invalide backoffice).
+- En cas d'echec E2E: logs serveurs + traces/screenshots Playwright en artifacts.
+- CI optimisee par chemins: jobs front/back declenches selon les fichiers modifies.
+
 ## Prérequis
 - Node.js (LTS recommandé)
 - Python (version compatible avec backend/requirements.txt)
@@ -350,3 +361,4 @@ Ne pas committer :
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`
 - Hooks pre-commit : `.pre-commit-config.yaml`
+
