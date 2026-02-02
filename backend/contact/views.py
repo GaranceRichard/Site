@@ -180,19 +180,13 @@ class ReferenceImageUploadAdminView(APIView):
             image.thumbnail((1920, 1080), Image.LANCZOS)
 
             buffer = BytesIO()
-            if has_alpha:
-                image.save(buffer, format="WEBP", quality=85, method=6)
-            else:
-                image.save(buffer, format="WEBP", quality=85, method=6)
+            image.save(buffer, format="WEBP", quality=85, method=6)
             buffer.seek(0)
 
             thumb = image.copy()
             thumb.thumbnail((640, 360), Image.LANCZOS)
             thumb_buf = BytesIO()
-            if has_alpha:
-                thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
-            else:
-                thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
+            thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
             thumb_buf.seek(0)
         except Exception:
             return Response({"detail": "Impossible de traiter l'image."}, status=status.HTTP_400_BAD_REQUEST)

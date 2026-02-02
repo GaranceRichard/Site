@@ -36,7 +36,7 @@ garancerichard-site/
 - Back quality gate: coverage report --fail-under=80.
 - Sur main: tests/build puis build Docker backend + frontend.
 - Nightly (02:00 UTC): suite E2E Playwright complete.
-- Pull requests: E2E smoke rapide (contact + login invalide backoffice).
+- Push sur `main`: E2E smoke rapide (contact + login invalide backoffice).
 - En cas d'echec E2E: logs serveurs + traces/screenshots Playwright en artifacts.
 - CI optimisee par chemins: jobs front/back declenches selon les fichiers modifies.
 

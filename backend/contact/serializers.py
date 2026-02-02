@@ -74,6 +74,17 @@ class ReferenceSerializer(serializers.ModelSerializer):
             return ""
         return str(getattr(value, "name", value) or "")
 
+    def _delete_media_if_changed(self, old_value, new_value) -> bool:
+        old_clean = self._as_str(old_value).strip()
+        new_clean = self._as_str(new_value).strip()
+        if old_clean == new_clean:
+            return False
+
+        rel_path = media_relative_path(old_clean)
+        if rel_path:
+            default_storage.delete(rel_path)
+        return True
+
     def create(self, validated_data):
         if validated_data.get("order_index") in (None, 0):
             last = Reference.objects.aggregate(models.Max("order_index")).get("order_index__max")
@@ -82,33 +93,15 @@ class ReferenceSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if "image" in validated_data:
-            new_image = self._as_str(validated_data.get("image")).strip()
-            old_image = self._as_str(instance.image).strip()
-            if new_image != old_image:
-                rel_path = media_relative_path(old_image)
-                if rel_path:
-                    default_storage.delete(rel_path)
-
-                old_thumb = self._as_str(instance.image_thumb).strip()
-                rel_thumb = media_relative_path(old_thumb)
-                if rel_thumb:
-                    default_storage.delete(rel_thumb)
+            image_changed = self._delete_media_if_changed(instance.image, validated_data.get("image"))
+            if image_changed:
+                self._delete_media_if_changed(instance.image_thumb, "")
 
         if "image_thumb" in validated_data:
-            new_thumb = self._as_str(validated_data.get("image_thumb")).strip()
-            old_thumb = self._as_str(instance.image_thumb).strip()
-            if new_thumb != old_thumb:
-                rel_thumb = media_relative_path(old_thumb)
-                if rel_thumb:
-                    default_storage.delete(rel_thumb)
+            self._delete_media_if_changed(instance.image_thumb, validated_data.get("image_thumb"))
 
         if "icon" in validated_data:
-            new_icon = self._as_str(validated_data.get("icon")).strip()
-            old_icon = self._as_str(instance.icon).strip()
-            if new_icon != old_icon:
-                rel_path = media_relative_path(old_icon)
-                if rel_path:
-                    default_storage.delete(rel_path)
+            self._delete_media_if_changed(instance.icon, validated_data.get("icon"))
 
         return super().update(instance, validated_data)
 

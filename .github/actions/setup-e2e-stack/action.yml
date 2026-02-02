@@ -1,0 +1,100 @@
+name: Setup E2E stack
+description: Start backend/frontend stack for Playwright E2E
+
+inputs:
+  create-admin:
+    description: Create Django admin user for E2E tests
+    required: false
+    default: "false"
+  e2e-admin-user:
+    description: Django admin username for E2E
+    required: false
+    default: ""
+  e2e-admin-pass:
+    description: Django admin password for E2E
+    required: false
+    default: ""
+  playwright-browser:
+    description: Browser to install for Playwright
+    required: false
+    default: "chromium"
+
+runs:
+  using: composite
+  steps:
+    - name: Migrate database
+      shell: bash
+      working-directory: backend
+      run: python manage.py migrate
+
+    - name: Validate E2E admin inputs
+      if: ${{ inputs.create-admin == 'true' }}
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.e2e-admin-user }}" ] || [ -z "${{ inputs.e2e-admin-pass }}" ]; then
+          echo "Missing e2e-admin-user/e2e-admin-pass inputs."
+          exit 1
+        fi
+
+    - name: Create E2E admin user
+      if: ${{ inputs.create-admin == 'true' }}
+      shell: bash
+      working-directory: backend
+      env:
+        E2E_ADMIN_USER: ${{ inputs.e2e-admin-user }}
+        E2E_ADMIN_PASS: ${{ inputs.e2e-admin-pass }}
+      run: |
+        python - <<'PY'
+        import os
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+        import django
+        django.setup()
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        user, _ = User.objects.get_or_create(
+            username=os.environ["E2E_ADMIN_USER"],
+            defaults={"is_staff": True, "is_superuser": True},
+        )
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(os.environ["E2E_ADMIN_PASS"])
+        user.save()
+        print("E2E admin ready:", user.username)
+        PY
+
+    - name: Start backend server
+      shell: bash
+      working-directory: backend
+      run: |
+        nohup python manage.py runserver 127.0.0.1:8000 > ../backend-server.log 2>&1 &
+
+    - name: Install Playwright browsers
+      shell: bash
+      working-directory: frontend
+      run: npx playwright install ${{ inputs.playwright-browser }}
+
+    - name: Build frontend
+      shell: bash
+      working-directory: frontend
+      run: npm run build
+
+    - name: Start frontend server
+      shell: bash
+      working-directory: frontend
+      run: |
+        nohup npm run start -- --hostname 127.0.0.1 --port 3000 > ../frontend-server.log 2>&1 &
+
+    - name: Wait for servers
+      shell: bash
+      run: |
+        for i in {1..60}; do
+          if curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1 && \
+             curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1; then
+            echo "Servers are up"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Servers did not start in time"
+        exit 1

@@ -69,6 +69,18 @@ async function debugSessionStorage(page: import("@playwright/test").Page, label:
   console.log("[E2E][session]", label, snapshot);
 }
 
+async function loginAsAdmin(page: import("@playwright/test").Page) {
+  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Acc.s back-office/i }).click();
+  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
+  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+}
+
 test("backoffice login fails with invalid credentials", async ({ page }) => {
   attachNetworkDebug(page);
   await page.goto("/");
@@ -100,14 +112,7 @@ test("backoffice login succeeds and reaches admin page", async ({ page }) => {
 test("backoffice logout clears session and returns home", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   await page.getByRole("button", { name: "Se déconnecter" }).click();
   await expect(page).toHaveURL("/");
@@ -116,14 +121,7 @@ test("backoffice logout clears session and returns home", async ({ page }) => {
 test("logout then visiting backoffice shows auth warning", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   await page.getByRole("button", { name: "Se déconnecter" }).click();
   await expect(page).toHaveURL("/");
@@ -138,21 +136,14 @@ test("expired token shows auth warning", async ({ page }) => {
   });
 
   await page.goto("/backoffice");
-  await expect(page.getByText("Session expiree ou acces refuse. Reconnectez-vous.")).toBeVisible();
+  await expect(page.getByText(/Session expir.*Reconnectez-vous\./)).toBeVisible();
   await expect(page.getByRole("button", { name: "Se reconnecter" })).toBeVisible();
 });
 
 test("return to site keeps session and footer icon reopens backoffice", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   await page.getByRole("button", { name: "Retour au site", exact: true }).click();
   await expect(page).toHaveURL("/");
@@ -164,14 +155,7 @@ test("return to site keeps session and footer icon reopens backoffice", async ({
 test("clicking a message opens details modal", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   const firstRow = page.locator("section ul li button").first();
   await firstRow.click();
@@ -187,14 +171,7 @@ test("clicking a message opens details modal", async ({ page }) => {
 test("messages list shows single-line columns and pagination", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   await expect(page.getByRole("button", { name: "Trier par nom" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Trier par email" })).toBeVisible();
@@ -207,14 +184,7 @@ test("messages list shows single-line columns and pagination", async ({ page }) 
 test("search filters messages by name, email, or subject", async ({ page }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
 
   const search = page.getByPlaceholder("Rechercher par nom, email ou sujet");
   await expect(search).toBeVisible();
@@ -232,17 +202,10 @@ test("select and delete messages", async ({ page, request }) => {
 
   const [seedName] = await seedContactMessages(request, 1);
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
   await expect(page.getByText(seedName)).toBeVisible();
 
-  const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
+  const checkbox = page.getByRole("checkbox", { name: /S[ée]lectionner/i }).first();
   await checkbox.check();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
@@ -257,14 +220,7 @@ test("delete button is disabled when nothing is selected", async ({ page, reques
 
   const [seedName] = await seedContactMessages(request, 1);
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
   await expect(page.getByText(seedName)).toBeVisible();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
@@ -276,17 +232,10 @@ test("delete shows undo toast and restore on cancel", async ({ page, request }) 
 
   const [seedName] = await seedContactMessages(request, 1);
 
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  await loginAsAdmin(page);
   await expect(page.getByText(seedName)).toBeVisible();
 
-  const checkbox = page.getByRole("checkbox", { name: /Selectionner/i }).first();
+  const checkbox = page.getByRole("checkbox", { name: /S[ée]lectionner/i }).first();
   await checkbox.check();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });

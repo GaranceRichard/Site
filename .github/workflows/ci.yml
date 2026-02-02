@@ -117,40 +117,8 @@ jobs:
       - name: Setup frontend toolchain
         uses: ./.github/actions/setup-frontend
 
-      - name: Migrate database
-        working-directory: backend
-        run: python manage.py migrate
-
-      - name: Start backend server
-        working-directory: backend
-        run: |
-          nohup python manage.py runserver 127.0.0.1:8000 > ../backend-server.log 2>&1 &
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install chromium
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-      - name: Start frontend server
-        working-directory: frontend
-        run: |
-          nohup npm run start -- --hostname 127.0.0.1 --port 3000 > ../frontend-server.log 2>&1 &
-
-      - name: Wait for servers
-        run: |
-          for i in {1..60}; do
-            if curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1 && \
-               curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1; then
-              echo "Servers are up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Servers did not start in time"
-          exit 1
+      - name: Setup E2E stack
+        uses: ./.github/actions/setup-e2e-stack
 
       - name: Run smoke E2E tests
         working-directory: frontend
@@ -201,69 +169,12 @@ jobs:
       - name: Setup frontend toolchain
         uses: ./.github/actions/setup-frontend
 
-      - name: Ensure E2E secrets are set
-        run: |
-          if [ -z "${E2E_ADMIN_USER}" ] || [ -z "${E2E_ADMIN_PASS}" ]; then
-            echo "Missing E2E_ADMIN_USER/E2E_ADMIN_PASS secrets."
-            exit 1
-          fi
-
-      - name: Migrate database
-        working-directory: backend
-        run: python manage.py migrate
-
-      - name: Create E2E admin user
-        working-directory: backend
-        run: |
-          python - <<'PY'
-          import os
-          os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-          import django
-          django.setup()
-          from django.contrib.auth import get_user_model
-
-          User = get_user_model()
-          user, _ = User.objects.get_or_create(
-              username=os.environ["E2E_ADMIN_USER"],
-              defaults={"is_staff": True, "is_superuser": True},
-          )
-          user.is_staff = True
-          user.is_superuser = True
-          user.set_password(os.environ["E2E_ADMIN_PASS"])
-          user.save()
-          print("E2E admin ready:", user.username)
-          PY
-
-      - name: Start backend server
-        working-directory: backend
-        run: |
-          nohup python manage.py runserver 127.0.0.1:8000 > ../backend-server.log 2>&1 &
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install chromium
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-      - name: Start frontend server
-        working-directory: frontend
-        run: |
-          nohup npm run start -- --hostname 127.0.0.1 --port 3000 > ../frontend-server.log 2>&1 &
-
-      - name: Wait for servers
-        run: |
-          for i in {1..60}; do
-            if curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1 && \
-               curl -fsS http://127.0.0.1:3000 >/dev/null 2>&1; then
-              echo "Servers are up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Servers did not start in time"
-          exit 1
+      - name: Setup E2E stack
+        uses: ./.github/actions/setup-e2e-stack
+        with:
+          create-admin: "true"
+          e2e-admin-user: ${{ env.E2E_ADMIN_USER }}
+          e2e-admin-pass: ${{ env.E2E_ADMIN_PASS }}
 
       - name: Run full E2E suite
         working-directory: frontend
