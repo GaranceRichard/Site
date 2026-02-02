@@ -29,6 +29,7 @@ class ReferencePublicApiTests(APITestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
+        self.assertTrue(res.data[0]["image"].startswith("http://testserver/media/"))
 
     def test_reference_requires_auth(self):
         res = self.client.get("/api/contact/references/admin")

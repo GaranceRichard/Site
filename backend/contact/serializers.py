@@ -24,10 +24,13 @@ class MediaPathField(serializers.ImageField):
     def to_representation(self, value):
         if not value:
             return ""
-        if hasattr(value, "url"):
-            return value.url
-        media_url = settings.MEDIA_URL or "/media/"
         request = self.context.get("request")
+        if hasattr(value, "url"):
+            url = value.url
+            if request and isinstance(url, str) and not url.startswith(("http://", "https://")):
+                return request.build_absolute_uri(url)
+            return url
+        media_url = settings.MEDIA_URL or "/media/"
         if request:
             return request.build_absolute_uri(f"{media_url}{value}")
         return f"{media_url}{value}"
