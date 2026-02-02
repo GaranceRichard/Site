@@ -1,4 +1,9 @@
+import tempfile
+
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from contact.models import Reference
 from contact.serializers import ContactMessageSerializer, ReferenceSerializer
@@ -84,3 +89,64 @@ class ReferenceSerializerTests(TestCase):
         serializer = ReferenceSerializer(data=payload)
         self.assertFalse(serializer.is_valid())
         self.assertIn("image", serializer.errors)
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_update_image_deletes_old_image_and_thumbnail(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                old_image = default_storage.save("references/old.webp", ContentFile(b"old-image"))
+                old_thumb = default_storage.save("references/thumbs/old.webp", ContentFile(b"old-thumb"))
+
+                ref = Reference.objects.create(
+                    reference="Ref update",
+                    image=old_image,
+                    image_thumb=old_thumb,
+                    icon="",
+                    situation="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                self.assertTrue(default_storage.exists(old_image))
+                self.assertTrue(default_storage.exists(old_thumb))
+
+                serializer = ReferenceSerializer(
+                    instance=ref,
+                    data={"image": "/media/references/new.webp"},
+                    partial=True,
+                )
+                self.assertTrue(serializer.is_valid(), serializer.errors)
+                serializer.save()
+
+                self.assertFalse(default_storage.exists(old_image))
+                self.assertFalse(default_storage.exists(old_thumb))
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_update_same_image_keeps_existing_files(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                old_image = default_storage.save("references/same.webp", ContentFile(b"same-image"))
+                old_thumb = default_storage.save("references/thumbs/same.webp", ContentFile(b"same-thumb"))
+
+                ref = Reference.objects.create(
+                    reference="Ref unchanged",
+                    image=old_image,
+                    image_thumb=old_thumb,
+                    icon="",
+                    situation="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                serializer = ReferenceSerializer(
+                    instance=ref,
+                    data={"image": f"/media/{old_image}"},
+                    partial=True,
+                )
+                self.assertTrue(serializer.is_valid(), serializer.errors)
+                serializer.save()
+
+                self.assertTrue(default_storage.exists(old_image))
+                self.assertTrue(default_storage.exists(old_thumb))

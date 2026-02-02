@@ -150,7 +150,7 @@ DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DJANGO_ENABLE_JWT=true
 # Mode E2E: relaxe le throttling pour eviter les faux positifs.
 DJANGO_E2E_MODE=false
-# (Optionnel) Headers de sÃ©curitÃ©
+# (Optionnel) Headers de sécurité
 # DJANGO_SECURITY_CSP=default-src 'self'; ...
 # DJANGO_PERMISSIONS_POLICY=geolocation=(), camera=(), microphone=(), ...
 # Throttling global (optionnel en dev, recommande en prod)

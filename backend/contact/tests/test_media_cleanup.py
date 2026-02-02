@@ -1,5 +1,4 @@
 import tempfile
-import tempfile
 from io import StringIO
 
 from django.core.files.base import ContentFile
