@@ -2,24 +2,11 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container, SectionTitle } from "./ui";
 import type { ReferenceItem } from "../../content/references";
 import ReferenceModal from "./ReferenceModal";
-
-type ApiReference = {
-  id: number;
-  reference: string;
-  reference_short: string;
-  order_index: number;
-  image: string;
-  image_thumb?: string;
-  icon: string;
-  situation: string;
-  tasks: string[];
-  actions: string[];
-  results: string[];
-};
+import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
 
 function pickMissionTitle(item: ApiReference): string {
   return item.results?.[0] ?? "";
@@ -52,36 +39,35 @@ export default function ReferencesSection() {
 
   const desktopWrapRef = useRef<HTMLDivElement | null>(null);
 
-  const loadReferences = useCallback(async () => {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!apiBase) {
-      setApiError("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${apiBase}/api/contact/references`);
-      if (!res.ok) throw new Error(`Erreur API (${res.status})`);
-      const data = (await res.json()) as ApiReference[];
-      if (Array.isArray(data)) {
-        const ordered = data.slice().sort((a, b) => a.order_index - b.order_index);
-        setItems(ordered.map(toReferenceItem));
-      }
-      setApiError(null);
-    } catch (error: unknown) {
-      setApiError(error instanceof Error ? error.message : "Erreur inconnue");
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void loadReferences();
-  }, [loadReferences]);
+    let cancelled = false;
 
-  const hasApiError = useMemo(() => apiError !== null, [apiError]);
+    const loadReferences = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchReferencesOnce();
+        if (!cancelled) {
+          setItems(data.map(toReferenceItem));
+          setApiError(null);
+        }
+      } catch (error: unknown) {
+        if (!cancelled) {
+          setApiError(error instanceof Error ? error.message : "Erreur inconnue");
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadReferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function clearActive() {
     setActiveIndex(null);
@@ -258,7 +244,7 @@ export default function ReferencesSection() {
           </>
         ) : null}
 
-        {hasApiError ? (
+        {apiError ? (
           <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
             Impossible de charger les références. Vérifiez l’API.
           </p>

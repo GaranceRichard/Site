@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import { isAccessTokenValid, isBackofficeEnabled } from "../lib/backoffice";
+import { fetchReferencesOnce } from "../lib/references";
 
 type NavItem = { label: string; href: string };
 
@@ -22,7 +23,7 @@ export default function TopNav({
   const backofficeEnabled = isBackofficeEnabled();
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
-  const [hasReferences, setHasReferences] = useState(false);
+  const [hasReferences, setHasReferences] = useState(true);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,24 +65,9 @@ export default function TopNav({
     let cancelled = false;
 
     const loadReferences = async () => {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!apiBase) {
-        setHasReferences(false);
-        return;
-      }
-
       try {
-        const res = await fetch(`${apiBase}/api/contact/references`);
-        if (!res.ok) {
-          setHasReferences(false);
-          return;
-        }
-        const data = (await res.json()) as unknown;
-        if (!cancelled && Array.isArray(data) && data.length > 0) {
-          setHasReferences(true);
-        } else if (!cancelled) {
-          setHasReferences(false);
-        }
+        const data = await fetchReferencesOnce();
+        if (!cancelled) setHasReferences(data.length > 0);
       } catch {
         if (!cancelled) setHasReferences(false);
       }

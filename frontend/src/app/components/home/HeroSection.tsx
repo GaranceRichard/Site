@@ -35,7 +35,7 @@ export default function HeroSection() {
                 Voir les offres
               </a>
               <a
-                href="#cases"
+                href="#references"
                 className="rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
               >
                 Exemples d’impact

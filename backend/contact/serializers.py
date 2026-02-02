@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework import serializers
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import models
