@@ -49,6 +49,22 @@
       "problemMatcher": []
     },
     {
+      "label": "Monitor",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File .\\scripts\\monitor-local.ps1 -Loop -IntervalSeconds 30",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "focus": false,
+        "showReuseMessage": false
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
       "label": "Test Back",
       "type": "shell",
       "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
@@ -80,7 +96,7 @@
     },
     {
       "label": "dev:all",
-      "dependsOn": ["Global", "Backend", "Frontend", "Test Back", "Test Front"],
+      "dependsOn": ["Global", "Backend", "Frontend", "Monitor", "Test Back", "Test Front"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     }
