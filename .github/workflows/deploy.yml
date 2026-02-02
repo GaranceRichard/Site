@@ -58,7 +58,7 @@ jobs:
     name: Deploy to staging
     needs: build_push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && secrets.STAGING_HOST != '' && secrets.STAGING_SSH_KEY != '' && secrets.STAGING_USER != '' && secrets.STAGING_PATH != '' && secrets.STAGING_BASE_URL != ''
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
