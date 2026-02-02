@@ -361,3 +361,7 @@ Ne pas committer :
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`
 - Hooks pre-commit : `.pre-commit-config.yaml`
+
+## Gouvernance technique
+- Strategie de migrations : `docs/migrations.md`
+- Politique de versions et cadence de mise a jour : `docs/dependency-policy.md`

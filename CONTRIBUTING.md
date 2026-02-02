@@ -1,20 +1,20 @@
-# Contribuer
+﻿# Contribuer
 
-Merci de contribuer ! Ce guide standardise l'onboarding, le workflow et la qualité.
+Merci de contribuer. Ce guide standardise l'onboarding, le workflow et la qualite.
 
 ## Setup rapide (Docker)
 
-Prérequis :
+Prerequis:
 - Docker + Docker Compose
 - Node.js (LTS)
 - Python (version compatible avec `backend/requirements.txt`)
 
-Démarrage :
+Demarrage:
 ```powershell
 docker compose up -d
 ```
 
-Configurer `backend/.env` :
+Configurer `backend/.env`:
 ```ini
 DJANGO_SECRET_KEY=dev-secret-key
 DJANGO_DEBUG=True
@@ -26,61 +26,60 @@ DATABASE_URL=postgresql://dev:dev@127.0.0.1:5432/garancerichard_dev
 REDIS_URL=redis://127.0.0.1:6379/0
 ```
 
-Installer les dépendances :
+Installer les dependances:
 ```powershell
 make install
 ```
 
-Lancer les migrations :
+Lancer les migrations:
 ```powershell
 cd backend
 python manage.py migrate
 ```
 
-Lancer le dev :
+Lancer le dev:
 ```powershell
 make dev
 ```
 
 ## Workflow de branche
 
-Créer une branche dédiée :
+Creer une branche dediee:
 - `feature/mon-sujet`
 - `fix/bug-critique`
 - `chore/maintenance`
 
-Gardez la branche à jour avec `main` si le travail s’étale.
+Gardez la branche a jour avec `main` si le travail s'etale.
 
 ## Format des commits (Conventional Commits)
 
-Format attendu :
+Format attendu:
 ```
 type(scope): sujet court
 ```
 
-Exemples :
+Exemples:
 - `feat(backoffice): add reference ordering`
 - `fix(api): handle upload errors`
 - `test(e2e): cover references modal`
 - `docs: update docker setup`
 
-Types usuels :
+Types usuels:
 `feat`, `fix`, `test`, `docs`, `refactor`, `chore`.
 
 ## Pre-commit (hooks)
 
-Installation (une fois) :
+Installation (une fois):
 ```powershell
 python -m pip install pre-commit
 pre-commit install
-
-Le hook lance la suite complète (backend + frontend + E2E).
-Prérequis E2E : fichier rontend/.env.e2e.local avec E2E_ADMIN_USER et E2E_ADMIN_PASS.
-Note : le hook peut être long à exécuter.
-
 ```
 
-Exécution manuelle :
+Le hook lance la suite complete (backend + frontend + E2E).
+Prerequis E2E: fichier `frontend/.env.e2e.local` avec `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
+Note: le hook peut etre long a executer.
+
+Execution manuelle:
 ```powershell
 pre-commit run --all-files
 ```
@@ -88,32 +87,38 @@ pre-commit run --all-files
 ## Checklist PR
 
 - [ ] Description claire du besoin / du bug
-- [ ] Pas de régressions visibles
+- [ ] Pas de regressions visibles
 - [ ] Tests OK (unit + lint + build)
 - [ ] E2E si impact front / backoffice
 - [ ] Couverture maintenue (cible 95% sur points vitaux)
-- [ ] Screenshots/vidéo si UI
-- [ ] Migrations incluses si modèle changé
+- [ ] Screenshots/video si UI
+- [ ] Migrations incluses si modele change
+- [ ] Notes de deploy/rollback si migration non triviale
 
 ## Standards de tests
 
-Backend :
+Backend:
 - `python manage.py test`
 - `coverage run --rcfile=.coveragerc manage.py test`
 - `coverage report -m`
-  - Vérifier que le seuil est >= 80%
+  - Verifier que le seuil est >= 80%
 
-Frontend :
+Frontend:
 - `npm test`
 - `npm run lint`
 - `npm run build`
 - `npm run test:coverage`
-  - Vérifier que le seuil est >= 80%
+  - Verifier que le seuil est >= 80%
 
-E2E :
+E2E:
 - `npm run test:e2e`
 - Utiliser `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`
 
-CI (GitHub Actions) :
+CI (GitHub Actions):
 - Ajouter les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS` dans le repo GitHub.
 - Settings -> Secrets and variables -> Actions -> New repository secret.
+
+## Documentation utile
+
+- Strategie de migrations: `docs/migrations.md`
+- Politique de versions: `docs/dependency-policy.md`

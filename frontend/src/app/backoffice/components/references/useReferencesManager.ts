@@ -1,7 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
-import type { Reference } from "../types";
+import type { Reference } from "../../types";
 
 type FormState = {
   reference: string;

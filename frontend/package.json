@@ -13,8 +13,8 @@
     "test:e2e:coverage": "cross-env E2E_COVERAGE=true playwright test"
   },
   "dependencies": {
-    "@sentry/browser": "^8.25.0",
-    "next": "^16.1.6",
+    "@sentry/browser": "8.25.0",
+    "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

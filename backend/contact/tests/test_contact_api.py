@@ -262,6 +262,54 @@ class ContactApiTests(APITestCase):
         self.assertEqual(res_asc.data.get("results", [])[0]["name"], "Alice Doe")
         self.assertEqual(res_desc.data.get("results", [])[0]["name"], "Bob Smith")
 
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_list_accepts_page_last_and_invalid_page(self):
+        for i in range(4):
+            ContactMessage.objects.create(
+                name=f"Page User {i}",
+                email=f"page{i}@example.com",
+                subject="Paging",
+                message="Message",
+                consent=True,
+                source="tests",
+            )
+
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="admin-page-parser",
+            password="admin-pass-654",
+            is_staff=True,
+        )
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": "admin-pass-654"},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+        token = token_res.data["access"]
+
+        res_last = self.client.get(
+            "/api/contact/messages/admin?limit=3&page=last",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(res_last.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_last.data.get("page"), 2)
+        self.assertEqual(len(res_last.data.get("results", [])), 1)
+
+        res_invalid = self.client.get(
+            "/api/contact/messages/admin?limit=3&page=abc",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(res_invalid.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_invalid.data.get("page"), 1)
+
     def test_contact_throttling(self):
         payload = {
             "name": "Throttle",

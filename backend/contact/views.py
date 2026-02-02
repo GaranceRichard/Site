@@ -1,19 +1,14 @@
-from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.db import models
-from io import BytesIO
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from uuid import uuid4
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 
-from PIL import Image
-
+from .image_upload import MAX_UPLOAD_BYTES, process_reference_image, save_reference_images
 from .models import ContactMessage, Reference
+from .pagination import ContactMessagePagination
 from .serializers import (
     ContactMessageDeleteSerializer,
     ContactMessageSerializer,
@@ -32,11 +27,10 @@ class ContactMessageCreateView(generics.CreateAPIView):
     throttle_classes = [ContactAnonRateThrottle]
 
 
-# ✅ Backoffice : accessible uniquement aux admins/staff
-# ✅ Limite simple pour éviter de renvoyer des milliers d’entrées (sans pagination DRF)
 class ContactMessageListAdminView(generics.ListAPIView):
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.IsAdminUser]
+    pagination_class = ContactMessagePagination
 
     def get_queryset(self):
         qs = ContactMessage.objects.all()
@@ -61,38 +55,6 @@ class ContactMessageListAdminView(generics.ListAPIView):
         if field == "created_at":
             return qs.order_by(order)
         return qs.order_by(order, "-created_at")
-
-    def list(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-
-        raw_limit = request.query_params.get("limit", "50")
-        raw_page = request.query_params.get("page", "1")
-        try:
-            limit = int(raw_limit)
-        except ValueError:
-            limit = 50
-        try:
-            page = int(raw_page)
-        except ValueError:
-            page = 1
-
-        limit = max(1, min(limit, 200))
-        page = max(1, page)
-
-        total = qs.count()
-        start = (page - 1) * limit
-        end = start + limit
-
-        serializer = self.get_serializer(qs[start:end], many=True)
-        return Response(
-            {
-                "count": total,
-                "page": page,
-                "limit": limit,
-                "results": serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
 
 
 class ContactMessageDeleteAdminView(APIView):
@@ -167,36 +129,19 @@ class ReferenceImageUploadAdminView(APIView):
         if not (file.content_type or "").startswith("image/"):
             return Response({"detail": "Format de fichier invalide."}, status=status.HTTP_400_BAD_REQUEST)
 
-        max_bytes = 5 * 1024 * 1024
-        if file.size > max_bytes:
+        if file.size > MAX_UPLOAD_BYTES:
             return Response({"detail": "Fichier trop volumineux (max 5MB)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            image = Image.open(file)
-            if image.format not in ("JPEG", "PNG", "WEBP"):
-                return Response({"detail": "Format non supporté (JPEG, PNG, WebP)."}, status=status.HTTP_400_BAD_REQUEST)
-            has_alpha = "A" in image.getbands() or image.mode in ("RGBA", "LA", "PA")
-            image = image.convert("RGBA" if has_alpha else "RGB")
-            image.thumbnail((1920, 1080), Image.LANCZOS)
-
-            buffer = BytesIO()
-            image.save(buffer, format="WEBP", quality=85, method=6)
-            buffer.seek(0)
-
-            thumb = image.copy()
-            thumb.thumbnail((640, 360), Image.LANCZOS)
-            thumb_buf = BytesIO()
-            thumb.save(thumb_buf, format="WEBP", quality=85, method=6)
-            thumb_buf.seek(0)
+            image_bytes, thumb_bytes = process_reference_image(file)
+        except ValueError:
+            return Response({"detail": "Format non supporté (JPEG, PNG, WebP)."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception:
             return Response({"detail": "Impossible de traiter l'image."}, status=status.HTTP_400_BAD_REQUEST)
 
-        filename = f"references/{uuid4().hex}.webp"
-        saved_path = default_storage.save(filename, ContentFile(buffer.read()))
-        url = request.build_absolute_uri(f"{settings.MEDIA_URL}{saved_path}")
-
-        thumb_name = f"references/thumbs/{uuid4().hex}.webp"
-        thumb_path = default_storage.save(thumb_name, ContentFile(thumb_buf.read()))
-        thumb_url = request.build_absolute_uri(f"{settings.MEDIA_URL}{thumb_path}")
-
-        return Response({"url": url, "thumbnail_url": thumb_url}, status=status.HTTP_201_CREATED)
+        payload = save_reference_images(
+            image_bytes=image_bytes,
+            thumb_bytes=thumb_bytes,
+            request=request,
+        )
+        return Response(payload, status=status.HTTP_201_CREATED)

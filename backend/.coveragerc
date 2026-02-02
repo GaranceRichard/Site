@@ -8,6 +8,7 @@ omit =
     */tests/*
     */__init__.py
     config/settings.py
+    config/settings/*
     */asgi.py
     */wsgi.py
 
