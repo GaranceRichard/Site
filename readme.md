@@ -265,12 +265,21 @@ python -m coverage run manage.py test
 python -m coverage report --fail-under=80
 python -m coverage html
 ```
+- Lint/format Python :
+```powershell
+python -m ruff check .
+python -m black --check .
+```
 
 ### Frontend (Next.js)
 Depuis `frontend/` :
 - Lancer les tests unitaires (Vitest) :
 ```powershell
 npm run test
+```
+- Typecheck strict TypeScript :
+```powershell
+npm run typecheck
 ```
  - Couverture :
 ```powershell

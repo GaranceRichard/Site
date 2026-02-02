@@ -29,6 +29,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const requestTimeoutMs = Number(process.env.NEXT_PUBLIC_CONTACT_TIMEOUT_MS || "10000");
 
   function onTextChange(
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -59,11 +60,16 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     setStatus("sending");
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+    }, requestTimeoutMs);
 
     try {
       const res = await fetch(`${apiBase}/api/contact/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: abortController.signal,
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
@@ -99,7 +105,14 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
       onSuccess?.();
     } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ?err.message : "Erreur inattendue");
+      const isAbortError = err instanceof DOMException && err.name === "AbortError";
+      if (isAbortError) {
+        setErrorMsg("Délai dépassé. Veuillez réessayer.");
+      } else {
+        setErrorMsg(err instanceof Error ? err.message : "Erreur inattendue");
+      }
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

@@ -146,4 +146,28 @@ describe("ContactForm", () => {
     });
   });
 
+  it("affiche une erreur de delai en cas de timeout reseau", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+    process.env.NEXT_PUBLIC_CONTACT_TIMEOUT_MS = "5";
+
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Erreur : Délai dépassé. Veuillez réessayer.")).toBeInTheDocument();
+    });
+  });
+
 });

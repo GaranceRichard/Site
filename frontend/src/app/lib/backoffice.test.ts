@@ -39,6 +39,12 @@ describe("isBackofficeEnabled", () => {
 });
 
 describe("isAccessTokenValid", () => {
+  const originalAtob = globalThis.atob;
+
+  afterEach(() => {
+    globalThis.atob = originalAtob;
+  });
+
   const base64Url = (input: string) =>
     Buffer.from(input, "utf-8")
       .toString("base64")
@@ -71,6 +77,13 @@ describe("isAccessTokenValid", () => {
 
   it("returns true when exp is in the future", () => {
     const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 3600 });
+    expect(isAccessTokenValid(token)).toBe(true);
+  });
+
+  it("supports environments without atob via Buffer fallback", () => {
+    // @ts-expect-error override for test
+    globalThis.atob = undefined;
+    const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 60 });
     expect(isAccessTokenValid(token)).toBe(true);
   });
 });

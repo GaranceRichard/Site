@@ -1,9 +1,9 @@
 from io import BytesIO
 import tempfile
-from io import BytesIO
 
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -17,6 +17,7 @@ from contact.models import Reference
 
 class ReferenceApiTests(APITestCase):
     def setUp(self):
+        cache.clear()
         self.list_url = "/api/contact/references/admin"
         self.detail_url = None
         self.username = "ref-admin"
@@ -331,3 +332,34 @@ class ReferenceApiTests(APITestCase):
         )
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_create_invalidates_public_reference_cache(self):
+        first_public = self.client.get("/api/contact/references")
+        self.assertEqual(first_public.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(first_public.data), 0)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
+                image_path = default_storage.save(
+                    "references/ref-cache.webp", ContentFile(b"image")
+                )
+                payload = {
+                    "reference": "Ref cache",
+                    "image": f"/media/{image_path}",
+                    "icon": "",
+                    "situation": "Cache invalidation",
+                    "tasks": [],
+                    "actions": [],
+                    "results": [],
+                }
+                create_res = self.client.post(
+                    self.list_url,
+                    payload,
+                    format="json",
+                    HTTP_AUTHORIZATION=f"Bearer {self.token}",
+                )
+                self.assertEqual(create_res.status_code, status.HTTP_201_CREATED, create_res.data)
+
+        second_public = self.client.get("/api/contact/references")
+        self.assertEqual(second_public.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(second_public.data), 1)

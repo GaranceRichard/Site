@@ -99,12 +99,15 @@ pre-commit run --all-files
 
 Backend:
 - `python manage.py test`
+- `python -m ruff check .`
+- `python -m black --check .`
 - `coverage run --rcfile=.coveragerc manage.py test`
 - `coverage report -m`
   - Verifier que le seuil est >= 80%
 
 Frontend:
 - `npm test`
+- `npm run typecheck`
 - `npm run lint`
 - `npm run build`
 - `npm run test:coverage`

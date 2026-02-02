@@ -27,13 +27,18 @@ class MediaPathField(serializers.ImageField):
         request = self.context.get("request")
         if hasattr(value, "url"):
             url = value.url
-            if request and isinstance(url, str) and not url.startswith(("http://", "https://")):
+            if (
+                request
+                and isinstance(url, str)
+                and not url.startswith(("http://", "https://"))
+            ):
                 return request.build_absolute_uri(url)
             return url
         media_url = settings.MEDIA_URL or "/media/"
         if request:
             return request.build_absolute_uri(f"{media_url}{value}")
         return f"{media_url}{value}"
+
 
 class ContactMessageSerializer(serializers.ModelSerializer):
     def validate_consent(self, value: bool) -> bool:
@@ -90,18 +95,24 @@ class ReferenceSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         if validated_data.get("order_index") in (None, 0):
-            last = Reference.objects.aggregate(models.Max("order_index")).get("order_index__max")
+            last = Reference.objects.aggregate(models.Max("order_index")).get(
+                "order_index__max"
+            )
             validated_data["order_index"] = (last or 0) + 1
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         if "image" in validated_data:
-            image_changed = self._delete_media_if_changed(instance.image, validated_data.get("image"))
+            image_changed = self._delete_media_if_changed(
+                instance.image, validated_data.get("image")
+            )
             if image_changed:
                 self._delete_media_if_changed(instance.image_thumb, "")
 
         if "image_thumb" in validated_data:
-            self._delete_media_if_changed(instance.image_thumb, validated_data.get("image_thumb"))
+            self._delete_media_if_changed(
+                instance.image_thumb, validated_data.get("image_thumb")
+            )
 
         if "icon" in validated_data:
             self._delete_media_if_changed(instance.icon, validated_data.get("icon"))

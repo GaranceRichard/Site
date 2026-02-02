@@ -48,3 +48,8 @@ export async function fetchReferencesOnce(): Promise<ApiReference[]> {
 
   return pendingReferencesRequest;
 }
+
+export function invalidateReferencesCache(): void {
+  cachedReferences = null;
+  pendingReferencesRequest = null;
+}

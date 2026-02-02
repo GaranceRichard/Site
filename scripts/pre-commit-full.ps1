@@ -33,6 +33,22 @@ function Wait-Url([string]$url, [int]$timeoutSec = 60) {
 }
 
 try {
+  Write-Host "==> Backend lint (ruff + black --check)"
+  Push-Location $backendDir
+  & $backendPython -m ruff check `
+    contact/views.py `
+    contact/serializers.py `
+    contact/image_upload.py `
+    contact/pagination.py `
+    contact/reference_cache.py
+  & $backendPython -m black --check `
+    contact/views.py `
+    contact/serializers.py `
+    contact/image_upload.py `
+    contact/pagination.py `
+    contact/reference_cache.py
+  Pop-Location
+
   Write-Host "==> Backend tests + coverage"
   Push-Location $backendDir
   & $backendPython -m coverage run manage.py test

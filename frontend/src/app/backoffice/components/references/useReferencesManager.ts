@@ -2,6 +2,7 @@
 import type { ChangeEvent, FormEvent } from "react";
 
 import type { Reference } from "../../types";
+import { invalidateReferencesCache } from "../../../lib/references";
 
 type FormState = {
   reference: string;
@@ -126,9 +127,10 @@ export function useReferencesManager({
         throw new Error(txt || `Erreur API (${res.status})`);
       }
 
-      const data = (await res.json()) as Reference[];
-      setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
-      setStatus("idle");
+        const data = (await res.json()) as Reference[];
+        setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
+        invalidateReferencesCache();
+        setStatus("idle");
     } catch (e: unknown) {
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
@@ -257,6 +259,7 @@ export function useReferencesManager({
           throw new Error(txt || `Erreur API (${resB.status})`);
         }
 
+        invalidateReferencesCache();
         setStatus("idle");
       } catch (e: unknown) {
         setStatus("error");
@@ -304,6 +307,7 @@ export function useReferencesManager({
         resetForm();
       }
       setSelectedIds(new Set());
+      invalidateReferencesCache();
       setStatus("idle");
     } catch (e: unknown) {
       setStatus("error");
@@ -383,6 +387,7 @@ export function useReferencesManager({
           return [...prev, saved].slice().sort((a, b) => a.order_index - b.order_index);
         });
         setSelectedIds((prev) => new Set(prev).add(saved.id));
+        invalidateReferencesCache();
         setStatus("idle");
         setModalOpen(false);
         resetForm();
