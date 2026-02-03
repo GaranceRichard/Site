@@ -6,6 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "perf": "lhci autorun --config=./lighthouserc.json",
+    "perf:local": "npm run build && npm run perf",
+    "perf:dev": "lhci autorun --config=./lighthouserc.dev.json",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "eslint",
     "test": "vitest run",
@@ -20,6 +23,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.51.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.8.0",

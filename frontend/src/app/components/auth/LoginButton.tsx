@@ -2,10 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import BackofficeModal from "../BackofficeModal";
 import { isAccessTokenValid, isBackofficeEnabled } from "../../lib/backoffice";
+
+const BackofficeModal = dynamic(() => import("../BackofficeModal"), { ssr: false });
 
 export default function LoginButton({
   size = 28,

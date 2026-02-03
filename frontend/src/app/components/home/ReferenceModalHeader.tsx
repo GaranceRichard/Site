@@ -1,6 +1,5 @@
 "use client";
-
-import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type ReferenceModalHeaderProps = {
   nameExpanded: string;
@@ -17,6 +16,12 @@ export default function ReferenceModalHeader({
   onClose,
   closeButtonRef,
 }: ReferenceModalHeaderProps) {
+  const [badgeVisible, setBadgeVisible] = useState(Boolean(badgeSrc));
+
+  useEffect(() => {
+    setBadgeVisible(Boolean(badgeSrc));
+  }, [badgeSrc]);
+
   return (
     <div className="relative z-10 flex items-start justify-between gap-6 border-b border-neutral-200/70 bg-transparent p-6 dark:border-neutral-800/70">
       <div className="min-w-0">
@@ -26,16 +31,17 @@ export default function ReferenceModalHeader({
       </div>
 
       <div className="flex shrink-0 items-start gap-3">
-        {badgeSrc ? (
+        {badgeSrc && badgeVisible ? (
           <div className="shrink-0">
             <div className="relative h-20 w-28 overflow-hidden bg-transparent">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={badgeSrc}
                 alt={badgeAlt}
-                fill
-                sizes="112px"
-                className="object-contain"
-                priority={false}
+                className="h-full w-full object-contain"
+                loading="lazy"
+                decoding="async"
+                onError={() => setBadgeVisible(false)}
               />
             </div>
           </div>

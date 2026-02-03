@@ -124,11 +124,22 @@ Depuis la racine du repo :
 .\scripts\dev-all.ps1
 ```
 
+Avec audit perf Lighthouse en boucle (toutes les 10 min) :
+```powershell
+.\scripts\dev-all.ps1 -PerfLoop
+```
+
+Intervalle personnalisable (en secondes) :
+```powershell
+.\scripts\dev-all.ps1 -PerfLoop -PerfIntervalSeconds 900
+```
+
 ### Lancer backend + frontend (VS Code)
 Utiliser les tasks VS Code :
 1) Ouvrir la palette de commandes (Ctrl+Shift+P)
 2) "Tasks: Run Task"
 3) Choisir `dev:all`
+   - inclut backend, frontend, monitoring local et audit perf Lighthouse en boucle
 
 ### Makefile (raccourcis)
 Depuis la racine du repo :

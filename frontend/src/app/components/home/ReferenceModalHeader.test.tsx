@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ReferenceModalHeader from "./ReferenceModalHeader";
@@ -48,5 +48,50 @@ describe("ReferenceModalHeader", () => {
     );
 
     expect(screen.queryByAltText("Badge")).toBeNull();
+  });
+
+  it("appelle onClose au clic sur fermer", () => {
+    const onClose = vi.fn();
+
+    render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc={null}
+        badgeAlt="Badge"
+        onClose={onClose}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("masque le badge après erreur image puis le réaffiche si la source change", () => {
+    const { rerender } = render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-a.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    const badge = screen.getByAltText("Badge");
+    fireEvent.error(badge);
+    expect(screen.queryByAltText("Badge")).toBeNull();
+
+    rerender(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-b.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    expect(screen.getByAltText("Badge")).toBeInTheDocument();
   });
 });

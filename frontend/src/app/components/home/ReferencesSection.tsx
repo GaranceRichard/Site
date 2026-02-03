@@ -2,11 +2,13 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { Container, SectionTitle } from "./ui";
 import type { ReferenceItem } from "../../content/references";
-import ReferenceModal from "./ReferenceModal";
 import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
+
+const ReferenceModal = dynamic(() => import("./ReferenceModal"), { ssr: false });
 
 function pickMissionTitle(item: ApiReference): string {
   return item.results?.[0] ?? "";
@@ -36,6 +38,7 @@ export default function ReferencesSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<ReferenceItem | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
 
   const desktopWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -71,6 +74,10 @@ export default function ReferencesSection() {
 
   function clearActive() {
     setActiveIndex(null);
+  }
+
+  function markImageFailed(id: string) {
+    setFailedImages((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
   }
 
   if (!isLoading && items.length === 0) {
@@ -115,7 +122,7 @@ export default function ReferencesSection() {
                       type="button"
                       onMouseEnter={() => setActiveIndex(i)}
                       onFocus={() => setActiveIndex(i)}
-                      onClick={() => setModal(r)}
+                      onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
                       aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
                       aria-expanded={isActive}
                       className={[
@@ -129,7 +136,7 @@ export default function ReferencesSection() {
                     >
                       {/* Image plein cadre */}
                       <div className="absolute inset-0">
-                        {r.imageSrc ? (
+                        {r.imageSrc && !failedImages[r.id] ? (
                           <Image
                             src={r.imageSrc}
                             alt=""
@@ -141,6 +148,7 @@ export default function ReferencesSection() {
                               isActive ? "scale-100" : "scale-[0.99]",
                             ].join(" ")}
                             priority={false}
+                            onError={() => markImageFailed(r.id)}
                           />
                         ) : (
                           <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900" />
@@ -201,7 +209,7 @@ export default function ReferencesSection() {
                     <button
                       key={r.id}
                       type="button"
-                      onClick={() => setModal(r)}
+                      onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
                       className={[
                         "snap-start",
                         "relative min-w-[84%] overflow-hidden rounded-3xl border border-neutral-200 bg-white text-left",
@@ -210,7 +218,7 @@ export default function ReferencesSection() {
                       ].join(" ")}
                     >
                       <div className="relative h-[240px] w-full">
-                        {r.imageSrc ? (
+                        {r.imageSrc && !failedImages[r.id] ? (
                           <Image
                             src={r.imageSrc}
                             alt=""
@@ -218,6 +226,7 @@ export default function ReferencesSection() {
                             sizes="90vw"
                             className="object-cover"
                             priority={false}
+                            onError={() => markImageFailed(r.id)}
                           />
                         ) : (
                           <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900" />
@@ -251,7 +260,7 @@ export default function ReferencesSection() {
         ) : null}
       </Container>
 
-      <ReferenceModal item={modal} onClose={() => setModal(null)} />
+      {modal ? <ReferenceModal item={modal} onClose={() => setModal(null)} /> : null}
     </section>
   );
 }
