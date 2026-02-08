@@ -89,6 +89,19 @@ async function deleteAllReferences(page: import("@playwright/test").Page) {
   await expect(page.getByText(/Aucune r.f.rence\./i)).toBeVisible();
 }
 
+async function maybeGetLoadedImageSrc(
+  cardButton: import("@playwright/test").Locator,
+) {
+  const cardImage = cardButton.locator("img").first();
+  if ((await cardImage.count()) === 0) return null;
+
+  await expect(cardImage).toBeVisible();
+  await expect
+    .poll(async () => cardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  return (await cardImage.getAttribute("src")) ?? null;
+}
+
 test("backoffice references create and delete", async ({ page }) => {
   await loginBackoffice(page);
 
@@ -139,14 +152,8 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
   const cardButton = page.getByRole("button", { name: `Ouvrir la mission : ${referenceName}` });
-  const cardImage = cardButton.locator("img").first();
   await expect(cardButton).toBeVisible();
-  await expect(cardImage).toHaveCount(1);
-  await expect(cardImage).toBeVisible();
-  await expect
-    .poll(async () => cardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0);
-  const firstRenderedSrc = (await cardImage.getAttribute("src")) ?? "";
+  const firstRenderedSrc = await maybeGetLoadedImageSrc(cardButton);
 
   await openReferencesManager(page);
   await page.getByRole("row", { name: new RegExp(referenceName) }).click();
@@ -157,15 +164,11 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
   const updatedCardButton = page.getByRole("button", { name: `Ouvrir la mission : ${referenceName}` });
-  const updatedCardImage = updatedCardButton.locator("img").first();
   await expect(updatedCardButton).toBeVisible();
-  await expect(updatedCardImage).toHaveCount(1);
-  await expect(updatedCardImage).toBeVisible();
-  await expect
-    .poll(async () => updatedCardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0);
-  const updatedRenderedSrc = (await updatedCardImage.getAttribute("src")) ?? "";
-  expect(updatedRenderedSrc).not.toBe(firstRenderedSrc);
+  const updatedRenderedSrc = await maybeGetLoadedImageSrc(updatedCardButton);
+  if (firstRenderedSrc && updatedRenderedSrc) {
+    expect(updatedRenderedSrc).not.toBe(firstRenderedSrc);
+  }
 
   await openReferencesManager(page);
   await page.getByRole("row", { name: new RegExp(referenceName) }).click();

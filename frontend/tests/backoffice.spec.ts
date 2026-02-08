@@ -158,10 +158,9 @@ test("clicking a message opens details modal", async ({ page, request }) => {
   const [seedName] = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
 
-  await expect(page.getByText(seedName)).toBeVisible();
-  const firstRow = page.locator("section ul li button").first();
-  await expect(firstRow).toBeVisible();
-  await firstRow.click();
+  const seedCell = page.getByText(seedName, { exact: true });
+  await expect(seedCell).toBeVisible();
+  await seedCell.click();
 
   const modal = page.getByTestId("message-modal");
   await expect(modal).toBeVisible();
