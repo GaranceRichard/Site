@@ -152,12 +152,15 @@ test("return to site keeps session and footer icon reopens backoffice", async ({
   await expect(page).toHaveURL("/backoffice");
 });
 
-test("clicking a message opens details modal", async ({ page }) => {
+test("clicking a message opens details modal", async ({ page, request }) => {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
 
+  const [seedName] = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
 
+  await expect(page.getByText(seedName)).toBeVisible();
   const firstRow = page.locator("section ul li button").first();
+  await expect(firstRow).toBeVisible();
   await firstRow.click();
 
   const modal = page.getByTestId("message-modal");

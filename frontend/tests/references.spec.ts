@@ -140,6 +140,8 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.locator("section#references").scrollIntoViewIfNeeded();
   const cardButton = page.getByRole("button", { name: `Ouvrir la mission : ${referenceName}` });
   const cardImage = cardButton.locator("img").first();
+  await expect(cardButton).toBeVisible();
+  await expect(cardImage).toHaveCount(1);
   await expect(cardImage).toBeVisible();
   await expect
     .poll(async () => cardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))
@@ -156,6 +158,8 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.locator("section#references").scrollIntoViewIfNeeded();
   const updatedCardButton = page.getByRole("button", { name: `Ouvrir la mission : ${referenceName}` });
   const updatedCardImage = updatedCardButton.locator("img").first();
+  await expect(updatedCardButton).toBeVisible();
+  await expect(updatedCardImage).toHaveCount(1);
   await expect(updatedCardImage).toBeVisible();
   await expect
     .poll(async () => updatedCardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))

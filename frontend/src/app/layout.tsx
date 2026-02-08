@@ -45,7 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <SentryInit />
         <Script
           id="theme-init"
