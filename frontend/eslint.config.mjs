@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Project-specific generated artifacts:
     "coverage/**",
     "coverage-e2e/**",
+    "coverage-e2e-report/**",
     "test-results/**",
   ]),
 ]);

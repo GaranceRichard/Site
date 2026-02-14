@@ -38,6 +38,8 @@ backend/media/
 .coverage
 htmlcov/
 frontend/test-results/
+frontend/coverage-e2e/
+frontend/coverage-e2e-report/
 
 # Autoriser les templates d'env
 !backend/.env.example

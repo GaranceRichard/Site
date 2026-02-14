@@ -11,8 +11,8 @@ const shouldCollectCoverage = () => process.env.E2E_COVERAGE === "true";
 
 export const test = base.extend<CoverageOpts>({
   page: async ({ page }, runFixture, testInfo) => {
-    const isChromium = testInfo.project.name.toLowerCase().includes("chromium");
-    const collect = shouldCollectCoverage() && isChromium;
+    const browserName = (testInfo.project.use.browserName as string | undefined) ?? "chromium";
+    const collect = shouldCollectCoverage() && browserName === "chromium";
 
     if (collect) {
       await page.coverage.startJSCoverage();

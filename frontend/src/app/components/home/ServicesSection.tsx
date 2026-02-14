@@ -12,7 +12,7 @@ export default function ServicesSection({ services }: { services: readonly Servi
         <div className="grid gap-10 md:grid-cols-12">
           <div className="md:col-span-5">
             <SectionTitle
-              eyebrow="Offres"
+              eyebrow="Publications"
               title="Trois formats, une même exigence"
               description="Des interventions calibrées : utiles, lisibles, et soutenables dans la durée."
             />

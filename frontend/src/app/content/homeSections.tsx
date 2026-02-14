@@ -23,12 +23,12 @@ export type HomeSectionDef = {
   render: (ctx: RenderCtx) => React.ReactElement;
 };
 
-// Ordre : home, promise, about, services, method, cases
+// Ordre : home, promise, method, services, references, about
 export const HOME_SECTIONS: HomeSectionDef[] = [
   { id: "home", label: "Accueil", render: () => <HeroSection /> },
-  { id: "promise", label: "Promesse", render: () => <PromiseSection /> },
+  { id: "promise", label: "Positionnement", render: () => <PromiseSection /> },
+  { id: "method", label: "Approche", render: ({ steps }) => <MethodSection steps={steps} /> },
+  { id: "services", label: "Publications", render: ({ services }) => <ServicesSection services={services} /> },
+  { id: "references", label: "Références", render: () => <ReferencesSection /> },
   { id: "about", label: "À propos", render: () => <AboutSection /> },
-  { id: "services", label: "Offres", render: ({ services }) => <ServicesSection services={services} />,},
-  { id: "method", label: "Méthode", render: ({ steps }) => <MethodSection steps={steps} />, },
-  { id: "references", label: "Références", render: () => <ReferencesSection />, },
 ];

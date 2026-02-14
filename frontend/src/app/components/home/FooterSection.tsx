@@ -20,7 +20,7 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
   const bookingHref = headerSettings.bookingUrl || bookingUrl;
 
   return (
-    <footer className="border-t border-neutral-200 dark:border-neutral-800">
+    <footer id="contact" className="border-t border-neutral-200 dark:border-neutral-800">
       <Container>
         <div className="flex h-[72px] items-center justify-between">
           <p className="text-sm text-neutral-600 dark:text-neutral-300">
@@ -41,7 +41,7 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
               rel="noopener noreferrer"
               className="hover:text-neutral-900 dark:hover:text-neutral-50"
             >
-              Prendre rendez-vous
+              Échanger
             </a>
 
             <Link

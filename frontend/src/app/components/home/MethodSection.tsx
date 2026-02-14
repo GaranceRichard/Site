@@ -13,7 +13,7 @@ export default function MethodSection({ steps }: { steps: readonly MethodStep[] 
         <div className="grid gap-10 md:grid-cols-12">
           <div className="md:col-span-5">
             <SectionTitle
-              eyebrow="Méthode"
+              eyebrow="Approche"
               title="Un chemin clair, étape par étape"
               description="Diagnostiquer, décider, mettre en œuvre, stabiliser — avec rigueur et sobriété."
             />

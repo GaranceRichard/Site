@@ -20,9 +20,15 @@ garancerichard-site/
 - Makefile (raccourcis commandes dev)
 - backend/ (Django + API REST)
 - frontend/ (Next.js)
-- frontend/src/app/backoffice/ (page, hook, composants UI)
-- frontend/src/app/components/backoffice/ (BackofficeModal découpe)
-- frontend/src/app/components/home/ (ReferenceModal découpe)
+- frontend/src/app/backoffice/ (page, sectionStore, composants UI)
+- frontend/src/app/backoffice/components/HomeSettingsManager.tsx
+- frontend/src/app/backoffice/components/HeaderSettingsManager.tsx
+- frontend/src/app/content/homeHeroSettings.ts
+- frontend/src/app/content/headerSettings.ts
+- frontend/src/app/components/home/ (Hero, sections, references, footer)
+- frontend/tests/ (Playwright: backoffice, references, contact, admin-home-header)
+- frontend/tests/helpers.ts (helpers E2E partages)
+- frontend/scripts/e2e-coverage-report.mjs (agregation coverage E2E)
 
 ## CI (GitHub Actions)
 - PR et main : tests unitaires backend + frontend + lint + build front
@@ -314,20 +320,26 @@ $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
 ```
- - Alternative locale (sans retaper) :
-   Créer `frontend/.env.e2e.local` (non versionné) :
- ```ini
- E2E_ADMIN_USER=votre_admin
- E2E_ADMIN_PASS=votre_mdp
- ```
- - Couverture E2E (Chromium uniquement) :
+- Alternative locale (sans retaper) :
+  Creer `frontend/.env.e2e.local` (non versionne) :
+```ini
+E2E_ADMIN_USER=votre_admin
+E2E_ADMIN_PASS=votre_mdp
+```
+- Couverture E2E (collecte brute) :
 ```powershell
 $env:E2E_COVERAGE="true"
 $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e:coverage
 ```
-
+- Couverture E2E + rapport agrege (text-summary + json + html) :
+```powershell
+$env:E2E_ADMIN_USER="votre_admin"
+$env:E2E_ADMIN_PASS="votre_mdp"
+npm run test:e2e:coverage:report
+```
+  Rapports generes dans `frontend/coverage-e2e-report/`.
 
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.

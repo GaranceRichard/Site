@@ -67,7 +67,7 @@ export default function HeaderSettingsManager() {
       <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Header du site</h3>
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Modifiez le nom, le titre et l URL du bouton &quot;Prendre rendez-vous&quot;.
+          Modifiez le nom, le titre et l URL du bouton &quot;Échanger&quot;.
         </p>
 
         <form onSubmit={onSubmit} className="mt-5 grid gap-4">

@@ -166,7 +166,7 @@ export default function TopNav({
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <a href={bookingHref} target="_blank" rel="noopener noreferrer" className={NAV_PILL}>
-                Prendre rendez-vous
+                Échanger
               </a>
 
               <Link href="/contact" className={NAV_PILL}>
@@ -207,7 +207,7 @@ export default function TopNav({
               onClick={closeMenu}
               className={NAV_PILL}
             >
-              Prendre rendez-vous
+              Échanger
             </a>
 
             <Link href="/contact" onClick={() => closeMenu()} className={NAV_PILL}>

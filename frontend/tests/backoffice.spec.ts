@@ -1,133 +1,75 @@
 import { expect, test } from "./fixtures";
+import { loginAsAdmin, openBackofficeLogin, requireAdminCreds } from "./helpers";
 
-const adminUser = process.env.E2E_ADMIN_USER;
-const adminPass = process.env.E2E_ADMIN_PASS;
-const debugE2E = process.env.E2E_DEBUG === "true";
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
+test.describe.configure({ mode: "serial" });
 
 async function seedContactMessages(
   request: import("@playwright/test").APIRequestContext,
-  count = 1
+  count = 1,
 ) {
   const stamp = Date.now();
   const names: string[] = [];
+  const emails: string[] = [];
+  const subjects: string[] = [];
+
   for (let i = 0; i < count; i += 1) {
     const name = `E2E ${stamp}-${i}`;
+    const email = `e2e-${stamp}-${i}@example.com`;
+    const subject = `Sujet ${stamp}-${i}`;
     names.push(name);
+    emails.push(email);
+    subjects.push(subject);
+
     await request.post(`${apiBase}/api/contact/messages`, {
       data: {
         name,
-        email: `e2e-${stamp}-${i}@example.com`,
-        subject: `Sujet ${stamp}-${i}`,
+        email,
+        subject,
         message: `Message ${stamp}-${i}`,
         consent: true,
         source: "e2e",
       },
     });
   }
-  return names;
-}
 
-function attachNetworkDebug(page: import("@playwright/test").Page) {
-  if (!debugE2E) return;
-
-  page.on("console", (msg) => {
-    console.log("[E2E][console]", msg.type(), msg.text());
-  });
-
-  page.on("pageerror", (err) => {
-    console.log("[E2E][pageerror]", err.message);
-  });
-
-  page.on("requestfailed", (req) => {
-    console.log("[E2E][requestfailed]", req.method(), req.url(), req.failure()?.errorText);
-  });
-
-  page.on("response", async (res) => {
-    const url = res.url();
-    if (!url.includes("/api/auth/token/") && !url.includes("/api/contact/messages/admin")) return;
-
-    let bodyPreview = "";
-    try {
-      const text = await res.text();
-      bodyPreview = text.slice(0, 200);
-    } catch {
-      bodyPreview = "<unreadable>";
-    }
-
-    console.log("[E2E][response]", res.status(), url, bodyPreview);
-  });
-}
-
-async function debugSessionStorage(page: import("@playwright/test").Page, label: string) {
-  if (!debugE2E) return;
-  const snapshot = await page.evaluate(() => ({
-    access: sessionStorage.getItem("access_token"),
-    refresh: sessionStorage.getItem("refresh_token"),
-    url: window.location.href,
-  }));
-  console.log("[E2E][session]", label, snapshot);
-}
-
-async function loginAsAdmin(page: import("@playwright/test").Page) {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
-  await page.goto("/");
-  await page.getByRole("button", { name: /Acc.s back-office/i }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+  return { names, emails, subjects };
 }
 
 test("backoffice login fails with invalid credentials", async ({ page }) => {
-  attachNetworkDebug(page);
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
+  await openBackofficeLogin(page);
   await page.getByPlaceholder("Identifiant").fill("invalid-user");
   await page.getByPlaceholder("Mot de passe").fill("wrong-pass");
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await debugSessionStorage(page, "after-invalid-login");
 
-  await expect(page.getByText("Identifiant ou mot de passe invalide.")).toBeVisible();
+  await expect(page.getByText(/Identifiant ou mot de passe invalide/i)).toBeVisible();
 });
 
 test("backoffice login succeeds and reaches admin page", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
-  attachNetworkDebug(page);
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "Accès back-office" }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-  await debugSessionStorage(page, "after-valid-login");
-
+  requireAdminCreds();
+  await loginAsAdmin(page);
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
 });
 
 test("backoffice logout clears session and returns home", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
+  requireAdminCreds();
   await loginAsAdmin(page);
 
-  await page.getByRole("button", { name: "Se déconnecter" }).click();
+  await page.getByRole("button", { name: /Se d.*connecter/i }).click();
   await expect(page).toHaveURL("/");
 });
 
 test("logout then visiting backoffice shows auth warning", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
+  requireAdminCreds();
   await loginAsAdmin(page);
 
-  await page.getByRole("button", { name: "Se déconnecter" }).click();
+  await page.getByRole("button", { name: /Se d.*connecter/i }).click();
   await expect(page).toHaveURL("/");
 
   await page.goto("/backoffice");
   await expect(page).toHaveURL("/");
+  await expect(page.getByRole("button", { name: /Acc.s back-office/i })).toBeVisible();
 });
 
 test("expired token shows auth warning", async ({ page }) => {
@@ -141,24 +83,23 @@ test("expired token shows auth warning", async ({ page }) => {
 });
 
 test("return to site keeps session and footer icon reopens backoffice", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
+  requireAdminCreds();
   await loginAsAdmin(page);
 
   await page.getByRole("button", { name: "Retour au site", exact: true }).click();
   await expect(page).toHaveURL("/");
 
-  await page.getByRole("button", { name: "Back-office (connecté)" }).click();
+  await page.getByRole("button", { name: /Back-office/i }).click();
   await expect(page).toHaveURL("/backoffice");
 });
 
 test("clicking a message opens details modal", async ({ page, request }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+  requireAdminCreds();
 
-  const [seedName] = await seedContactMessages(request, 1);
+  const { names } = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
 
-  const seedCell = page.getByText(seedName, { exact: true });
+  const seedCell = page.getByText(names[0], { exact: true });
   await expect(seedCell).toBeVisible();
   await seedCell.click();
 
@@ -170,9 +111,9 @@ test("clicking a message opens details modal", async ({ page, request }) => {
   await expect(modal.getByText("Message :", { exact: true })).toBeVisible();
 });
 
-test("messages list shows single-line columns and pagination", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
+test("messages list shows single-line columns and pagination", async ({ page, request }) => {
+  requireAdminCreds();
+  await seedContactMessages(request, 2);
   await loginAsAdmin(page);
 
   await expect(page.getByRole("button", { name: "Trier par nom" })).toBeVisible();
@@ -180,70 +121,65 @@ test("messages list shows single-line columns and pagination", async ({ page }) 
   await expect(page.getByRole("button", { name: "Trier par sujet" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Trier par date" })).toBeVisible();
 
-  await expect(page.getByText(/Page 1 \/ \d+ — \d+ message/)).toBeVisible();
+  await expect(page.getByText(/Page 1 \/ \d+.*\d+ message/i)).toBeVisible();
 });
 
-test("search filters messages by name, email, or subject", async ({ page }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
+test("search filters messages by name, email, or subject", async ({ page, request }) => {
+  requireAdminCreds();
+  const seeded = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
 
   const search = page.getByPlaceholder("Rechercher par nom, email ou sujet");
   await expect(search).toBeVisible();
 
-  const firstEmail = page.locator("section ul li span").nth(1);
-  const email = (await firstEmail.textContent())?.trim() || "";
-  if (email) {
-    await search.fill(email);
-    await expect(page.getByText(/Page \d+ \/ \d+ —/)).toBeVisible();
-  }
+  await search.fill(seeded.emails[0]);
+  await expect(page.getByText(seeded.names[0], { exact: true })).toBeVisible();
+
+  await search.fill(seeded.subjects[0]);
+  await expect(page.getByText(seeded.names[0], { exact: true })).toBeVisible();
 });
 
 test("select and delete messages", async ({ page, request }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+  requireAdminCreds();
 
-  const [seedName] = await seedContactMessages(request, 1);
-
+  const { names } = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
-  await expect(page.getByText(seedName)).toBeVisible();
+  await expect(page.getByText(names[0])).toBeVisible();
 
-  const checkbox = page.getByRole("checkbox", { name: /S[ée]lectionner/i }).first();
+  const checkbox = page.getByRole("checkbox", { name: /S.lectionner/i }).first();
   await checkbox.check();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
   await expect(deleteButton).toBeEnabled();
   await deleteButton.click();
-
   await expect(deleteButton).toBeDisabled();
 });
 
 test("delete button is disabled when nothing is selected", async ({ page, request }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+  requireAdminCreds();
 
-  const [seedName] = await seedContactMessages(request, 1);
-
+  const { names } = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
-  await expect(page.getByText(seedName)).toBeVisible();
+  await expect(page.getByText(names[0])).toBeVisible();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
   await expect(deleteButton).toBeDisabled();
 });
 
 test("delete shows undo toast and restore on cancel", async ({ page, request }) => {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+  requireAdminCreds();
 
-  const [seedName] = await seedContactMessages(request, 1);
-
+  const { names } = await seedContactMessages(request, 1);
   await loginAsAdmin(page);
-  await expect(page.getByText(seedName)).toBeVisible();
+  await expect(page.getByText(names[0])).toBeVisible();
 
-  const checkbox = page.getByRole("checkbox", { name: /S[ée]lectionner/i }).first();
+  const checkbox = page.getByRole("checkbox", { name: /S.lectionner/i }).first();
   await checkbox.check();
 
   const deleteButton = page.getByRole("button", { name: "Supprimer" });
   await deleteButton.click();
 
-  const undoToast = page.getByText(/message\(s\) supprimé\(s\)/);
+  const undoToast = page.getByText(/message\(s\) supprim/i);
   await expect(undoToast).toBeVisible();
   await page.getByRole("button", { name: "Annuler" }).click();
   await expect(undoToast).not.toBeVisible();

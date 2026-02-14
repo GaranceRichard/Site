@@ -13,6 +13,7 @@ export type SortField = "created_at" | "name" | "email" | "subject";
 export type SortDir = "asc" | "desc";
 export type BackofficeSection =
   | "messages"
+  | "home"
   | "references"
   | "header"
   | "stats"

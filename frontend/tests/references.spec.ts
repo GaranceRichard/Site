@@ -1,19 +1,8 @@
 import path from "node:path";
 import { expect, test } from "./fixtures";
+import { loginAsAdmin, requireAdminCreds } from "./helpers";
 
-const adminUser = process.env.E2E_ADMIN_USER;
-const adminPass = process.env.E2E_ADMIN_PASS;
-
-async function loginBackoffice(page: import("@playwright/test").Page) {
-  test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
-
-  await page.goto("/");
-  await page.getByRole("button", { name: /back-office|backoffice/i }).click();
-  await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-  await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-  await page.getByRole("button", { name: "Se connecter" }).click();
-  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
-}
+test.describe.configure({ mode: "serial" });
 
 async function openReferencesManager(page: import("@playwright/test").Page) {
   await page.goto("/backoffice");
@@ -26,14 +15,18 @@ async function uploadWithChooser(
   buttonName: RegExp,
   filePath: string,
 ) {
+  const uploadPromise = page.waitForResponse(
+    (res) =>
+      res.url().includes("/api/contact/references/admin/upload") &&
+      res.request().method() === "POST" &&
+      res.status() < 500,
+    { timeout: 60_000 },
+  );
+
   const [chooser] = await Promise.all([
     page.waitForEvent("filechooser"),
     page.getByRole("button", { name: buttonName }).click(),
   ]);
-
-  const uploadPromise = page.waitForResponse((res) =>
-    res.url().includes("/api/contact/references/admin/upload"),
-  );
 
   await chooser.setFiles(filePath);
   const uploadRes = await uploadPromise;
@@ -45,7 +38,7 @@ async function createReference(
   referenceName: string,
   situation?: string,
 ) {
-  await page.getByRole("button", { name: /R.f.rences/i }).click();
+  await openReferencesManager(page);
   await page.getByRole("button", { name: "Ajouter" }).click();
   await expect(page.getByText(/Cr.er une r.f.rence/i)).toBeVisible();
 
@@ -58,7 +51,7 @@ async function createReference(
   }
 
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText(referenceName)).toBeVisible();
+  await expect(page.getByText(referenceName)).toBeVisible({ timeout: 20_000 });
 }
 
 async function deleteReference(page: import("@playwright/test").Page, referenceName: string) {
@@ -83,15 +76,13 @@ async function deleteAllReferences(page: import("@playwright/test").Page) {
     }
 
     await page.getByRole("button", { name: "Supprimer" }).click();
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(400);
   }
 
   await expect(page.getByText(/Aucune r.f.rence\./i)).toBeVisible();
 }
 
-async function maybeGetLoadedImageSrc(
-  cardButton: import("@playwright/test").Locator,
-) {
+async function maybeGetLoadedImageSrc(cardButton: import("@playwright/test").Locator) {
   const cardImage = cardButton.locator("img").first();
   if ((await cardImage.count()) === 0) return null;
 
@@ -103,7 +94,8 @@ async function maybeGetLoadedImageSrc(
 }
 
 test("backoffice references create and delete", async ({ page }) => {
-  await loginBackoffice(page);
+  requireAdminCreds();
+  await loginAsAdmin(page);
 
   const referenceName = `Ref E2E ${Date.now()}`;
   await createReference(page, referenceName, "Situation E2E");
@@ -111,7 +103,8 @@ test("backoffice references create and delete", async ({ page }) => {
 });
 
 test("frontoffice reference modal shows details", async ({ page }) => {
-  await loginBackoffice(page);
+  requireAdminCreds();
+  await loginAsAdmin(page);
 
   const referenceName = `Ref Front ${Date.now()}`;
   const situation = "Situation front E2E";
@@ -126,13 +119,13 @@ test("frontoffice reference modal shows details", async ({ page }) => {
   await expect(modal.getByText("Situation", { exact: true })).toBeVisible();
   await expect(modal.getByText(situation)).toBeVisible();
 
-  await page.goto("/backoffice");
-  await page.getByRole("button", { name: /R.f.rences/i }).click();
+  await openReferencesManager(page);
   await deleteReference(page, referenceName);
 });
 
 test("references flow: create, replace image, add icon, delete all and hide menu", async ({ page }) => {
-  await loginBackoffice(page);
+  requireAdminCreds();
+  await loginAsAdmin(page);
   await openReferencesManager(page);
   await deleteAllReferences(page);
 

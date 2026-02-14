@@ -29,6 +29,7 @@ describe("Sidebar", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Messages contact" }));
+    fireEvent.click(screen.getByRole("button", { name: "Accueil" }));
     fireEvent.click(screen.getByRole("button", { name: "References" }));
     fireEvent.click(screen.getByRole("button", { name: "Header" }));
     fireEvent.click(screen.getByRole("button", { name: "Retour au site" }));
@@ -36,6 +37,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
 
     expect(onSelectSection).toHaveBeenCalledWith("messages");
+    expect(onSelectSection).toHaveBeenCalledWith("home");
     expect(onSelectSection).toHaveBeenCalledWith("references");
     expect(onSelectSection).toHaveBeenCalledWith("header");
     expect(onGoHome).toHaveBeenCalled();
@@ -70,6 +72,21 @@ describe("Sidebar", () => {
     );
 
     const button = screen.getByRole("button", { name: "Header" });
+    expect(button.className).toContain("bg-neutral-900 text-white");
+  });
+
+  it("affiche le style actif pour Accueil", () => {
+    render(
+      <Sidebar
+        section="home"
+        onSelectSection={vi.fn()}
+        onGoHome={vi.fn()}
+        onRefresh={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    const button = screen.getByRole("button", { name: "Accueil" });
     expect(button.className).toContain("bg-neutral-900 text-white");
   });
 

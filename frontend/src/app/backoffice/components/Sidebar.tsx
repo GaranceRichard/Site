@@ -60,6 +60,8 @@ export default function Sidebar({
         >
           Messages contact
         </button>
+      </div>
+      <div className="mt-4 space-y-2">
         <button
           type="button"
           onClick={() => onSelectSection("header")}
@@ -72,6 +74,19 @@ export default function Sidebar({
           ].join(" ")}
         >
           Header
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectSection("home")}
+          className={[
+            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+            section === "home"
+              ? "bg-neutral-900 text-white"
+              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+          ].join(" ")}
+        >
+          Accueil
         </button>
         <button
           type="button"

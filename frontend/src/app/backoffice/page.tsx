@@ -8,6 +8,7 @@ import { clearAuthTokens } from "./logic";
 import AuthAlert from "./components/AuthAlert";
 import DisabledView from "./components/DisabledView";
 import HeaderSettingsManager from "./components/HeaderSettingsManager";
+import HomeSettingsManager from "./components/HomeSettingsManager";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
 import ReferencesManager from "./components/ReferencesManager";
@@ -23,6 +24,13 @@ import {
 } from "./sectionStore";
 
 function getSectionCopy(section: string): { title: string; subtitle: string } {
+  if (section === "home") {
+    return {
+      title: "Accueil",
+      subtitle: "Edition du hero, des liens, des mots-cles et des encarts.",
+    };
+  }
+
   if (section === "references") {
     return {
       title: "References",
@@ -165,6 +173,7 @@ export default function BackofficePage() {
           ) : null}
 
           {section === "header" ? <HeaderSettingsManager /> : null}
+          {section === "home" ? <HomeSettingsManager /> : null}
         </section>
       </div>
 

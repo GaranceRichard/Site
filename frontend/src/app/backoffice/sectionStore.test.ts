@@ -24,6 +24,11 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("header");
   });
 
+  it("returns home when stored value is home", () => {
+    window.localStorage.setItem(SECTION_KEY, "home");
+    expect(getBackofficeSection()).toBe("home");
+  });
+
   it("falls back to messages when stored value is invalid", () => {
     window.localStorage.setItem(SECTION_KEY, "invalid");
     expect(getBackofficeSection()).toBe("messages");
