@@ -1,4 +1,3 @@
-// frontend/src/app/backoffice/page.tsx
 "use client";
 
 import { useSyncExternalStore } from "react";
@@ -8,6 +7,7 @@ import { isBackofficeEnabled } from "../lib/backoffice";
 import { clearAuthTokens } from "./logic";
 import AuthAlert from "./components/AuthAlert";
 import DisabledView from "./components/DisabledView";
+import HeaderSettingsManager from "./components/HeaderSettingsManager";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
 import ReferencesManager from "./components/ReferencesManager";
@@ -22,6 +22,27 @@ import {
   subscribeBackofficeSection,
 } from "./sectionStore";
 
+function getSectionCopy(section: string): { title: string; subtitle: string } {
+  if (section === "references") {
+    return {
+      title: "References",
+      subtitle: "Gestion des references visibles sur le site.",
+    };
+  }
+
+  if (section === "header") {
+    return {
+      title: "Header",
+      subtitle: "Edition du nom, du titre et du lien de prise de rendez-vous.",
+    };
+  }
+
+  return {
+    title: "Messages de contact",
+    subtitle: "Vue condensee des messages les plus recents.",
+  };
+}
+
 export default function BackofficePage() {
   const router = useRouter();
   const backofficeEnabled = isBackofficeEnabled();
@@ -32,6 +53,7 @@ export default function BackofficePage() {
     getBackofficeSection,
     getBackofficeSectionServer,
   );
+  const sectionCopy = getSectionCopy(section);
 
   const {
     openLogin,
@@ -90,13 +112,9 @@ export default function BackofficePage() {
         <section className="flex min-w-0 flex-1 flex-col px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold">
-                {section === "references" ? "Références" : "Messages de contact"}
-              </h2>
+              <h2 className="text-lg font-semibold">{sectionCopy.title}</h2>
               <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-                {section === "references"
-                  ? "Gestion des références visibles sur le site."
-                  : "Vue condensée des messages les plus récents."}
+                {sectionCopy.subtitle}
               </p>
             </div>
           </div>
@@ -145,6 +163,8 @@ export default function BackofficePage() {
           {section === "references" ? (
             <ReferencesManager apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
           ) : null}
+
+          {section === "header" ? <HeaderSettingsManager /> : null}
         </section>
       </div>
 

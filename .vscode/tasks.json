@@ -1,4 +1,4 @@
-{
+﻿{
   "version": "2.0.0",
   "tasks": [
     {
@@ -71,7 +71,7 @@
     {
       "label": "Perf Loop",
       "type": "shell",
-      "command": "npm run perf:dev; while ($true) { Start-Sleep -Seconds 600; npm run perf:dev }",
+      "command": "while ($true) { try { Invoke-WebRequest -Uri 'http://127.0.0.1:3000' -Method GET -TimeoutSec 5 | Out-Null; npm run perf:dev; Start-Sleep -Seconds 600 } catch { Write-Host 'Perf Loop: frontend indisponible, nouvel essai dans 30s.'; Start-Sleep -Seconds 30 } }",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
@@ -87,7 +87,7 @@
     {
       "label": "Test Back",
       "type": "shell",
-      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
+      "command": "powershell -NoExit -Command \"if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { .\\.venv\\Scripts\\Activate.ps1 }; Write-Host 'Ready'\"",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
@@ -117,8 +117,10 @@
     {
       "label": "dev:all",
       "dependsOn": ["Global", "Backend", "Frontend", "Monitor", "Perf Loop", "Test Back", "Test Front"],
-      "dependsOrder": "parallel",
+      "dependsOrder": "sequence",
       "problemMatcher": []
     }
   ]
 }
+
+

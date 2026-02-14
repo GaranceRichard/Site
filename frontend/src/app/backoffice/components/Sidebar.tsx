@@ -39,11 +39,9 @@ export default function Sidebar({
             />
           </button>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
-              Admin
-            </p>
-          <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
-        </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">Admin</p>
+            <h1 className="mt-3 text-xl font-semibold">Backoffice</h1>
+          </div>
         </div>
         <ThemeToggle className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:hover:bg-neutral-900" />
       </div>
@@ -64,6 +62,19 @@ export default function Sidebar({
         </button>
         <button
           type="button"
+          onClick={() => onSelectSection("header")}
+          className={[
+            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+            section === "header"
+              ? "bg-neutral-900 text-white"
+              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+          ].join(" ")}
+        >
+          Header
+        </button>
+        <button
+          type="button"
           onClick={() => onSelectSection("references")}
           className={[
             "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
@@ -73,7 +84,7 @@ export default function Sidebar({
             "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
           ].join(" ")}
         >
-          Références
+          References
         </button>
         <button
           type="button"

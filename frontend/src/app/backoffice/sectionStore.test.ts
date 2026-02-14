@@ -19,6 +19,11 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("references");
   });
 
+  it("returns header when stored value is header", () => {
+    window.localStorage.setItem(SECTION_KEY, "header");
+    expect(getBackofficeSection()).toBe("header");
+  });
+
   it("falls back to messages when stored value is invalid", () => {
     window.localStorage.setItem(SECTION_KEY, "invalid");
     expect(getBackofficeSection()).toBe("messages");

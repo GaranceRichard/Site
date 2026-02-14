@@ -1,7 +1,7 @@
 ﻿// frontend/src/app/components/TopNav.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,11 @@ import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import { isAccessTokenValid, isBackofficeEnabled } from "../lib/backoffice";
 import { fetchReferencesOnce } from "../lib/references";
+import {
+  getHeaderSettings,
+  getHeaderSettingsServer,
+  subscribeHeaderSettings,
+} from "../content/headerSettings";
 
 type NavItem = { label: string; href: string };
 
@@ -21,9 +26,15 @@ export default function TopNav({
 }) {
   const router = useRouter();
   const backofficeEnabled = isBackofficeEnabled();
+  const headerSettings = useSyncExternalStore(
+    subscribeHeaderSettings,
+    getHeaderSettings,
+    getHeaderSettingsServer,
+  );
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
   const [hasReferences, setHasReferences] = useState(true);
+  const bookingHref = headerSettings.bookingUrl || bookingUrl;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -132,7 +143,7 @@ export default function TopNav({
           >
             <Image
               src="/brand/logo.png"
-              alt="Garance Richard"
+              alt={headerSettings.name}
               width={48}
               height={48}
               priority
@@ -140,8 +151,8 @@ export default function TopNav({
             />
 
             <div className="min-w-0 leading-tight">
-              <p className="text-sm font-semibold">Garance Richard</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Coach Lean-Agile</p>
+              <p className="text-sm font-semibold">{headerSettings.name}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{headerSettings.title}</p>
             </div>
           </button>
 
@@ -154,7 +165,7 @@ export default function TopNav({
           <div className="flex items-center gap-2 md:gap-3">
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
-              <a href={bookingUrl} target="_blank" rel="noopener noreferrer" className={NAV_PILL}>
+              <a href={bookingHref} target="_blank" rel="noopener noreferrer" className={NAV_PILL}>
                 Prendre rendez-vous
               </a>
 
@@ -190,7 +201,7 @@ export default function TopNav({
             <ScrollNav items={navItems} className={NAV_PILL} onNavigate={closeMenu} />
 
             <a
-              href={bookingUrl}
+              href={bookingHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={closeMenu}

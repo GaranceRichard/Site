@@ -4,7 +4,13 @@ const SECTION_KEY = "backoffice_section";
 const sectionListeners = new Set<() => void>();
 
 function normalizeSection(value: string | null): BackofficeSection {
-  if (value === "messages" || value === "references" || value === "stats" || value === "settings") {
+  if (
+    value === "messages" ||
+    value === "references" ||
+    value === "header" ||
+    value === "stats" ||
+    value === "settings"
+  ) {
     return value;
   }
   return "messages";

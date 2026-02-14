@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import BackofficePage from "./page";
 import { setBackofficeSection } from "./sectionStore";
 
@@ -53,6 +53,10 @@ vi.mock("./components/DisabledView", () => ({
   default: () => <div data-testid="disabled-view" />,
 }));
 
+vi.mock("./components/HeaderSettingsManager", () => ({
+  default: () => <div data-testid="header-settings-manager" />,
+}));
+
 vi.mock("./components/MessageModal", () => ({
   default: () => <div data-testid="message-modal" />,
 }));
@@ -81,6 +85,7 @@ const SECTION_KEY = "backoffice_section";
 
 describe("BackofficePage", () => {
   beforeEach(() => {
+    cleanup();
     window.localStorage.removeItem(SECTION_KEY);
     isBackofficeEnabledMock.mockReturnValue(true);
   });
@@ -104,5 +109,13 @@ describe("BackofficePage", () => {
     expect(screen.getAllByTestId("references-manager").length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryByPlaceholderText("Rechercher par nom, email ou sujet")).not.toBeInTheDocument();
+  });
+
+  it("renders header section when stored", () => {
+    setBackofficeSection("header");
+    render(<BackofficePage />);
+    expect(screen.getByTestId("header-settings-manager")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
+    expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
   });
 });

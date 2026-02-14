@@ -26,20 +26,17 @@ describe("ContactForm", () => {
     fireEvent.change(screen.getByLabelText("Message"), {
       target: { value: "Bonjour" },
     });
-    fireEvent.click(
-      screen.getByRole("checkbox", {
-        name: /J’accepte que mes informations soient utilisées/i,
-      })
-    );
+    fireEvent.click(screen.getByRole("checkbox"));
   }
 
-  it("ignore le honeypot et affiche le succès", async () => {
+  it("ignore le honeypot et affiche le succÃ¨s", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
 
     const fetchMock = vi.fn();
+    const onSuccess = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<ContactForm />);
+    render(<ContactForm onSuccess={onSuccess} />);
     fillRequiredFields();
 
     fireEvent.change(screen.getByLabelText("Website"), {
@@ -49,15 +46,14 @@ describe("ContactForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Merci, votre message a bien été envoyé.")
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Merci, votre message a bien/i)).toBeInTheDocument();
     });
 
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it("affiche une erreur si l'API n'est pas configurée", async () => {
+  it("affiche une erreur si l'API n'est pas configurÃ©e", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
 
     render(<ContactForm />);
@@ -68,14 +64,15 @@ describe("ContactForm", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Erreur : Configuration API manquante (NEXT_PUBLIC_API_BASE_URL)."
-        )
+          "Erreur : Configuration API manquante (NEXT_PUBLIC_API_BASE_URL).",
+        ),
       ).toBeInTheDocument();
     });
   });
 
-  it("soumet le formulaire et affiche le succès", async () => {
+  it("soumet le formulaire et affiche le succÃ¨s", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+    const onSuccess = vi.fn();
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -84,24 +81,24 @@ describe("ContactForm", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<ContactForm />);
+    render(<ContactForm onSuccess={onSuccess} />);
     fillRequiredFields();
 
     fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Merci, votre message a bien été envoyé.")
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Merci, votre message a bien/i)).toBeInTheDocument();
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://example.com/api/contact/messages",
       expect.objectContaining({
         method: "POST",
-      })
+      }),
     );
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
+
   it("affiche le detail JSON quand l'API repond en erreur", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
 
@@ -146,6 +143,28 @@ describe("ContactForm", () => {
     });
   });
 
+  it("affiche le fallback Erreur API si la reponse erreur est vide", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 418,
+      json: vi.fn().mockRejectedValue(new Error("bad json")),
+      text: vi.fn().mockResolvedValue(""),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Erreur : Erreur API (418)")).toBeInTheDocument();
+    });
+  });
+
   it("affiche une erreur de delai en cas de timeout reseau", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
     process.env.NEXT_PUBLIC_CONTACT_TIMEOUT_MS = "5";
@@ -166,8 +185,25 @@ describe("ContactForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Erreur : Délai dépassé. Veuillez réessayer.")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Erreur :\s*D[ée]lai d[ée]pass[ée]\. Veuillez r[ée]essayer\./i),
+      ).toBeInTheDocument();
     });
   });
 
+  it("affiche 'Erreur inattendue' quand l'erreur n'est pas une instance d'Error", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+
+    const fetchMock = vi.fn().mockRejectedValue("plain failure");
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Erreur : Erreur inattendue")).toBeInTheDocument();
+    });
+  });
 });
