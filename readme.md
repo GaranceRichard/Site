@@ -397,3 +397,100 @@ Ne pas committer :
 ## Gouvernance technique
 - Strategie de migrations : `docs/migrations.md`
 - Politique de versions et cadence de mise a jour : `docs/dependency-policy.md`
+
+## RUN / Exploitation
+### 1) Service overview
+- Composants:
+- Frontend: Next.js (`frontend`) sert le site sur le port `3000` en dev.
+- Backend: Django/DRF (`backend`) sert l'API et l'admin sur le port `8000`.
+- DB: PostgreSQL (`db` en prod compose, `postgres` en dev compose) sur `5432`.
+- Cache/rate-limit: Redis (`redis`) sur `6379`.
+- Monitoring: Prometheus (`9090`) + Grafana (`3001`) via `docker-compose.monitoring.yml`.
+- Ports utilises:
+- App locale: `http://127.0.0.1:8000` (API), `http://127.0.0.1:3000` (front).
+- Monitoring local serveur: `http://127.0.0.1:9090` (Prometheus), `http://127.0.0.1:3001` (Grafana).
+- Prerequis:
+- Dev: Node.js LTS, Python, Docker (pour postgres/redis).
+- Staging/Prod: Docker + Docker Compose, `.env.prod`, acces SSH pour CD.
+
+### 2) Deploiement
+- Workflow recommande:
+- `main` -> workflow `.github/workflows/deploy.yml` -> build/push GHCR -> deploiement staging -> smoke tests.
+- Commandes locales "prod-like":
+```bash
+cp docs/env.prod.example .env.prod
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+- Commandes avec monitoring:
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod up -d
+```
+- Configuration par environnement:
+- `dev`: `backend/.env` + `frontend/.env.local`, execution locale (`runserver` + `npm run dev`).
+- `staging`: compose prod + monitoring, images GHCR taggees par SHA, deploy auto via GitHub Actions.
+- `prod`: meme stack que staging, mais secrets et endpoints de prod dans `.env.prod`.
+
+### 3) Configuration & secrets
+- Variables clefs backend:
+- `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL`, `REDIS_URL`.
+- Variables clefs frontend:
+- `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SENTRY_DSN`.
+- Variables observabilite:
+- `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`, `PROMETHEUS_RETENTION_DAYS`.
+- Stockage des secrets:
+- Local: `backend/.env`, `frontend/.env.local`, `frontend/.env.e2e.local` (non versionnes).
+- Serveur: `.env.prod` hors git.
+- CI/CD: GitHub Secrets (`STAGING_*`, `REGISTRY_*`).
+- Interdits:
+- Ne jamais committer `.env*`, tokens, mots de passe, clefs privees.
+- Ne jamais publier `GRAFANA_ADMIN_PASSWORD`, `SENTRY_DSN` prive, credentials DB/Redis.
+
+### 4) Supervision / Observabilite
+- Quoi regarder en premier:
+- 1. `GET /api/health` et `GET /api/health/ready` (etat global app/DB/Redis).
+- 2. Prometheus (`/metrics` scrape sur `backend:8000`) pour erreurs HTTP, latence, disponibilite.
+- 3. Grafana pour la vue consolidee (datasource `Prometheus` preconfiguree).
+- 4. En local: `./scripts/monitor-local.ps1 -Loop`.
+- Sentry (priorisation):
+- Sev1: erreurs massives ou indisponibilite (500 en rafale, auth/admin KO global, crash frontend bloque).
+- Sev2: erreur partielle degradee (route/feature critique partiellement indisponible).
+- Sev3: erreur isolee ou non bloquante.
+- Ownership (par defaut):
+- Backend/API, DB, Redis: owner backend.
+- Frontend UX/runtime: owner frontend.
+- Infra deploy/compose/nginx/monitoring: owner ops.
+
+### 5) Incidents
+- Triage en 5 etapes:
+- 1. Symptome: identifier impact utilisateur (page KO, API KO, lenteur, erreurs 5xx).
+- 2. Logs: verifier logs runtime (`docker compose logs -f backend frontend nginx redis db` ou terminaux dev).
+- 3. Metriques: verifier tendance erreurs/latence dans Prometheus/Grafana.
+- 4. Sentry: isoler type d'exception, volume, endpoint ecrase, release concernee.
+- 5. Hypotheses: formuler 1-2 causes probables, tester rapidement, appliquer correctif ou rollback.
+- Ou trouver les logs:
+- Dev: sortie terminal `python manage.py runserver` et `npm run dev`.
+- Compose: `docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f <service>`.
+- Reproduction:
+- Utiliser endpoint minimal (`/api/health`, `/api/contact/messages`) puis reproduire sur route cible.
+- Capturer timestamp + route + payload + user impacte (si dispo) pour correler avec Sentry/metriques.
+- Severite minimale:
+- Sev1: indisponibilite totale ou perte fonction coeur metier.
+- Sev2: degradation majeure avec contournement possible.
+- Sev3: bug mineur, impact limite, pas de blocage global.
+
+### 6) Rollback / reprise
+- Rollback applicatif (images precedentes):
+```bash
+cd /chemin/vers/deploy
+export BACKEND_IMAGE=ghcr.io/<owner>/<repo>-backend:<sha-precedent>
+export FRONTEND_IMAGE=ghcr.io/<owner>/<repo>-frontend:<sha-precedent>
+docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod pull
+docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod up -d
+```
+- Si incident DB lie a migration irreversible:
+- Restaurer la sauvegarde DB puis redeployer la version precedente (voir `docs/migrations.md`).
+- Checks de reprise (obligatoires):
+- `curl -fsS https://<domaine>/api/health`
+- `curl -fsS https://<domaine>/api/health/ready`
+- `curl -fsS https://<domaine>/`
+- Verifier baisse des erreurs Sentry + retour des metriques a la normale (latence/5xx).

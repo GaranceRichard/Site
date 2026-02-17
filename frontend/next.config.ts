@@ -78,6 +78,7 @@ if (apiHostname && !["localhost", "127.0.0.1"].includes(apiHostname)) {
 }
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
   assetPrefix: process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
   compress: true,
   poweredByHeader: false,

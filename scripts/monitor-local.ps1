@@ -19,7 +19,7 @@ function Invoke-Check {
 
     $start = Get-Date
     try {
-        $res = Invoke-WebRequest -Uri $Url -Method GET -TimeoutSec $TimeoutSeconds
+        $res = Invoke-WebRequest -UseBasicParsing -Uri $Url -Method GET -TimeoutSec $TimeoutSeconds
         $duration = [int]((Get-Date) - $start).TotalMilliseconds
         $ok = & $IsOk $res.StatusCode
 
