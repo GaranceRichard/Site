@@ -4,6 +4,17 @@ const rawCdnUrl = process.env.NEXT_PUBLIC_CDN_URL?.trim() ?? "";
 const cdnUrl = rawCdnUrl.replace(/\/$/, "");
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
 const backendOrigin = (rawApiBaseUrl || "http://127.0.0.1:8000").replace(/\/$/, "");
+const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? "";
+const rawAllowedDevOrigins = process.env.NEXT_DEV_ALLOWED_ORIGINS?.trim() ?? "";
+
+const normalizeOrigin = (value: string): string | null => {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+};
 
 const cdnHostname = (() => {
   if (!cdnUrl) return null;
@@ -78,8 +89,21 @@ if (apiHostname && !["localhost", "127.0.0.1"].includes(apiHostname)) {
   );
 }
 
+const allowedDevOrigins = Array.from(
+  new Set(
+    [
+      "http://127.0.0.1:3000",
+      "http://localhost:3000",
+      normalizeOrigin(rawSiteUrl),
+      ...rawAllowedDevOrigins
+        .split(",")
+        .map((value) => normalizeOrigin(value.trim())),
+    ].filter((value): value is string => Boolean(value)),
+  ),
+);
+
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
+  allowedDevOrigins,
   assetPrefix: process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
   compress: true,
   poweredByHeader: false,

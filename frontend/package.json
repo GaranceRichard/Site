@@ -13,6 +13,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:coverage": "node scripts/run-vitest-coverage.mjs",
+    "test:coverage:vitals": "node scripts/run-vitest-coverage.mjs --config vitest.config.vitals.ts",
     "test:coverage:html": "vitest run --coverage --coverage.reporter=html",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --grep @smoke",

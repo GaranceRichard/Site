@@ -19,6 +19,7 @@ const rootDir = path.resolve(__dirname, "..");
 const rawDir = path.join(rootDir, "coverage-e2e");
 const outDir = path.join(rootDir, "coverage-e2e-report");
 const virtualDir = path.join(rootDir, ".e2e-virtual");
+const minimumCoverage = 80;
 
 function toPosix(input) {
   return input.replace(/\\/g, "/");
@@ -142,6 +143,20 @@ async function main() {
 
   console.log("E2E coverage report generated in:", outDir);
   console.log(JSON.stringify(summary, null, 2));
+
+  const failingMetrics = ["lines", "statements", "functions", "branches"].filter((metric) => {
+    const value = summary[metric]?.pct;
+    return typeof value === "number" && value < minimumCoverage;
+  });
+
+  if (failingMetrics.length > 0) {
+    for (const metric of failingMetrics) {
+      console.error(
+        `E2E coverage ${metric} (${summary[metric].pct}%) does not meet threshold (${minimumCoverage}%).`,
+      );
+    }
+    process.exit(1);
+  }
 }
 
 main().catch((error) => {

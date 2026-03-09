@@ -38,7 +38,7 @@ garancerichard-site/
 
 ## Quality & CI
 - Pull requests: lint + tests + coverage gates avant merge.
-- Front quality gate: npm run test:coverage avec seuil 80% (lines/statements/branches/functions) dans Vitest.
+- Front quality gate: npm run test:coverage avec seuil 80% (lines/statements/branches/functions) dans Vitest, avec enforcement `perFile`.
 - Back quality gate: coverage report --fail-under=80.
 - Sur main: tests/build puis build Docker backend + frontend.
 - Nightly (02:00 UTC): suite E2E Playwright complete.
@@ -149,7 +149,7 @@ Utiliser les tasks VS Code :
 
 Tasks de verification utiles :
 - `Tests` : lance les couvertures backend, integration, frontend, E2E, `Vitals compliance`, `npm lint` et `npm build`.
-- `Vitals compliance` : valide la couverture vitale frontend puis la couverture d'integration backend avec un seuil backend de `95%`.
+- `Vitals compliance` : valide la couverture vitale frontend (`95/95/95/95` avec `perFile`) puis la couverture d'integration backend avec un seuil global backend de `95%` et un controle backend vital par fichier.
 
 ### Makefile (raccourcis)
 Depuis la racine du repo :
@@ -359,7 +359,7 @@ npm run test:e2e:coverage:report
 
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
-- `npm run test:coverage` est la commande stable pour CLI/VS Code. Le HTML est volontairement sorti dans `npm run test:coverage:html`.
+- `npm run test:coverage` est la commande stable pour CLI/VS Code. Le HTML est volontairement sorti dans `npm run test:coverage:html`. Le wrapper nettoie `frontend/coverage/` avant chaque run pour eviter les etats de coverage stale entre executions.
 - Les tests E2E nécessitent un compte admin `is_staff` et un backend en cours d'exécution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
 - Couverture E2E KPI : parcours browser critiques du front visible. Le backoffice detaille reste principalement couvert par Vitest.
@@ -407,6 +407,7 @@ Ne pas committer :
 ## Standards d'ingenierie (DoD)
 - Definition of Done stricte : `docs/Definition-of-Done.md`
 - Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
+- Controle backend vital par fichier : `backend/scripts/check_vitals_coverage.py`
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`
 - Hooks pre-commit : `.pre-commit-config.yaml`
