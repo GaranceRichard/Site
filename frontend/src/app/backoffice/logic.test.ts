@@ -35,6 +35,16 @@ describe("backoffice logic", () => {
     expect(removed).toEqual(["access_token", "refresh_token"]);
   });
 
+  it("clearAuthTokens ignores storage failures", () => {
+    const storage = {
+      removeItem: () => {
+        throw new Error("boom");
+      },
+    };
+
+    expect(() => clearAuthTokens(storage)).not.toThrow();
+  });
+
   it("buildAdminMessagesQuery includes q only when search is non-empty", () => {
     const noSearch = buildAdminMessagesQuery({
       pageSize: 10,

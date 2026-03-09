@@ -1,33 +1,20 @@
-﻿{
+{
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Global",
-      "type": "shell",
-      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "presentation": {
-        "panel": "new",
-        "reveal": "always",
-        "focus": true,
-        "showReuseMessage": false
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Backend",
       "type": "shell",
-      "command": "if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { .\\.venv\\Scripts\\Activate.ps1 }; python manage.py runserver",
+      "command": "if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { . .\\.venv\\Scripts\\Activate.ps1 }; python manage.py runserver",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "dev-backend",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": false
       },
       "isBackground": true,
       "problemMatcher": []
@@ -45,9 +32,11 @@
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "dev-frontend",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": false
       },
       "isBackground": true,
       "problemMatcher": []
@@ -61,9 +50,11 @@
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "dev-monitor",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": false
       },
       "isBackground": true,
       "problemMatcher": []
@@ -71,56 +62,179 @@
     {
       "label": "Perf Loop",
       "type": "shell",
-      "command": "while ($true) { try { Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:3000' -Method GET -TimeoutSec 5 | Out-Null; npm run perf:dev; Start-Sleep -Seconds 600 } catch { Write-Host 'Perf Loop: frontend indisponible, nouvel essai dans 30s.'; Start-Sleep -Seconds 30 } }",
+      "command": "$frontendReady = $false; while ($true) { try { $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://localhost:3000' -Method GET -TimeoutSec 10; if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) { $frontendReady = $true } else { throw 'Frontend non pret.' } } catch { $frontendReady = $false } if (-not $frontendReady) { Write-Host 'Perf Loop: frontend indisponible sur http://localhost:3000, nouvel essai dans 30s.'; Start-Sleep -Seconds 30; continue } & \"${env:ProgramFiles}\\nodejs\\npm.cmd\" run perf:dev; $perfExitCode = $LASTEXITCODE; if ($perfExitCode -ne 0) { Write-Host \"Perf Loop: echec du run perf (exit $perfExitCode), nouvel essai dans 30s.\"; Start-Sleep -Seconds 30; continue } Write-Host 'Perf Loop: audit termine, prochain run dans 600s.'; Start-Sleep -Seconds 600 }",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "dev-perf",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": false
       },
       "isBackground": true,
       "problemMatcher": []
     },
     {
-      "label": "Test Back",
-      "type": "process",
-      "command": "powershell",
-      "args": ["-NoExit", "-Command", "& { if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { . .\\.venv\\Scripts\\Activate.ps1 }; Write-Host 'Ready' }"],
+      "label": "dev:all",
+      "dependsOn": ["Backend", "Frontend", "Monitor", "Perf Loop"],
+      "dependsOrder": "parallel",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test coverage Backend",
+      "type": "shell",
+      "command": "if (Test-Path .\\.venv\\Scripts\\Activate.ps1) { . .\\.venv\\Scripts\\Activate.ps1 }; python -m coverage run manage.py test; python -m coverage report --fail-under=80",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "tests-backend",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": true
       },
       "problemMatcher": []
     },
     {
-      "label": "Test Front",
+      "label": "Test integration",
       "type": "shell",
-      "command": "powershell -NoExit -Command \"Write-Host 'Ready'\"",
+      "command": "$py = if (Test-Path .\\.venv\\Scripts\\python.exe) { '.\\.venv\\Scripts\\python.exe' } else { 'python' }; & $py -m coverage run --rcfile=.coveragerc.integration manage.py test config.tests.test_middleware contact.tests.test_config_urls contact.tests.test_health contact.tests.test_contact_api contact.tests.test_auth_jwt contact.tests.test_throttles contact.tests.test_reference_public_api contact.tests.test_reference_admin_integration contact.tests.test_security; & $py -m coverage report --rcfile=.coveragerc.integration --fail-under=80",
       "options": {
-        "cwd": "${workspaceFolder}/frontend"
+        "cwd": "${workspaceFolder}/backend"
       },
       "presentation": {
         "panel": "new",
-        "reveal": "silent",
+        "group": "tests-integration",
+        "reveal": "always",
         "focus": false,
-        "showReuseMessage": false
+        "showReuseMessage": false,
+        "clear": true
       },
       "problemMatcher": []
     },
     {
-      "label": "dev:all",
-      "dependsOn": ["Global", "Backend", "Frontend", "Monitor", "Perf Loop", "Test Back", "Test Front"],
+      "label": "Test coverage frontend",
+      "type": "process",
+      "command": "${env:ProgramFiles}\\nodejs\\npm.cmd",
+      "args": ["run", "test:coverage"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend",
+        "env": {
+          "Path": "${env:Path};${env:ProgramFiles}\\nodejs"
+        }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "tests-frontend",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test coverage e2e",
+      "type": "process",
+      "command": "${env:ProgramFiles}\\nodejs\\npm.cmd",
+      "args": ["run", "test:e2e:coverage:report"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend",
+        "env": {
+          "Path": "${env:Path};${env:ProgramFiles}\\nodejs"
+        }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "tests-e2e",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Vitals compliance",
+      "type": "shell",
+      "command": "$root = (Get-Location).Path; $backendPython = Join-Path $root 'backend\\.venv\\Scripts\\python.exe'; $py = if (Test-Path $backendPython) { $backendPython } else { 'python' }; $npm = Join-Path $env:ProgramFiles 'nodejs\\npm.cmd'; Write-Host 'Vitals: frontend coverage'; Push-Location (Join-Path $root 'frontend'); & $npm run test:coverage; if ($LASTEXITCODE -ne 0) { Pop-Location; exit $LASTEXITCODE }; Pop-Location; Write-Host 'Vitals: backend integration coverage'; Push-Location (Join-Path $root 'backend'); & $py -m coverage run --rcfile=.coveragerc.integration manage.py test config.tests.test_middleware contact.tests.test_config_urls contact.tests.test_health contact.tests.test_contact_api contact.tests.test_auth_jwt contact.tests.test_throttles contact.tests.test_reference_public_api contact.tests.test_reference_admin_integration contact.tests.test_security; if ($LASTEXITCODE -ne 0) { Pop-Location; exit $LASTEXITCODE }; & $py -m coverage report --rcfile=.coveragerc.integration --fail-under=95; $exitCode = $LASTEXITCODE; Pop-Location; exit $exitCode",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "tests-vitals",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "npm lint",
+      "type": "process",
+      "command": "${env:ProgramFiles}\\nodejs\\npm.cmd",
+      "args": ["run", "lint"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend",
+        "env": {
+          "Path": "${env:Path};${env:ProgramFiles}\\nodejs"
+        }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "tests-lint",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "npm build",
+      "type": "process",
+      "command": "${env:ProgramFiles}\\nodejs\\npm.cmd",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend",
+        "env": {
+          "Path": "${env:Path};${env:ProgramFiles}\\nodejs"
+        }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "tests-build",
+        "reveal": "always",
+        "focus": false,
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests",
+      "dependsOn": [
+        "Test coverage Backend",
+        "Test integration",
+        "Test coverage frontend",
+        "Test coverage e2e",
+        "Vitals compliance",
+        "npm lint",
+        "npm build"
+      ],
       "dependsOrder": "parallel",
       "problemMatcher": []
     }
   ]
 }
-

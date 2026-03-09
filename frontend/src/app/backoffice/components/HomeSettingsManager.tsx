@@ -11,7 +11,7 @@ import {
   type HomeHeroSettings,
 } from "../../content/homeHeroSettings";
 
-function moveItem<T>(items: T[], from: number, to: number): T[] {
+export function moveItem<T>(items: T[], from: number, to: number): T[] {
   if (to < 0 || to >= items.length || from === to) {
     return items;
   }

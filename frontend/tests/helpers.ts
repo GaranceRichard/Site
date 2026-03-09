@@ -2,9 +2,76 @@ import { expect, test } from "./fixtures";
 
 const adminUser = process.env.E2E_ADMIN_USER;
 const adminPass = process.env.E2E_ADMIN_PASS;
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+
+type AdminTokens = {
+  access: string;
+  refresh: string;
+};
+
+let adminTokensPromise: Promise<AdminTokens> | null = null;
 
 export function requireAdminCreds() {
   test.skip(!adminUser || !adminPass, "E2E_ADMIN_USER/E2E_ADMIN_PASS not set");
+}
+
+async function fetchAdminTokens(): Promise<AdminTokens> {
+  requireAdminCreds();
+
+  const response = await fetch(`${apiBase}/api/auth/token/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: adminUser,
+      password: adminPass,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to fetch admin tokens: ${response.status}`);
+  }
+
+  return (await response.json()) as AdminTokens;
+}
+
+async function getAdminTokens(): Promise<AdminTokens> {
+  if (!adminTokensPromise) {
+    adminTokensPromise = fetchAdminTokens();
+  }
+
+  return adminTokensPromise;
+}
+
+async function injectAdminSession(page: import("@playwright/test").Page) {
+  const tokens = await getAdminTokens();
+
+  await page.goto("/");
+  await page.evaluate((auth) => {
+    window.sessionStorage.setItem("access_token", auth.access);
+    window.sessionStorage.setItem("refresh_token", auth.refresh);
+  }, tokens);
+}
+
+export async function fillStableValue(
+  locator: import("@playwright/test").Locator,
+  value: string,
+  attempts = 3,
+) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    await locator.click();
+    await locator.fill(value);
+
+    try {
+      await expect(locator).toHaveValue(value, { timeout: 1_500 });
+      return;
+    } catch {
+      if (attempt === attempts - 1) {
+        throw new Error(`Unable to persist value "${value}" in input`);
+      }
+      await locator.clear();
+      await locator.page().waitForTimeout(150);
+    }
+  }
 }
 
 export async function openBackofficeLogin(page: import("@playwright/test").Page) {
@@ -23,22 +90,29 @@ export async function openBackofficeLogin(page: import("@playwright/test").Page)
 }
 
 export async function loginAsAdmin(page: import("@playwright/test").Page) {
+  await injectAdminSession(page);
+  await page.goto("/backoffice");
+  await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible({ timeout: 12_000 });
+}
+
+export async function submitAdminLogin(page: import("@playwright/test").Page) {
   requireAdminCreds();
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    await openBackofficeLogin(page);
-    await page.getByPlaceholder("Identifiant").fill(adminUser as string);
-    await page.getByPlaceholder("Mot de passe").fill(adminPass as string);
-    await page.getByRole("button", { name: "Se connecter" }).click();
-    try {
-      await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible({ timeout: 12_000 });
-      return;
-    } catch {
-      if (attempt === 1) {
-        throw new Error("Unable to login to backoffice");
-      }
-    }
-  }
+  await openBackofficeLogin(page);
+  const usernameInput = page.getByPlaceholder("Identifiant");
+  const passwordInput = page.getByPlaceholder("Mot de passe");
+
+  await fillStableValue(usernameInput, adminUser as string);
+
+  await fillStableValue(passwordInput, adminPass as string);
+
+  await page.getByRole("button", { name: "Se connecter" }).click();
+
+  await Promise.race([
+    page.waitForURL(/\/backoffice$/, { timeout: 12_000 }),
+    expect(page.getByText(/Identifiant ou mot de passe invalide/i)).toBeVisible({ timeout: 12_000 }),
+    expect(page.getByText(/API introuvable/i)).toBeVisible({ timeout: 12_000 }),
+  ]);
 }
 
 export async function fillContactForm(page: import("@playwright/test").Page, seed: string) {

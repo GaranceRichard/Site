@@ -38,3 +38,27 @@ class SecurityHeadersMiddlewareTests(SimpleTestCase):
 
         self.assertEqual(response["Content-Security-Policy"], "default-src 'none'")
         self.assertEqual(response["Permissions-Policy"], "camera=()")
+
+    @override_settings(SECURITY_CSP="", SECURITY_PERMISSIONS_POLICY="")
+    def test_skips_security_headers_when_settings_are_empty(self):
+        middleware = SecurityHeadersMiddleware(self.get_response)
+        response = middleware(self.factory.get("/"))
+
+        self.assertNotIn("Content-Security-Policy", response)
+        self.assertNotIn("Permissions-Policy", response)
+
+    @override_settings(
+        SECURITY_CSP="default-src 'self'",
+        SECURITY_PERMISSIONS_POLICY="geolocation=()",
+    )
+    def test_adds_only_missing_header_when_other_is_already_present(self):
+        def partially_defined_response(_request):
+            resp = HttpResponse("ok")
+            resp["Permissions-Policy"] = "camera=()"
+            return resp
+
+        middleware = SecurityHeadersMiddleware(partially_defined_response)
+        response = middleware(self.factory.get("/"))
+
+        self.assertEqual(response["Content-Security-Policy"], "default-src 'self'")
+        self.assertEqual(response["Permissions-Policy"], "camera=()")

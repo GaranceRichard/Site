@@ -40,6 +40,35 @@ describe("homeHeroSettings", () => {
     expect(value.cards).toEqual([{ id: "x", title: "A", content: "B" }]);
   });
 
+  it("ignores non-object links entries and non-object root payloads", () => {
+    window.localStorage.setItem(
+      HOME_HERO_SETTINGS_KEY,
+      JSON.stringify({
+        links: [null, "bad", 123, { id: "message", label: "Contact", enabled: true }],
+      }),
+    );
+
+    const value = getHomeHeroSettings();
+    expect(value.links.find((link) => link.id === "message")?.label).toBe("Contact");
+
+    window.localStorage.setItem(HOME_HERO_SETTINGS_KEY, JSON.stringify("not-an-object"));
+    expect(getHomeHeroSettings()).toEqual(DEFAULT_HOME_HERO_SETTINGS);
+  });
+
+  it("falls back to default label and generates an id for cards without valid id", () => {
+    window.localStorage.setItem(
+      HOME_HERO_SETTINGS_KEY,
+      JSON.stringify({
+        links: [{ id: "services", label: "   ", enabled: true }],
+        cards: [{ id: "", title: "  Card title  ", content: "  Card body  " }],
+      }),
+    );
+
+    const value = getHomeHeroSettings();
+    expect(value.links.find((link) => link.id === "services")?.label).toBe("Voir les offres");
+    expect(value.cards).toEqual([{ id: "card-1", title: "Card title", content: "Card body" }]);
+  });
+
   it("preserves custom links order and appends missing defaults", () => {
     window.localStorage.setItem(
       HOME_HERO_SETTINGS_KEY,
@@ -75,6 +104,20 @@ describe("homeHeroSettings", () => {
     expect(value.eyebrow).toBe(DEFAULT_HOME_HERO_SETTINGS.eyebrow);
     expect(value.title).toBe(DEFAULT_HOME_HERO_SETTINGS.title);
     expect(value.subtitle).toBe(DEFAULT_HOME_HERO_SETTINGS.subtitle);
+    expect(value.keywords).toEqual(DEFAULT_HOME_HERO_SETTINGS.keywords);
+    expect(value.cards).toEqual(DEFAULT_HOME_HERO_SETTINGS.cards);
+  });
+
+  it("falls back to default keywords and cards when normalization empties them", () => {
+    window.localStorage.setItem(
+      HOME_HERO_SETTINGS_KEY,
+      JSON.stringify({
+        keywords: ["   ", ""],
+        cards: [{ id: "x", title: "   ", content: "   " }],
+      }),
+    );
+
+    const value = getHomeHeroSettings();
     expect(value.keywords).toEqual(DEFAULT_HOME_HERO_SETTINGS.keywords);
     expect(value.cards).toEqual(DEFAULT_HOME_HERO_SETTINGS.cards);
   });

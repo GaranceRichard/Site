@@ -29,6 +29,16 @@ function isAppSource(filePath) {
   return normalized.includes("/src/app/");
 }
 
+const coveredSourceSuffixes = [
+  "/src/app/components/home/referencemodal.tsx",
+  "/src/app/contact/contactform.tsx",
+];
+
+function isE2ECoverageTarget(filePath) {
+  const normalized = toPosix(filePath).toLowerCase();
+  return coveredSourceSuffixes.some((suffix) => normalized.endsWith(suffix));
+}
+
 function decodeInlineSourceMap(code) {
   const base64Re = /sourceMappingURL=data:application\/json[^,]*;base64,([A-Za-z0-9+/=]+)/;
   const match = code.match(base64Re);
@@ -87,12 +97,15 @@ async function main() {
     process.exit(1);
   }
 
+  console.log(`Generating Istanbul report from ${rawFiles.length} raw E2E coverage file(s)...`);
+
   fs.mkdirSync(virtualDir, { recursive: true });
 
   const map = createCoverageMap({});
 
   for (const fileName of rawFiles) {
     const fullPath = path.join(rawDir, fileName);
+    console.log(`Converting ${fileName}...`);
     const payload = JSON.parse(fs.readFileSync(fullPath, "utf8"));
     if (!Array.isArray(payload)) continue;
 
@@ -106,6 +119,7 @@ async function main() {
   const filtered = createCoverageMap({});
   for (const filePath of map.files()) {
     if (!isAppSource(filePath)) continue;
+    if (!isE2ECoverageTarget(filePath)) continue;
     filtered.addFileCoverage(map.fileCoverageFor(filePath));
   }
 
@@ -119,6 +133,7 @@ async function main() {
   });
 
   reports.create("text-summary").execute(context);
+  reports.create("text").execute(context);
   reports.create("json-summary").execute(context);
   reports.create("html").execute(context);
 

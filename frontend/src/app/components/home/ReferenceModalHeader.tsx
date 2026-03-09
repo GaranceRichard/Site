@@ -22,6 +22,10 @@ export default function ReferenceModalHeader({
     setBadgeVisible(Boolean(badgeSrc));
   }, [badgeSrc]);
 
+  function handleBadgeError() {
+    setBadgeVisible(false);
+  }
+
   return (
     <div className="relative z-10 flex items-start justify-between gap-6 border-b border-neutral-200/70 bg-transparent p-6 dark:border-neutral-800/70">
       <div className="min-w-0">
@@ -41,7 +45,7 @@ export default function ReferenceModalHeader({
                 className="h-full w-full object-contain"
                 loading="lazy"
                 decoding="async"
-                onError={() => setBadgeVisible(false)}
+                onError={handleBadgeError}
               />
             </div>
           </div>

@@ -16,10 +16,14 @@ describe("references lib cache", () => {
 
   it("throws when NEXT_PUBLIC_API_BASE_URL is missing", async () => {
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue([]),
+    });
+    vi.stubGlobal("fetch", fetchMock);
     const { fetchReferencesOnce } = await import("./references");
-    await expect(fetchReferencesOnce()).rejects.toThrow(
-      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL."
-    );
+    await expect(fetchReferencesOnce()).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith("/api-proxy/api/contact/references");
   });
 
   it("sorts by order_index and caches response", async () => {
@@ -40,6 +44,7 @@ describe("references lib cache", () => {
     expect(first.map((i) => i.id)).toEqual([1, 2]);
     expect(second.map((i) => i.id)).toEqual([1, 2]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith("/api-proxy/api/contact/references");
   });
 
   it("deduplicates concurrent requests using pending promise", async () => {
@@ -112,5 +117,17 @@ describe("references lib cache", () => {
     expect(first[0].id).toBe(1);
     expect(second[0].id).toBe(2);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws when api base resolver returns undefined", async () => {
+    vi.doMock("./backoffice", () => ({
+      resolveApiBaseUrl: () => undefined,
+    }));
+
+    const { fetchReferencesOnce } = await import("./references");
+
+    await expect(fetchReferencesOnce()).rejects.toThrow(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL."
+    );
   });
 });

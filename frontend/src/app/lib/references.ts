@@ -1,3 +1,5 @@
+import { resolveApiBaseUrl } from "./backoffice";
+
 export type ApiReference = {
   id: number;
   reference: string;
@@ -27,7 +29,7 @@ export async function fetchReferencesOnce(): Promise<ApiReference[]> {
     return pendingReferencesRequest;
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBase = resolveApiBaseUrl();
   if (!apiBase) {
     throw new Error("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
   }

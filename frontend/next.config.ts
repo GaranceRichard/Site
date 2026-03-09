@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const rawCdnUrl = process.env.NEXT_PUBLIC_CDN_URL?.trim() ?? "";
 const cdnUrl = rawCdnUrl.replace(/\/$/, "");
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
+const backendOrigin = (rawApiBaseUrl || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const cdnHostname = (() => {
   if (!cdnUrl) return null;
@@ -82,6 +83,14 @@ const nextConfig: NextConfig = {
   assetPrefix: process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
   compress: true,
   poweredByHeader: false,
+  async rewrites() {
+    return [
+      {
+        source: "/api-proxy/:path*",
+        destination: `${backendOrigin}/:path*`,
+      },
+    ];
+  },
   images: {
     remotePatterns,
     formats: ["image/avif", "image/webp"],

@@ -1,8 +1,8 @@
-// frontend/src/app/contact/ContactForm.tsx
 "use client";
 
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { resolveApiBaseUrl } from "../lib/backoffice";
 
 type FormState = {
   name: string;
@@ -11,7 +11,7 @@ type FormState = {
   message: string;
   consent: boolean;
   source: string;
-  website: string; // honeypot
+  website: string;
 };
 
 export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -28,12 +28,10 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBase = resolveApiBaseUrl() ?? "/api-proxy";
   const requestTimeoutMs = Number(process.env.NEXT_PUBLIC_CONTACT_TIMEOUT_MS || "10000");
 
-  function onTextChange(
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
+  function onTextChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.currentTarget;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
@@ -46,16 +44,10 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
     e.preventDefault();
     setErrorMsg("");
 
-    // Honeypot : si rempli, on simule un succès sans appeler l’API
+    // Honeypot: si rempli, on simule un succes sans appeler l'API.
     if (form.website.trim().length > 0) {
       setStatus("success");
       onSuccess?.();
-      return;
-    }
-
-    if (!apiBase) {
-      setStatus("error");
-      setErrorMsg("Configuration API manquante (NEXT_PUBLIC_API_BASE_URL).");
       return;
     }
 
@@ -107,7 +99,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
       setStatus("error");
       const isAbortError = err instanceof DOMException && err.name === "AbortError";
       if (isAbortError) {
-        setErrorMsg("Délai dépassé. Veuillez réessayer.");
+        setErrorMsg("Delai depasse. Veuillez reessayer.");
       } else {
         setErrorMsg(err instanceof Error ? err.message : "Erreur inattendue");
       }
@@ -118,7 +110,6 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
-      {/* Honeypot invisible */}
       <div className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden">
         <label>
           Website
@@ -184,7 +175,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
           checked={form.consent}
           onChange={onConsentChange}
         />
-        J’accepte que mes informations soient utilisées pour être recontacté(e).
+        J&apos;accepte que mes informations soient utilisees pour etre recontacte(e).
       </label>
 
       <button
@@ -192,11 +183,11 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
         disabled={status === "sending"}
         className="rounded-xl border border-neutral-200 bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
       >
-        {status === "sending" ?"Envoi..." : "Envoyer"}
+        {status === "sending" ? "Envoi..." : "Envoyer"}
       </button>
 
       {status === "success" && (
-        <p className="text-sm text-neutral-700">Merci, votre message a bien été envoyé.</p>
+        <p className="text-sm text-neutral-700">Merci, votre message a bien ete envoye.</p>
       )}
       {status === "error" && (
         <p className="text-sm text-red-700 whitespace-pre-wrap">Erreur : {errorMsg}</p>

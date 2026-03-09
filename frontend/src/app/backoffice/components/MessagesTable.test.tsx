@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import MessagesTable from "./MessagesTable";
 import type { Msg } from "../types";
@@ -14,6 +14,10 @@ const sampleMessage: Msg = {
   source: "tests",
   created_at: new Date("2025-01-01T10:00:00Z").toISOString(),
 };
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("MessagesTable", () => {
   it("retourne null si aucun item", () => {
@@ -68,6 +72,12 @@ describe("MessagesTable", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Trier par nom" }));
     expect(onChangeSort).toHaveBeenCalledWith("name");
+    fireEvent.click(screen.getByRole("button", { name: "Trier par email" }));
+    expect(onChangeSort).toHaveBeenCalledWith("email");
+    fireEvent.click(screen.getByRole("button", { name: "Trier par sujet" }));
+    expect(onChangeSort).toHaveBeenCalledWith("subject");
+    fireEvent.click(screen.getByRole("button", { name: "Trier par date" }));
+    expect(onChangeSort).toHaveBeenCalledWith("created_at");
 
     fireEvent.click(screen.getByRole("checkbox", { name: /Selectionner/i }));
     expect(onToggleSelected).toHaveBeenCalledWith(1);
@@ -87,5 +97,31 @@ describe("MessagesTable", () => {
     fireEvent.click(screen.getByRole("button", { name: "Page 1" }));
     expect(onSetPage).toHaveBeenCalledWith(1);
   });
-});
 
+  it("masque les badges de tri vides et desactive les controles aux bornes", () => {
+    render(
+      <MessagesTable
+        items={[{ ...sampleMessage, subject: "Sujet visible" }]}
+        selectedIds={new Set()}
+        page={1}
+        totalPages={1}
+        totalCount={1}
+        onToggleSelected={vi.fn()}
+        onSelectMessage={vi.fn()}
+        onDeleteSelected={vi.fn()}
+        onPrevPage={vi.fn()}
+        onNextPage={vi.fn()}
+        onSetPage={vi.fn()}
+        onChangeSort={vi.fn()}
+        getSortArrow={vi.fn().mockReturnValue(null)}
+      />
+    );
+
+    expect(screen.queryByText("â†‘")).not.toBeInTheDocument();
+    expect(screen.queryByText("â†“")).not.toBeInTheDocument();
+    expect(screen.getByText("Sujet visible")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Supprimer" }).at(-1)).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: "Prev" }).at(-1)).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: "Next" }).at(-1)).toBeDisabled();
+  });
+});

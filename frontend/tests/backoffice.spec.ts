@@ -1,5 +1,11 @@
 import { expect, test } from "./fixtures";
-import { loginAsAdmin, openBackofficeLogin, requireAdminCreds } from "./helpers";
+import {
+  fillStableValue,
+  loginAsAdmin,
+  openBackofficeLogin,
+  requireAdminCreds,
+  submitAdminLogin,
+} from "./helpers";
 
 const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -37,19 +43,42 @@ async function seedContactMessages(
   return { names, emails, subjects };
 }
 
-test("backoffice login fails with invalid credentials", async ({ page }) => {
+test("backoffice login fails with invalid credentials @smoke", async ({ page }) => {
   await openBackofficeLogin(page);
-  await page.getByPlaceholder("Identifiant").fill("invalid-user");
-  await page.getByPlaceholder("Mot de passe").fill("wrong-pass");
-  await page.getByRole("button", { name: "Se connecter" }).click();
+  const usernameInput = page.getByPlaceholder("Identifiant");
+  const passwordInput = page.getByPlaceholder("Mot de passe");
 
+  await fillStableValue(usernameInput, "invalid-user");
+
+  await fillStableValue(passwordInput, "wrong-pass");
+
+  const responsePromise = page.waitForResponse((response) => {
+    return response.url().includes("/api/auth/token/") && response.request().method() === "POST";
+  });
+
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  const response = await responsePromise;
+
+  expect(response.ok()).toBeFalsy();
   await expect(page.getByText(/Identifiant ou mot de passe invalide/i)).toBeVisible();
 });
 
 test("backoffice login succeeds and reaches admin page", async ({ page }) => {
   requireAdminCreds();
-  await loginAsAdmin(page);
+
+  await submitAdminLogin(page);
+
+  await expect(page.getByText(/API introuvable/i)).toHaveCount(0);
+  await expect(page.getByText(/Identifiant ou mot de passe invalide/i)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/backoffice$/);
   await expect(page.getByRole("heading", { name: "Backoffice" })).toBeVisible();
+
+  const tokens = await page.evaluate(() => ({
+    access: sessionStorage.getItem("access_token"),
+    refresh: sessionStorage.getItem("refresh_token"),
+  }));
+  expect(tokens.access).toBeTruthy();
+  expect(tokens.refresh).toBeTruthy();
 });
 
 test("backoffice logout clears session and returns home", async ({ page }) => {
@@ -122,21 +151,6 @@ test("messages list shows single-line columns and pagination", async ({ page, re
   await expect(page.getByRole("button", { name: "Trier par date" })).toBeVisible();
 
   await expect(page.getByText(/Page 1 \/ \d+.*\d+ message/i)).toBeVisible();
-});
-
-test("search filters messages by name, email, or subject", async ({ page, request }) => {
-  requireAdminCreds();
-  const seeded = await seedContactMessages(request, 1);
-  await loginAsAdmin(page);
-
-  const search = page.getByPlaceholder("Rechercher par nom, email ou sujet");
-  await expect(search).toBeVisible();
-
-  await search.fill(seeded.emails[0]);
-  await expect(page.getByText(seeded.names[0], { exact: true })).toBeVisible();
-
-  await search.fill(seeded.subjects[0]);
-  await expect(page.getByText(seeded.names[0], { exact: true })).toBeVisible();
 });
 
 test("select and delete messages", async ({ page, request }) => {

@@ -102,7 +102,7 @@ test("backoffice references create and delete", async ({ page }) => {
   await deleteReference(page, referenceName);
 });
 
-test("frontoffice reference modal shows details", async ({ page }) => {
+test("frontoffice reference modal shows details @coverage", async ({ page }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
 

@@ -5,6 +5,14 @@ import { cleanup } from "@testing-library/react";
 import BackofficePage from "./page";
 
 const pushMock = vi.fn();
+const originalLocation = window.location;
+
+function setHostname(url: string) {
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: new URL(url) as unknown as Location,
+  });
+}
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
@@ -12,6 +20,7 @@ vi.mock("next/navigation", () => ({
 
 beforeEach(() => {
   pushMock.mockClear();
+  setHostname("http://localhost/");
   // Basic sessionStorage shim
   const store = new Map<string, string>();
   Object.defineProperty(window, "sessionStorage", {
@@ -54,6 +63,10 @@ beforeEach(() => {
   afterEach(() => {
     vi.restoreAllMocks();
     cleanup();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
   });
 
 describe("BackofficePage", () => {
@@ -261,16 +274,18 @@ describe("BackofficePage", () => {
     });
   });
 
-  it("affiche une erreur si l'API n'est pas configurée", async () => {
+  it("utilise le proxy API si la variable d'environnement est vide", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
+    setHostname("https://example.com/");
 
     render(<BackofficePage />);
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Erreur : Configuration manquante : NEXT_PUBLIC_API_BASE_URL.")
-      ).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalled();
     });
+
+    const lastCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1);
+    expect(String(lastCall?.[0])).toContain("/api-proxy/api/contact/messages/admin");
   });
 
   it("redirige vers l'accueil si aucun token n'est présent", async () => {
@@ -460,7 +475,7 @@ describe("BackofficePage", () => {
     await waitFor(() => {
       expect(screen.getByText("Connexion requise pour acceder au backoffice.")).toBeInTheDocument();
     });
-    expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText("Identifiant")).toBeInTheDocument();
   });
 
   it("restaure les elements si la suppression differee echoue", async () => {
@@ -592,7 +607,7 @@ describe("BackofficePage", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Se reconnecter" }));
-    expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText("Identifiant")).toBeInTheDocument();
 
     const closeButtons = screen.getAllByRole("button", { name: "Fermer" });
     fireEvent.click(closeButtons[0]);
@@ -928,7 +943,7 @@ describe("BackofficePage", () => {
       await waitFor(() => {
         expect(screen.getByText("Connexion requise pour acceder au backoffice.")).toBeInTheDocument();
       });
-      expect(screen.getByPlaceholderText("Identifiant")).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText("Identifiant")).toBeInTheDocument();
     } finally {
       window.sessionStorage.getItem = originalGetItem;
     }

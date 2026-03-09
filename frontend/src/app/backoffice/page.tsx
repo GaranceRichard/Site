@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import BackofficeModal from "../components/BackofficeModal";
-import { isBackofficeEnabled } from "../lib/backoffice";
+import { isBackofficeEnabled, resolveApiBaseUrl } from "../lib/backoffice";
 import { clearAuthTokens } from "./logic";
 import AuthAlert from "./components/AuthAlert";
 import DisabledView from "./components/DisabledView";
@@ -54,7 +54,7 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
 export default function BackofficePage() {
   const router = useRouter();
   const backofficeEnabled = isBackofficeEnabled();
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBase = resolveApiBaseUrl();
 
   const section = useSyncExternalStore(
     subscribeBackofficeSection,

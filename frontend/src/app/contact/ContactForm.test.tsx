@@ -29,7 +29,7 @@ describe("ContactForm", () => {
     fireEvent.click(screen.getByRole("checkbox"));
   }
 
-  it("ignore le honeypot et affiche le succÃ¨s", async () => {
+  it("ignore le honeypot et affiche le succes", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
 
     const fetchMock = vi.fn();
@@ -53,8 +53,10 @@ describe("ContactForm", () => {
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 
-  it("affiche une erreur si l'API n'est pas configurÃ©e", async () => {
+  it("affiche une erreur si l'API n'est pas configuree", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
+    const fetchMock = vi.fn().mockRejectedValue(new Error("boom"));
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<ContactForm />);
     fillRequiredFields();
@@ -63,14 +65,12 @@ describe("ContactForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(
-          "Erreur : Configuration API manquante (NEXT_PUBLIC_API_BASE_URL).",
-        ),
+        screen.getByText("Erreur : boom"),
       ).toBeInTheDocument();
     });
   });
 
-  it("soumet le formulaire et affiche le succÃ¨s", async () => {
+  it("soumet le formulaire et affiche le succes", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
     const onSuccess = vi.fn();
 
@@ -91,12 +91,54 @@ describe("ContactForm", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://example.com/api/contact/messages",
+      "/api-proxy/api/contact/messages",
       expect.objectContaining({
         method: "POST",
       }),
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("trim le payload et preserve subject/source sur le POST", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({}),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ContactForm />);
+
+    fireEvent.change(screen.getByLabelText("Nom"), {
+      target: { value: "  Ada Lovelace  " },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "  ada@example.com  " },
+    });
+    fireEvent.change(screen.getByLabelText("Sujet"), {
+      target: { value: "  Sujet test  " },
+    });
+    fireEvent.change(screen.getByLabelText("Message"), {
+      target: { value: "  Bonjour trim  " },
+    });
+    fireEvent.click(screen.getByRole("checkbox"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      name: "Ada Lovelace",
+      email: "ada@example.com",
+      subject: "Sujet test",
+      message: "Bonjour trim",
+      consent: true,
+      source: "contact-page",
+    });
   });
 
   it("affiche le detail JSON quand l'API repond en erreur", async () => {
@@ -186,9 +228,47 @@ describe("ContactForm", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Erreur :\s*D[ée]lai d[ée]pass[ée]\. Veuillez r[ée]essayer\./i),
+        screen.getByText(/Erreur :\s*Delai depasse\. Veuillez reessayer\./i),
       ).toBeInTheDocument();
     });
+  });
+
+  it("clear le timer en succes", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+
+    const successFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({}),
+    });
+    vi.stubGlobal("fetch", successFetch);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Merci, votre message a bien/i)).toBeInTheDocument();
+    });
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
+
+  it("clear le timer en erreur", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.com";
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+    const errorFetch = vi.fn().mockRejectedValue(new Error("network down"));
+    vi.stubGlobal("fetch", errorFetch);
+
+    render(<ContactForm />);
+    fillRequiredFields();
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Erreur : network down")).toBeInTheDocument();
+    });
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 
   it("affiche 'Erreur inattendue' quand l'erreur n'est pas une instance d'Error", async () => {

@@ -1,4 +1,4 @@
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ReferenceModalHeader from "./ReferenceModalHeader";
@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 describe("ReferenceModalHeader", () => {
-  it("rend le titre et le badge quand fournis", () => {
+  it("renders title and badge when provided", () => {
     render(
       <ReferenceModalHeader
         nameExpanded="Titre"
@@ -36,7 +36,7 @@ describe("ReferenceModalHeader", () => {
     expect(screen.getByAltText("Badge")).toBeInTheDocument();
   });
 
-  it("n'affiche pas le badge si badgeSrc est absent", () => {
+  it("does not render the badge when badgeSrc is missing", () => {
     render(
       <ReferenceModalHeader
         nameExpanded="Titre"
@@ -50,7 +50,7 @@ describe("ReferenceModalHeader", () => {
     expect(screen.queryByAltText("Badge")).toBeNull();
   });
 
-  it("appelle onClose au clic sur fermer", () => {
+  it("calls onClose when clicking the close button", () => {
     const onClose = vi.fn();
 
     render(
@@ -67,7 +67,7 @@ describe("ReferenceModalHeader", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("masque le badge après erreur image puis le réaffiche si la source change", () => {
+  it("hides the badge after an image error and shows it again when the source changes", () => {
     const { rerender } = render(
       <ReferenceModalHeader
         nameExpanded="Titre"
@@ -78,8 +78,7 @@ describe("ReferenceModalHeader", () => {
       />,
     );
 
-    const badge = screen.getByAltText("Badge");
-    fireEvent.error(badge);
+    fireEvent.error(screen.getByAltText("Badge"));
     expect(screen.queryByAltText("Badge")).toBeNull();
 
     rerender(
@@ -93,5 +92,43 @@ describe("ReferenceModalHeader", () => {
     );
 
     expect(screen.getByAltText("Badge")).toBeInTheDocument();
+  });
+
+  it("syncs badge visibility when the source appears and then disappears", () => {
+    const { rerender } = render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc={null}
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    expect(screen.queryByAltText("Badge")).toBeNull();
+
+    rerender(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-c.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    expect(screen.getByAltText("Badge")).toBeInTheDocument();
+
+    rerender(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc={null}
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    expect(screen.queryByAltText("Badge")).toBeNull();
   });
 });

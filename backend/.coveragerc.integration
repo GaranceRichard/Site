@@ -1,0 +1,22 @@
+[run]
+branch = True
+source =
+    contact
+    config
+omit =
+    */migrations/*
+    */tests/*
+    */__init__.py
+    config/settings.py
+    config/settings/*
+    */asgi.py
+    */wsgi.py
+    contact/image_upload.py
+    contact/media_cleanup.py
+    contact/serializers.py
+    contact/management/commands/cleanup_reference_media.py
+
+[report]
+show_missing = True
+skip_covered = True
+fail_under = 80

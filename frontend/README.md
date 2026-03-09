@@ -8,16 +8,40 @@ npm run lint
 npm run typecheck
 npm run test
 npm run test:coverage
+npm run test:coverage:html
 npm run test:e2e
+npm run test:e2e:smoke
 npm run test:e2e:coverage
 npm run test:e2e:coverage:report
+npm run test:e2e:full
 npm run build
 ```
 
+## Coverage frontend
+
+- `npm run test:coverage` : coverage CLI stable pour le terminal et les tasks VS Code.
+- Le script passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs) pour tolerer le faux echec Windows lie a `coverage/.tmp`.
+- Reporters actifs par defaut : `text` + `lcov`.
+- `npm run test:coverage:html` : generation explicite du rapport HTML si besoin.
+
 ## E2E coverage
 
-- `npm run test:e2e:coverage` : collecte brute V8 dans `coverage-e2e/`.
+- `npm run test:e2e:smoke` : filet rapide des parcours critiques transverses.
+- `npm run test:e2e:coverage` : KPI browser court, limite au front visible (`ContactForm`, `ReferenceModal`) et collecte brute V8 dans `coverage-e2e/`.
 - `npm run test:e2e:coverage:report` : collecte + aggregation Istanbul (text/json/html) dans `coverage-e2e-report/`.
+- `npm run test:e2e:full` : suite Playwright exhaustive, hors KPI coverage.
+
+## Pyramide de tests
+
+- Vitest couvre la logique fine front, les branches d'erreur et le backoffice detaille.
+- Les tests d'integration backend couvrent les endpoints DRF, l'auth, le throttling et la securite.
+- Les E2E couvrent seulement les parcours utilisateur critiques visibles dans le navigateur, sans redoubler les branches deja protegees en unitaire.
+
+## Tasks VS Code
+
+- `dev:all` : lance `Backend`, `Frontend`, `Monitor` et `Perf Loop` dans 4 terminaux distincts.
+- `Tests` : lance `Test coverage Backend`, `Test integration`, `Test coverage frontend`, `Test coverage e2e`, `Vitals compliance`, `npm lint` et `npm build`.
+- `Vitals compliance` : combine le coverage frontend vital et le coverage d'integration backend avec un seuil final backend de `95%`.
 
 ## Audit de performance local
 

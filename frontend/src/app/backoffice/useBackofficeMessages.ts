@@ -177,12 +177,6 @@ export function useBackofficeMessages({
       setAuthMsg("");
       setSelectedIds(new Set());
 
-      if (!apiBase) {
-        setStatus("error");
-        setErrorMsg("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
-        return;
-      }
-
       let token: string | null = null;
       try {
         token = sessionStorage.getItem("access_token");

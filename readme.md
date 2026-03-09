@@ -147,6 +147,10 @@ Utiliser les tasks VS Code :
 3) Choisir `dev:all`
    - inclut backend, frontend, monitoring local et audit perf Lighthouse en boucle
 
+Tasks de verification utiles :
+- `Tests` : lance les couvertures backend, integration, frontend, E2E, `Vitals compliance`, `npm lint` et `npm build`.
+- `Vitals compliance` : valide la couverture vitale frontend puis la couverture d'integration backend avec un seuil backend de `95%`.
+
 ### Makefile (raccourcis)
 Depuis la racine du repo :
 - `make install` : installe les dépendances backend + frontend
@@ -302,6 +306,10 @@ npm run typecheck
 ```powershell
 npm run test:coverage
 ```
+ - Rapport HTML explicite :
+```powershell
+npm run test:coverage:html
+```
 
 ### E2E (Playwright)
 Depuis `frontend/` :
@@ -333,6 +341,14 @@ $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e:coverage
 ```
+- Smoke rapide :
+```powershell
+npm run test:e2e:smoke
+```
+- Suite exhaustive hors KPI coverage :
+```powershell
+npm run test:e2e:full
+```
 - Couverture E2E + rapport agrege (text-summary + json + html) :
 ```powershell
 $env:E2E_ADMIN_USER="votre_admin"
@@ -343,9 +359,10 @@ npm run test:e2e:coverage:report
 
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
+- `npm run test:coverage` est la commande stable pour CLI/VS Code. Le HTML est volontairement sorti dans `npm run test:coverage:html`.
 - Les tests E2E nécessitent un compte admin `is_staff` et un backend en cours d'exécution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
-- Couverture E2E : backoffice, references, formulaire de contact.
+- Couverture E2E KPI : parcours browser critiques du front visible. Le backoffice detaille reste principalement couvert par Vitest.
 
 ## Maintenance
 Nettoyer les medias orphelins des references :

@@ -11,6 +11,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("../lib/backoffice", () => ({
   isBackofficeEnabled: () => isBackofficeEnabledMock(),
+  resolveApiBaseUrl: () => "/api-proxy",
 }));
 
 vi.mock("./useBackofficeMessages", () => ({

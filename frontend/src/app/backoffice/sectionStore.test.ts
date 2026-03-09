@@ -43,8 +43,58 @@ describe("sectionStore", () => {
     unsubscribe();
   });
 
+  it("ignores localStorage write errors and still notifies listeners", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeBackofficeSection(listener);
+    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("boom");
+    });
+
+    expect(() => setBackofficeSection("settings")).not.toThrow();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    spy.mockRestore();
+  });
+
+  it("stops notifying a listener after unsubscribe", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeBackofficeSection(listener);
+
+    unsubscribe();
+    setBackofficeSection("home");
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it("returns messages on server snapshot", () => {
     expect(getBackofficeSectionServer()).toBe("messages");
+  });
+
+  it("returns messages when window is unavailable", () => {
+    const originalWindow = globalThis.window;
+    vi.stubGlobal("window", undefined);
+
+    try {
+      expect(getBackofficeSection()).toBe("messages");
+    } finally {
+      vi.stubGlobal("window", originalWindow);
+    }
+  });
+
+  it("does nothing when writing section without window", () => {
+    const originalWindow = globalThis.window;
+    const listener = vi.fn();
+    const unsubscribe = subscribeBackofficeSection(listener);
+    vi.stubGlobal("window", undefined);
+
+    try {
+      expect(() => setBackofficeSection("home")).not.toThrow();
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      unsubscribe();
+      vi.stubGlobal("window", originalWindow);
+    }
   });
 
   it("handles localStorage read errors gracefully", () => {

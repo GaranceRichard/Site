@@ -1,9 +1,8 @@
-// frontend/src/app/components/BackofficeModal.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { isBackofficeEnabled } from "../lib/backoffice";
+import { isBackofficeEnabled, resolveApiBaseUrl } from "../lib/backoffice";
 import BackofficeModalBackdrop from "./backoffice/BackofficeModalBackdrop";
 import BackofficeModalCard from "./backoffice/BackofficeModalCard";
 import BackofficeModalForm from "./backoffice/BackofficeModalForm";
@@ -24,40 +23,42 @@ export default function BackofficeModal({
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
 
-  const [email, setEmail] = useState<string>(""); // identifiant (username)
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBase = resolveApiBaseUrl();
 
   const usernameRef = useRef<HTMLInputElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const closingRef = useRef(false);
+  const requestClose = onClose;
 
   useEffect(() => {
     if (open) {
       if (!backofficeEnabled) {
-        setMounted(true);
-        setVisible(true);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = requestAnimationFrame(() => {
+          setMounted(true);
+          setVisible(true);
+        });
         return;
       }
-      setMounted(true);
       closingRef.current = false;
-
-      setEmail("");
-      setPassword("");
-      setStatus("idle");
-      setErrorMsg("");
 
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
       rafRef.current = requestAnimationFrame(() => {
+        setMounted(true);
+        setEmail("");
+        setPassword("");
+        setStatus("idle");
+        setErrorMsg("");
         setVisible(true);
-        // Focus the username field as soon as the modal is visible.
         setTimeout(() => {
           usernameRef.current?.focus();
         }, 0);
@@ -70,13 +71,15 @@ export default function BackofficeModal({
     if (closingRef.current) return;
     closingRef.current = true;
 
-    setVisible(false);
-
     if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = window.setTimeout(() => {
-      setMounted(false);
-      closingRef.current = false;
-    }, EXIT_MS);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setVisible(false);
+      closeTimerRef.current = window.setTimeout(() => {
+        setMounted(false);
+        closingRef.current = false;
+      }, EXIT_MS);
+    });
   }, [open, mounted, backofficeEnabled]);
 
   useEffect(() => {
@@ -94,8 +97,7 @@ export default function BackofficeModal({
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prev;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted]);
+  }, [mounted, requestClose]);
 
   useEffect(() => {
     return () => {
@@ -103,10 +105,6 @@ export default function BackofficeModal({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
-
-  function requestClose() {
-    onClose();
-  }
 
   function onEmailChange(e: ChangeEvent<HTMLInputElement>) {
     setEmail(e.currentTarget.value);
@@ -139,7 +137,7 @@ export default function BackofficeModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: email.trim(),
-          password: password,
+          password,
         }),
       });
 
@@ -159,12 +157,12 @@ export default function BackofficeModal({
       onSuccess?.();
     } catch {
       setStatus("error");
-      setErrorMsg("Erreur réseau. Réessayez.");
+      setErrorMsg(`API introuvable (${apiBase}). Verifiez que le backend Django tourne.`);
     }
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault(); // ✅ Entrée valide le formulaire
+    e.preventDefault();
     if (!backofficeEnabled) return;
     if (status === "sending") return;
     void login();
@@ -173,7 +171,7 @@ export default function BackofficeModal({
   if (!mounted) return null;
 
   const ease = "ease-[cubic-bezier(0.22,1,0.36,1)]";
-  const dur = visible ?"duration-[420ms]" : "duration-[520ms]";
+  const dur = visible ? "duration-[420ms]" : "duration-[520ms]";
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center">

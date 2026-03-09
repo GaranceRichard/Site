@@ -11,6 +11,22 @@ class ContactApiTests(APITestCase):
     def setUp(self):
         self.url = reverse("contact-message-create")
 
+    def _create_admin_token(self, username: str, password: str):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            is_staff=True,
+        )
+
+        token_res = self.client.post(
+            "/api/auth/token/",
+            {"username": user.username, "password": password},
+            format="json",
+        )
+        self.assertEqual(token_res.status_code, status.HTTP_200_OK)
+        return token_res.data["access"]
+
     def test_contact_requires_consent(self):
         payload = {
             "name": "Test",
@@ -328,3 +344,66 @@ class ContactApiTests(APITestCase):
             last.status_code,
             [status.HTTP_201_CREATED, status.HTTP_429_TOO_MANY_REQUESTS],
         )
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_delete_admin_rejects_non_list_ids(self):
+        token = self._create_admin_token("admin-delete-non-list", "admin-pass-111")
+
+        res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": "not-a-list"},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data["detail"], "ids must be a list.")
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_delete_admin_rejects_non_integer_ids(self):
+        token = self._create_admin_token("admin-delete-non-int", "admin-pass-222")
+
+        res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": [1, "oops"]},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data["detail"], "ids must be integers.")
+
+    @override_settings(
+        REST_FRAMEWORK={
+            **settings.REST_FRAMEWORK,
+            "DEFAULT_AUTHENTICATION_CLASSES": (
+                "rest_framework_simplejwt.authentication.JWTAuthentication",
+            ),
+        }
+    )
+    def test_contact_delete_admin_rejects_empty_ids(self):
+        token = self._create_admin_token("admin-delete-empty", "admin-pass-333")
+
+        res = self.client.post(
+            "/api/contact/messages/admin/delete",
+            {"ids": []},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.data["detail"], "ids list is empty.")

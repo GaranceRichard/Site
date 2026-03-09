@@ -39,7 +39,7 @@ def _int(name: str, default: int) -> int:
 
 
 # -------------------------------------------------
-# SÃ©curitÃ© de base
+# Securite de base
 # -------------------------------------------------
 ALLOW_INSECURE_SECRET_KEY = _bool("DJANGO_ALLOW_INSECURE_SECRET_KEY", default=False)
 
@@ -54,7 +54,7 @@ if not SECRET_KEY:
 
 DEBUG = _bool("DJANGO_DEBUG", default=not IS_PROD)
 if IS_PROD and DEBUG:
-    raise RuntimeError("DJANGO_DEBUG ne peut pas Ãªtre True en production.")
+    raise RuntimeError("DJANGO_DEBUG ne peut pas etre True en production.")
 
 
 # -------------------------------------------------
@@ -96,7 +96,7 @@ def _validate_origins(label: str, origins: list[str], require_https: bool) -> No
             raise RuntimeError(f"{label} invalide: {o} (attendu http:// ou https://)")
         if require_https and not o.startswith("https://"):
             if not allow_insecure_in_prod:
-                raise RuntimeError(f"{label} doit Ãªtre en HTTPS en production: {o}")
+                raise RuntimeError(f"{label} doit etre en HTTPS en production: {o}")
 
 
 def _validate_dev_local_origins(label: str, origins: list[str]) -> None:
@@ -190,7 +190,7 @@ TEMPLATES = [
 
 
 # -------------------------------------------------
-# Base de donnÃ©es
+# Base de donnees
 # -------------------------------------------------
 def _sqlite_name_from_url(u) -> str:
     # sqlite:///relative.db  -> u.path="/relative.db"  => BASE_DIR/relative.db
@@ -230,8 +230,8 @@ def _db_from_database_url(db_url: str) -> dict:
         return {"ENGINE": "django.db.backends.sqlite3", "NAME": _sqlite_name_from_url(u)}
 
     raise RuntimeError(
-        f"DATABASE_URL non supportÃ©: {db_url}\n"
-        "Formats acceptÃ©s: postgresql://... ou sqlite:///"
+        f"DATABASE_URL non supporte: {db_url}\n"
+        "Formats acceptes: postgresql://... ou sqlite:///"
     )
 
 
@@ -243,7 +243,7 @@ if IS_PROD:
     try:
         import dj_database_url  # type: ignore
     except ImportError:
-        logger.info("dj-database-url non installÃ©, utilisation du parser minimaliste")
+        logger.info("dj-database-url non installe, utilisation du parser minimaliste")
         DATABASES = {"default": _db_from_database_url(DATABASE_URL)}
     else:
         DATABASES = {
@@ -284,7 +284,7 @@ else:
                 raise RuntimeError(
                     "django-redis requis quand REDIS_URL est defini en production."
                 )
-            logger.warning("django-redis non installÃ©, LocMemCache en prod (non recommandÃ©)")
+            logger.warning("django-redis non installe, LocMemCache en prod (non recommande)")
             CACHES = _locmem_cache()
         else:
             CACHES = {
@@ -387,14 +387,14 @@ if _bool("DJANGO_E2E_MODE", default=False):
     ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "10000/hour")
     USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "20000/hour")
 
-# JWT : off par dÃ©faut, on lâ€™active quand il y a un vrai besoin
+# JWT: off par defaut, on l'active quand il y a un vrai besoin
 ENABLE_JWT = _bool("DJANGO_ENABLE_JWT", default=False)
 auth_classes: tuple[str, ...] = ()
 if ENABLE_JWT:
     try:
         import rest_framework_simplejwt  # noqa: F401
     except ImportError:
-        raise RuntimeError("DJANGO_ENABLE_JWT=True mais djangorestframework-simplejwt non installÃ©.")
+        raise RuntimeError("DJANGO_ENABLE_JWT=True mais djangorestframework-simplejwt non installe.")
     auth_classes = ("rest_framework_simplejwt.authentication.JWTAuthentication",)
 
 REST_FRAMEWORK = {
@@ -507,7 +507,7 @@ if not DEBUG and SENTRY_DSN:
         import sentry_sdk
         from sentry_sdk.integrations.django import DjangoIntegration
     except ImportError:
-        logger.warning("sentry-sdk non installÃ©, monitoring dÃ©sactivÃ©")
+        logger.warning("sentry-sdk non installe, monitoring desactive")
     else:
         sentry_sdk.init(
             dsn=SENTRY_DSN,
@@ -530,6 +530,6 @@ if not IS_TEST and _bool("DJANGO_STARTUP_BANNER", default=not IS_PROD):
         DEBUG,
         db_engine,
         cache_backend,
-        "âœ“" if auth_classes else "âœ—",
+        "yes" if auth_classes else "no",
     )
 

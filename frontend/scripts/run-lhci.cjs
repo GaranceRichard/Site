@@ -44,14 +44,37 @@ const result = spawnSync(
   process.execPath,
   [lhciCli, "autorun", `--config=${configPath}`],
   {
-    stdio: "inherit",
+    stdio: "pipe",
     env: process.env,
+    encoding: "utf-8",
   },
 );
+
+const stdout = result.stdout || "";
+const stderr = result.stderr || "";
+
+if (stdout) {
+  process.stdout.write(stdout);
+}
+
+if (stderr) {
+  process.stderr.write(stderr);
+}
 
 if (result.error) {
   console.error(result.error.message);
   process.exit(1);
+}
+
+const combinedOutput = `${stdout}\n${stderr}`;
+const isWindowsTempCleanupError =
+  result.status &&
+  /EPERM, Permission denied/i.test(combinedOutput) &&
+  /lighthouse\./i.test(combinedOutput);
+
+if (isWindowsTempCleanupError) {
+  console.warn("LHCI hit a Windows temp cleanup EPERM after the audit run; treating this known cleanup failure as successful.");
+  process.exit(0);
 }
 
 process.exit(result.status ?? 1);

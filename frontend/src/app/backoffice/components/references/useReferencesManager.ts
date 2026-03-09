@@ -127,10 +127,10 @@ export function useReferencesManager({
         throw new Error(txt || `Erreur API (${res.status})`);
       }
 
-        const data = (await res.json()) as Reference[];
-        setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
-        invalidateReferencesCache();
-        setStatus("idle");
+      const data = (await res.json()) as Reference[];
+      setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
+      invalidateReferencesCache();
+      setStatus("idle");
     } catch (e: unknown) {
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
@@ -441,15 +441,16 @@ export function useReferencesManager({
         }
 
         const data = (await res.json()) as { url?: string; thumbnail_url?: string };
-        if (data.url) {
+        const uploadedUrl = data.url;
+        if (typeof uploadedUrl === "string" && uploadedUrl.length > 0) {
           if (target === "image") {
             setForm((prev) => ({
               ...prev,
-              image: data.url ?? "",
+              image: uploadedUrl,
               imageThumb: data.thumbnail_url ?? "",
             }));
           } else {
-            setForm((prev) => ({ ...prev, icon: data.url ?? "" }));
+            setForm((prev) => ({ ...prev, icon: uploadedUrl }));
           }
         } else {
           throw new Error("URL d'image manquante.");

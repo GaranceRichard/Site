@@ -6,6 +6,16 @@ export function isBackofficeEnabled() {
   return true;
 }
 
+export function resolveApiBaseUrl(): string | undefined {
+  if (typeof window !== "undefined") {
+    return "/api-proxy";
+  }
+
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (raw) return raw.replace(/\/+$/, "");
+  return "http://127.0.0.1:8000";
+}
+
 function decodeBase64Url(payload: string): string {
   const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");

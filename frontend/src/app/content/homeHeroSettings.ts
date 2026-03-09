@@ -103,14 +103,11 @@ function normalizeLinks(value: unknown): HeroSectionLink[] {
   const normalizedOrdered = orderedIds
     .map((id) => {
       const saved = mapById.get(id);
-      const fallback = defaultsById.get(id);
-      if (!saved || !fallback) {
-        return null;
-      }
+      const fallback = defaultsById.get(id) as HeroSectionLink;
       return {
         id,
-        label: saved.label || fallback.label,
-        enabled: saved.enabled,
+        label: (saved as HeroSectionLink).label || fallback.label,
+        enabled: (saved as HeroSectionLink).enabled,
       };
     })
     .filter((item): item is HeroSectionLink => item !== null);

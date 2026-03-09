@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import BackofficeModal from "./BackofficeModal";
@@ -28,8 +28,10 @@ describe("BackofficeModal", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("shows error when API base is missing", async () => {
+  it("falls back to the local proxy when API base is missing", async () => {
     process.env.NEXT_PUBLIC_API_BASE_URL = "";
+    const fetchMock = vi.fn().mockRejectedValue(new Error("boom"));
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<BackofficeModal open={true} onClose={() => {}} />);
 
@@ -43,7 +45,7 @@ describe("BackofficeModal", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.")
+        screen.getByText("API introuvable (/api-proxy). Verifiez que le backend Django tourne.")
       ).toBeInTheDocument();
     });
   });

@@ -12,9 +12,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "eslint",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "node scripts/run-vitest-coverage.mjs",
+    "test:coverage:html": "vitest run --coverage --coverage.reporter=html",
     "test:e2e": "playwright test",
-    "test:e2e:coverage": "cross-env E2E_COVERAGE=true playwright test --workers=1",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:full": "playwright test",
+    "test:e2e:coverage": "node scripts/clean-e2e-coverage.mjs && cross-env E2E_COVERAGE=true playwright test --workers=1 --grep @coverage",
     "test:e2e:coverage:report": "npm run test:e2e:coverage && node scripts/e2e-coverage-report.mjs"
   },
   "dependencies": {

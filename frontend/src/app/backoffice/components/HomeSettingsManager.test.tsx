@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import HomeSettingsManager from "./HomeSettingsManager";
+import HomeSettingsManager, { moveItem } from "./HomeSettingsManager";
 
 const HOME_HERO_SETTINGS_KEY = "site_home_hero_settings";
 
@@ -56,6 +56,14 @@ describe("HomeSettingsManager", () => {
     expect(addButton).toBeDisabled();
   });
 
+  it("returns the same array when moveItem is a no-op or out of bounds", () => {
+    const items = ["a", "b", "c"];
+
+    expect(moveItem(items, 1, 1)).toBe(items);
+    expect(moveItem(items, 1, -1)).toBe(items);
+    expect(moveItem(items, 1, 3)).toBe(items);
+  });
+
   it("can reorder links and keeps the new order on save", () => {
     render(<HomeSettingsManager />);
     fireEvent.click(screen.getByRole("button", { name: "Liens et mots clefs" }));
@@ -82,6 +90,36 @@ describe("HomeSettingsManager", () => {
     expect(screen.getByText("Il faut entre 1 et 5 mots-cles.")).toBeInTheDocument();
   });
 
+  it("can reorder keywords from the links-keywords tab", () => {
+    render(<HomeSettingsManager />);
+    fireEvent.click(screen.getByRole("button", { name: "Liens et mots clefs" }));
+
+    const firstKeywordCard = screen.getByText("1. mot-cle").closest("div");
+    const secondKeywordCard = screen.getByText("2. mot-cle").closest("div");
+    expect(firstKeywordCard).not.toBeNull();
+    expect(secondKeywordCard).not.toBeNull();
+
+    const keywordInputs = [
+      within(firstKeywordCard as HTMLElement).getByRole("textbox"),
+      within(secondKeywordCard as HTMLElement).getByRole("textbox"),
+    ];
+    fireEvent.change(keywordInputs[0], { target: { value: "Premier" } });
+    fireEvent.change(keywordInputs[1], { target: { value: "Second" } });
+
+    fireEvent.click(within(firstKeywordCard as HTMLElement).getByRole("button", { name: "Descendre" }));
+
+    expect(screen.getByDisplayValue("Second")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Premier")).toBeInTheDocument();
+
+    const movedKeywordInput = screen.getByDisplayValue("Premier");
+    const movedKeywordCard = movedKeywordInput.closest("div");
+    expect(movedKeywordCard).not.toBeNull();
+    fireEvent.click(within(movedKeywordCard as HTMLElement).getByRole("button", { name: "Monter" }));
+
+    expect(screen.getByDisplayValue("Premier")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Second")).toBeInTheDocument();
+  });
+
   it("covers main tab interactions and actions handlers", () => {
     render(<HomeSettingsManager />);
 
@@ -95,8 +133,9 @@ describe("HomeSettingsManager", () => {
     fireEvent.change(screen.getAllByLabelText("Contenu (1 ligne = 1 puce)")[0], {
       target: { value: "Bullet A" },
     });
+    fireEvent.change(screen.getAllByLabelText("Titre encart")[1], { target: { value: "Card B" } });
     fireEvent.click(screen.getAllByRole("button", { name: "Descendre" })[0]);
-    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[1]);
     fireEvent.click(screen.getAllByRole("button", { name: "Supprimer" })[0]);
 
     fireEvent.click(screen.getByRole("button", { name: "Liens et mots clefs" }));
@@ -105,12 +144,14 @@ describe("HomeSettingsManager", () => {
       target: { value: "Lien X" },
     });
     fireEvent.click(screen.getAllByRole("button", { name: "Descendre" })[0]);
-    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[1]);
 
     fireEvent.click(screen.getByRole("button", { name: "Ajouter" }));
     fireEvent.change(screen.getAllByDisplayValue("")[0], { target: { value: "Keyword X" } });
     const keywordMoveButtons = screen.getAllByRole("button", { name: "Descendre" });
     fireEvent.click(keywordMoveButtons[keywordMoveButtons.length - 1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Descendre" })[1]);
     const keywordRemoveButtons = screen.getAllByRole("button", { name: "Supprimer" });
     fireEvent.click(keywordRemoveButtons[keywordRemoveButtons.length - 1]);
 

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, cleanup } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ReferenceModal from "./ReferenceModal";
@@ -6,7 +6,6 @@ import type { ReferenceItem } from "../../content/references";
 
 vi.mock("next/image", () => ({
   default: (props: Record<string, unknown>) => {
-    // next/image is not needed for behavior tests; render a plain img instead.
     const { alt, src, className, sizes } = props as {
       alt?: string;
       src?: string;
@@ -67,12 +66,9 @@ describe("ReferenceModal", () => {
       </>,
     );
 
-    // Flush the focus setTimeout(0) scheduled on open.
     vi.advanceTimersByTime(0);
 
-    expect(
-      screen.getByRole("dialog", { name: /détail de mission/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /détail de mission/i })).toBeInTheDocument();
 
     const closeButtons = screen.getAllByRole("button", { name: "Fermer" });
     const closeButton = closeButtons[1];
@@ -85,6 +81,7 @@ describe("ReferenceModal", () => {
         <ReferenceModal item={null} onClose={onClose} />
       </>,
     );
+
     await act(async () => {
       await vi.runAllTimersAsync();
     });
@@ -104,6 +101,7 @@ describe("ReferenceModal", () => {
 
     fireEvent.click(overlayButton);
     rerender(<ReferenceModal item={null} onClose={onClose} />);
+
     await act(async () => {
       await vi.runAllTimersAsync();
     });

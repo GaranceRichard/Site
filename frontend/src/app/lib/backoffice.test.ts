@@ -1,6 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 
-import { isAccessTokenValid, isBackofficeEnabled } from "./backoffice";
+import { isAccessTokenValid, isBackofficeEnabled, resolveApiBaseUrl } from "./backoffice";
+
+const originalLocation = window.location;
 
 describe("isBackofficeEnabled", () => {
   const originalEnv = process.env;
@@ -85,5 +87,54 @@ describe("isAccessTokenValid", () => {
     globalThis.atob = undefined;
     const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 60 });
     expect(isAccessTokenValid(token)).toBe(true);
+  });
+});
+
+describe("resolveApiBaseUrl", () => {
+  const originalEnv = process.env;
+  const originalWindow = globalThis.window;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    if (typeof window !== "undefined") {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: originalWindow,
+    });
+  });
+
+  it("returns proxy path in the browser when env is configured", () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test/";
+    expect(resolveApiBaseUrl()).toBe("/api-proxy");
+  });
+
+  it("returns proxy path in the browser when env is missing", () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    expect(resolveApiBaseUrl()).toBe("/api-proxy");
+  });
+
+  it("uses the trimmed env value on the server", () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = " http://example.test/// ";
+    // @ts-expect-error test server branch
+    delete globalThis.window;
+
+    expect(resolveApiBaseUrl()).toBe("http://example.test");
+  });
+
+  it("falls back to local Django on the server when env is missing", () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    // @ts-expect-error test server branch
+    delete globalThis.window;
+
+    expect(resolveApiBaseUrl()).toBe("http://127.0.0.1:8000");
   });
 });
