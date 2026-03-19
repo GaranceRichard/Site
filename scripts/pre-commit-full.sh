@@ -24,8 +24,16 @@ trap cleanup EXIT
 
 echo "==> Backend tests + coverage"
 cd "$BACKEND_DIR"
+python -m ruff check \
+  contact/views.py \
+  contact/serializers.py \
+  contact/image_upload.py \
+  contact/pagination.py \
+  contact/reference_cache.py
+python -m black --check --diff --verbose .
 python -m coverage run manage.py test
 python -m coverage report --fail-under=80
+python manage.py spectacular --validate --fail-on-warn
 
 echo "==> Frontend lint + unit tests + coverage + build"
 cd "$FRONTEND_DIR"

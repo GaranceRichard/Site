@@ -41,12 +41,7 @@ try {
     contact/image_upload.py `
     contact/pagination.py `
     contact/reference_cache.py
-  & $backendPython -m black --check `
-    contact/views.py `
-    contact/serializers.py `
-    contact/image_upload.py `
-    contact/pagination.py `
-    contact/reference_cache.py
+  & $backendPython -m black --check --diff --verbose .
   Pop-Location
 
   Write-Host "==> Backend tests + coverage"
