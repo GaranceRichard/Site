@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from config.views import HealthLiveView, HealthReadyView, HealthView
 from contact.views import SiteSettingsAdminView, SiteSettingsPublicView
@@ -15,13 +15,13 @@ from drf_spectacular.views import (
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/contact/", include("contact.urls")),
-    path("api/settings", SiteSettingsPublicView.as_view()),
-    path(
-        "api/settings/", SiteSettingsPublicView.as_view(), name="site-settings-public"
+    re_path(
+        r"^api/settings/?$",
+        SiteSettingsPublicView.as_view(),
+        name="site-settings-public",
     ),
-    path("api/settings/admin", SiteSettingsAdminView.as_view()),
-    path(
-        "api/settings/admin/",
+    re_path(
+        r"^api/settings/admin/?$",
         SiteSettingsAdminView.as_view(),
         name="site-settings-admin",
     ),

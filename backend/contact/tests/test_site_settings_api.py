@@ -54,6 +54,13 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
         self.assertEqual(SiteSettings.objects.count(), 1)
 
+    def test_public_endpoint_without_trailing_slash_returns_defaults(self):
+        res = self.client.get("/api/settings")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
+        self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
+
     def test_admin_put_updates_settings(self):
         payload = {
             "header": {
