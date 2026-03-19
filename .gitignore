@@ -36,6 +36,7 @@ backend/media/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
 htmlcov/
 frontend/test-results/
 frontend/coverage-e2e/

@@ -96,6 +96,10 @@ NGINX_SSL_CERTIFICATE_KEY_PATH=/etc/letsencrypt/live/example.com/privkey.pem
 Fichiers utilises:
 - `docker-compose.monitoring.yml`
 - `monitoring/prometheus/prometheus.yml`
+- `monitoring/blackbox/blackbox.yml`
+- `monitoring/grafana/provisioning/alerting/contact-points.yml`
+- `monitoring/grafana/provisioning/alerting/notification-policies.yml`
+- `monitoring/grafana/provisioning/alerting/rules.yml`
 
 Demarrage (stack app + monitoring):
 ```bash
@@ -109,11 +113,14 @@ Acces local serveur:
 - Prometheus: `http://127.0.0.1:9090`
 - Grafana: `http://127.0.0.1:3001`
 - Datasource Grafana `Prometheus` preconfiguree (URL interne `http://prometheus:9090`).
+- Dashboard Grafana `Mon Site - Overview` provisionne automatiquement depuis `monitoring/grafana/provisioning/dashboards/`.
+- Alertes Grafana provisionnees automatiquement pour les metriques critiques backend.
 
 Important:
 - Les ports sont bindes sur `127.0.0.1` pour eviter une exposition publique directe.
 - Mettre Grafana derriere un reverse proxy authentifie (ou VPN) si acces distant.
 - Changer `GRAFANA_ADMIN_PASSWORD` dans `.env.prod`.
+- Renseigner `GRAFANA_ALERT_WEBHOOK_URL` dans `.env.prod` pour recevoir les notifications Grafana (Slack, ntfy, PagerDuty webhook, etc.).
 
 ## CD GitHub Actions (staging)
 Le workflow `deploy.yml`:
@@ -161,6 +168,10 @@ Recommande:
 - Healthcheck externe sur `GET /api/health` et `GET /api/health/ready`.
 - Alertes (Uptime Kuma/UptimeRobot/Better Uptime) si timeout ou statut non 200.
 - Dashboard Grafana branche sur Prometheus (datasource: `http://prometheus:9090`).
+- Alerting Grafana provisionne depuis le repo:
+  - taux de reponses HTTP 5xx > 1 % sur 5 min
+  - latence P95 > 2 s sur `POST /api/contact/messages`
+  - health `/api/health` en echec via blackbox exporter
 
 ## Cron cleanup medias
 Configurer un cron serveur pour supprimer les medias orphelins:

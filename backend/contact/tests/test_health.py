@@ -4,10 +4,18 @@ from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from config.views import HealthAnonThrottle
+from config.views import HEALTHCHECK_STATUS, HealthAnonThrottle
 
 
 class HealthChecksTests(APITestCase):
+    def _health_metric_samples(self):
+        return {
+            sample.labels["component"]: sample.value
+            for metric in HEALTHCHECK_STATUS.collect()
+            for sample in metric.samples
+            if sample.name == "django_healthcheck_status"
+        }
+
     @override_settings(HEALTH_THROTTLE_RATE="12/min")
     def test_health_throttle_uses_django_setting(self):
         self.assertEqual(HealthAnonThrottle().get_rate(), "12/min")
@@ -23,6 +31,8 @@ class HealthChecksTests(APITestCase):
         self.assertEqual(res.data.get("ok"), True)
         self.assertEqual(res.data["db"].get("ok"), True)
         self.assertEqual(res.data["redis"].get("skipped"), True)
+        self.assertEqual(self._health_metric_samples()["db"], 1)
+        self.assertEqual(self._health_metric_samples()["redis"], 1)
 
     def test_health_live_is_ok(self):
         res = self.client.get("/api/health/live")
@@ -44,6 +54,8 @@ class HealthChecksTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
         self.assertEqual(res.data.get("ok"), False)
         self.assertEqual(res.data["redis"].get("ok"), False)
+        self.assertEqual(self._health_metric_samples()["db"], 1)
+        self.assertEqual(self._health_metric_samples()["redis"], 0)
 
     @override_settings(REDIS_URL="")
     def test_health_ready_reports_db_failure(self):
@@ -53,3 +65,5 @@ class HealthChecksTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
         self.assertEqual(res.data.get("ok"), False)
         self.assertEqual(res.data["db"].get("ok"), False)
+        self.assertEqual(self._health_metric_samples()["db"], 0)
+        self.assertEqual(self._health_metric_samples()["redis"], 1)

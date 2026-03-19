@@ -2,6 +2,8 @@ from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from config.middleware import SecurityHeadersMiddleware
+from config.middleware import RequestIdMiddleware
+from config.request_id import clear_request_id, get_request_id
 
 
 class SecurityHeadersMiddlewareTests(SimpleTestCase):
@@ -62,3 +64,48 @@ class SecurityHeadersMiddlewareTests(SimpleTestCase):
 
         self.assertEqual(response["Content-Security-Policy"], "default-src 'self'")
         self.assertEqual(response["Permissions-Policy"], "camera=()")
+
+
+class RequestIdMiddlewareTests(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def tearDown(self):
+        clear_request_id()
+
+    def test_sets_request_id_on_request_and_response_header(self):
+        captured = {}
+
+        def get_response(request):
+            captured["request_id"] = request.request_id
+            captured["thread_local_request_id"] = get_request_id()
+            return HttpResponse("ok")
+
+        middleware = RequestIdMiddleware(get_response)
+        response = middleware(self.factory.get("/"))
+
+        self.assertEqual(response["X-Request-ID"], captured["request_id"])
+        self.assertEqual(captured["thread_local_request_id"], captured["request_id"])
+
+    def test_clears_request_id_after_response(self):
+        middleware = RequestIdMiddleware(lambda request: HttpResponse("ok"))
+
+        middleware(self.factory.get("/"))
+
+        self.assertIsNone(get_request_id())
+
+    def test_preserves_existing_response_request_id_header(self):
+        def get_response(_request):
+            response = HttpResponse("ok")
+            response["X-Request-ID"] = "upstream-id"
+            return response
+
+        middleware = RequestIdMiddleware(get_response)
+        response = middleware(self.factory.get("/"))
+
+        self.assertEqual(response["X-Request-ID"], "upstream-id")
+
+    def test_clear_request_id_is_safe_when_no_request_id_exists(self):
+        clear_request_id()
+
+        self.assertIsNone(get_request_id())

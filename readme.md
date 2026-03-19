@@ -434,6 +434,7 @@ Ne pas committer :
 - DB: PostgreSQL (`db` en prod compose, `postgres` en dev compose) sur `5432`.
 - Cache/rate-limit: Redis (`redis`) sur `6379`.
 - Monitoring: Prometheus (`9090`) + Grafana (`3001`) via `docker-compose.monitoring.yml`.
+- Alerting Grafana provisionne en YAML (`monitoring/grafana/provisioning/alerting/`) avec notifications webhook via `GRAFANA_ALERT_WEBHOOK_URL`.
 - Ports utilises:
 - App locale: `http://127.0.0.1:8000` (API), `http://127.0.0.1:3000` (front).
 - Monitoring local serveur: `http://127.0.0.1:9090` (Prometheus), `http://127.0.0.1:3001` (Grafana).
@@ -469,7 +470,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Variables clefs proxy TLS:
 - `NGINX_SSL_CERTIFICATE`, `NGINX_SSL_CERTIFICATE_KEY`, `NGINX_SSL_CERTIFICATE_PATH`, `NGINX_SSL_CERTIFICATE_KEY_PATH`.
 - Variables observabilite:
-- `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`, `PROMETHEUS_RETENTION_DAYS`.
+- `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`, `PROMETHEUS_RETENTION_DAYS`, `GRAFANA_ALERT_WEBHOOK_URL`.
 - Stockage des secrets:
 - Local: `backend/.env`, `frontend/.env.local`, `frontend/.env.e2e.local` (non versionnes).
 - Serveur: `.env.prod` hors git.
@@ -482,7 +483,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Quoi regarder en premier:
 - 1. `GET /api/health` et `GET /api/health/ready` (etat global app/DB/Redis).
 - 2. Prometheus (`/metrics` scrape sur `backend:8000`) pour erreurs HTTP, latence, disponibilite.
-- 3. Grafana pour la vue consolidee (datasource `Prometheus` preconfiguree).
+- 3. Grafana pour la vue consolidee et l'alerting (datasource `Prometheus` preconfiguree, contact point webhook provisionne).
 - 4. En local: `./scripts/monitor-local.ps1 -Loop`.
 - Sentry (priorisation):
 - Sev1: erreurs massives ou indisponibilite (500 en rafale, auth/admin KO global, crash frontend bloque).

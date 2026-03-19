@@ -172,6 +172,7 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "config.middleware.SecurityHeadersMiddleware",
+    "config.middleware.RequestIdMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -521,10 +522,17 @@ LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO" if IS_PROD else "DEBUG").upper(
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {"request_id": {"()": "config.logging.RequestIdFilter"}},
     "formatters": {
         "default": {"format": "{levelname} {asctime} {name} {message}", "style": "{"}
     },
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "default"}},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "filters": ["request_id"],
+        }
+    },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
         "django.request": {
@@ -540,6 +548,15 @@ LOGGING = {
         "PIL": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }
+
+if IS_PROD:
+    LOGGING["formatters"]["json"] = {
+        "()": "config.logging.ProductionJsonFormatter",
+        "fmt": "%(timestamp)s %(level)s %(logger)s %(message)s %(request_id)s",
+    }
+    LOGGING["handlers"]["console"].update(
+        {"formatter": "json", "stream": "ext://sys.stdout"}
+    )
 
 
 # -------------------------------------------------

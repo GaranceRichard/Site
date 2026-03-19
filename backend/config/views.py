@@ -1,11 +1,19 @@
 from django.conf import settings
 from django.db import connection
+from prometheus_client import Gauge
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.throttling import AnonRateThrottle
 
 from drf_spectacular.utils import extend_schema, inline_serializer
+
+
+HEALTHCHECK_STATUS = Gauge(
+    "django_healthcheck_status",
+    "Latest dependency health check status by component (1=up, 0=down).",
+    labelnames=("component",),
+)
 
 
 class HealthAnonThrottle(AnonRateThrottle):
@@ -91,6 +99,7 @@ def _check_dependencies() -> dict:
         db_error = str(exc)
         status["ok"] = False
     status["db"] = {"ok": db_ok, **({"error": db_error} if db_error else {})}
+    HEALTHCHECK_STATUS.labels(component="db").set(1 if db_ok else 0)
 
     # Redis check (only if configured)
     redis_url = getattr(settings, "REDIS_URL", "") or ""
@@ -113,6 +122,9 @@ def _check_dependencies() -> dict:
             **({"error": redis_error} if redis_error else {}),
         }
     else:
+        redis_ok = True
         status["redis"] = {"ok": True, "skipped": True}
+
+    HEALTHCHECK_STATUS.labels(component="redis").set(1 if redis_ok else 0)
 
     return status

@@ -1,0 +1,244 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: backend-critical-alerts
+    folder: Monitoring
+    interval: 1m
+    rules:
+      - uid: backend-http-5xx-rate
+        title: Backend HTTP 5xx > 1% sur 5m
+        condition: C
+        for: 5m
+        noDataState: NoData
+        execErrState: Error
+        annotations:
+          summary: Le taux de reponses HTTP 5xx depasse 1 % depuis 5 minutes.
+          description: Verifier les erreurs backend, nginx et les exceptions Django si le trafic utilisateur est degrade.
+        labels:
+          severity: critical
+          service: backend
+          alertname: backend-http-5xx-rate
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: |
+                100 * (
+                  sum(rate(django_http_responses_total_by_status_view_method_total{status=~"5..",view!~"api-health|api-health-live|api-health-ready"}[5m]))
+                  /
+                  clamp_min(sum(rate(django_http_responses_total_by_status_view_method_total{view!~"api-health|api-health-live|api-health-ready"}[5m])), 0.001)
+                )
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 1
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+      - uid: contact-messages-p95-latency
+        title: API contact messages P95 > 2s
+        condition: C
+        for: 5m
+        noDataState: NoData
+        execErrState: Error
+        annotations:
+          summary: La latence P95 de POST /api/contact/messages depasse 2 secondes.
+          description: Verifier la sante du backend, la base de donnees et les dependances externes si les soumissions contact ralentissent.
+        labels:
+          severity: critical
+          service: backend
+          endpoint: /api/contact/messages
+          alertname: contact-messages-p95-latency
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: |
+                histogram_quantile(
+                  0.95,
+                  sum by (le) (
+                    rate(django_http_requests_latency_seconds_by_view_method_bucket{view="contact-message-create",method="POST"}[5m])
+                  )
+                )
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 2
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+      - uid: backend-healthcheck-failed
+        title: Health check backend en echec
+        condition: C
+        for: 2m
+        noDataState: Alerting
+        execErrState: Error
+        annotations:
+          summary: Le health check /api/health ne renvoie plus un statut sain.
+          description: L'endpoint /api/health retourne 503 lorsque ok=false. Le blackbox exporter signale ici un echec continu.
+        labels:
+          severity: critical
+          service: backend
+          endpoint: /api/health
+          alertname: backend-healthcheck-failed
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: |
+                probe_success{job="blackbox-health",healthcheck="backend-api-health"}
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 1
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
