@@ -154,6 +154,10 @@ vi.mock("./components/MessagesTable", () => ({
   ),
 }));
 
+vi.mock("./components/PromiseSettingsManager", () => ({
+  default: () => <div data-testid="promise-settings-manager" />,
+}));
+
 vi.mock("./components/ReferencesManager", () => ({
   default: ({ onRequestLogin }: { onRequestLogin: () => void }) => (
     <div data-testid="references-manager">
@@ -301,6 +305,15 @@ describe("BackofficePage", () => {
     render(<BackofficePage />);
     expect(screen.getByRole("heading", { name: "Accueil" })).toBeInTheDocument();
     expect(screen.getByTestId("home-settings-manager")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
+    expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
+  });
+
+  it("renders promise section when stored", () => {
+    setBackofficeSection("promise");
+    render(<BackofficePage />);
+    expect(screen.getByRole("heading", { name: "Positionnement" })).toBeInTheDocument();
+    expect(screen.getByTestId("promise-settings-manager")).toBeInTheDocument();
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
   });

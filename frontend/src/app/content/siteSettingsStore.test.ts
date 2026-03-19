@@ -8,15 +8,18 @@ import { resolveApiBaseUrl } from "../lib/backoffice";
 import {
   DEFAULT_HEADER_SETTINGS,
   DEFAULT_HOME_HERO_SETTINGS,
+  DEFAULT_PROMISE_SETTINGS,
   ensureSiteSettingsLoaded,
   getSiteSettings,
   getSiteSettingsServer,
   resetSiteSettingsStoreForTests,
   saveHeaderSettings,
   saveHomeHeroSettings,
+  savePromiseSettings,
   saveSiteSettings,
   setHeaderSettings,
   setHomeHeroSettings,
+  setPromiseSettings,
   subscribeSiteSettings,
   type SiteSettings,
 } from "./siteSettingsStore";
@@ -186,6 +189,27 @@ describe("siteSettingsStore", () => {
     expect(result.homeHero.cards).toEqual(DEFAULT_HOME_HERO_SETTINGS.cards);
   });
 
+  it("falls back when promise cards are not an array", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: {
+            ...DEFAULT_PROMISE_SETTINGS,
+            cards: "not-an-array",
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.promise.cards).toEqual(DEFAULT_PROMISE_SETTINGS.cards);
+  });
+
   it("falls back when cleaned keywords and cards become empty", async () => {
     vi.stubGlobal(
       "fetch",
@@ -206,6 +230,27 @@ describe("siteSettingsStore", () => {
 
     expect(result.homeHero.keywords).toEqual(DEFAULT_HOME_HERO_SETTINGS.keywords);
     expect(result.homeHero.cards).toEqual(DEFAULT_HOME_HERO_SETTINGS.cards);
+  });
+
+  it("falls back when cleaned promise cards become empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: {
+            ...DEFAULT_PROMISE_SETTINGS,
+            cards: [{ id: "", title: " ", content: " " }],
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.promise.cards).toEqual(DEFAULT_PROMISE_SETTINGS.cards);
   });
 
   it("keeps defaults when the API request fails", async () => {
@@ -300,6 +345,7 @@ describe("siteSettingsStore", () => {
         json: async () => ({
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -317,6 +363,11 @@ describe("siteSettingsStore", () => {
             links: [{ id: "references", label: "", enabled: true }],
             keywords: [" ", "Delivery"],
             cards: [{ id: "", title: "  New card ", content: "  New content " }],
+          },
+          promise: {
+            title: " Promise title ",
+            subtitle: " Promise subtitle ",
+            cards: [{ id: "", title: " Promise card ", content: " Promise content " }],
           },
         }),
       });
@@ -337,6 +388,11 @@ describe("siteSettingsStore", () => {
           links: [{ id: "references", label: "", enabled: true }],
           keywords: [" ", "Delivery"],
           cards: [{ id: "", title: "  New card ", content: "  New content " }],
+        },
+        promise: {
+          title: " Promise title ",
+          subtitle: " Promise subtitle ",
+          cards: [{ id: "", title: " Promise card ", content: " Promise content " }],
         },
       },
       "token-123",
@@ -368,6 +424,11 @@ describe("siteSettingsStore", () => {
             keywords: ["Delivery"],
             cards: [{ id: "card-1", title: "New card", content: "New content" }],
           },
+          promise: {
+            title: "Promise title",
+            subtitle: "Promise subtitle",
+            cards: [{ id: "promise-card-1", title: "Promise card", content: "Promise content" }],
+          },
         }),
       }),
     );
@@ -381,6 +442,7 @@ describe("siteSettingsStore", () => {
       label: "Exemples d'impact",
       enabled: true,
     });
+    expect(result.promise.title).toBe("Promise title");
     expect(listener).toHaveBeenCalledTimes(2);
 
     unsubscribe();
@@ -394,6 +456,7 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
         },
         "token",
       ),
@@ -414,6 +477,7 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
         },
         "token",
       ),
@@ -433,13 +497,14 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
         },
         "token",
       ),
     ).rejects.toThrow("Erreur API (503)");
   });
 
-  it("updates header and home hero through helper setters and save wrappers", async () => {
+  it("updates header, home hero and promise through helper setters and save wrappers", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce({
@@ -451,6 +516,7 @@ describe("siteSettingsStore", () => {
             bookingUrl: "https://example.com/header",
           },
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -464,6 +530,25 @@ describe("siteSettingsStore", () => {
           homeHero: {
             ...DEFAULT_HOME_HERO_SETTINGS,
             eyebrow: "Hero wrapper",
+          },
+          promise: DEFAULT_PROMISE_SETTINGS,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: {
+            name: "Header wrapper",
+            title: "Coach",
+            bookingUrl: "https://example.com/header",
+          },
+          homeHero: {
+            ...DEFAULT_HOME_HERO_SETTINGS,
+            eyebrow: "Hero wrapper",
+          },
+          promise: {
+            ...DEFAULT_PROMISE_SETTINGS,
+            title: "Promise wrapper",
           },
         }),
       });
@@ -481,6 +566,12 @@ describe("siteSettingsStore", () => {
       eyebrow: "Local hero",
     });
     expect(getSiteSettings().homeHero.eyebrow).toBe("Local hero");
+
+    setPromiseSettings({
+      ...DEFAULT_PROMISE_SETTINGS,
+      title: "Local promise",
+    });
+    expect(getSiteSettings().promise.title).toBe("Local promise");
 
     const savedHeader = await saveHeaderSettings(
       {
@@ -500,7 +591,16 @@ describe("siteSettingsStore", () => {
       "token",
     );
     expect(savedHero.homeHero.eyebrow).toBe("Hero wrapper");
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    const savedPromise = await savePromiseSettings(
+      {
+        ...DEFAULT_PROMISE_SETTINGS,
+        title: "Promise wrapper",
+      },
+      "token",
+    );
+    expect(savedPromise.promise.title).toBe("Promise wrapper");
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
   });
 
   it("returns defaults when normalizing a completely invalid site settings object", async () => {
@@ -515,6 +615,7 @@ describe("siteSettingsStore", () => {
     await expect(ensureSiteSettingsLoaded()).resolves.toEqual({
       header: DEFAULT_HEADER_SETTINGS,
       homeHero: DEFAULT_HOME_HERO_SETTINGS,
+      promise: DEFAULT_PROMISE_SETTINGS,
     } satisfies SiteSettings);
   });
 });

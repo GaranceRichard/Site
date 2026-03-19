@@ -28,6 +28,12 @@ export type HeroCard = {
   content: string;
 };
 
+export type PromiseCard = {
+  id: string;
+  title: string;
+  content: string;
+};
+
 export type HomeHeroSettings = {
   eyebrow: string;
   title: string;
@@ -37,9 +43,16 @@ export type HomeHeroSettings = {
   cards: HeroCard[];
 };
 
+export type PromiseSettings = {
+  title: string;
+  subtitle: string;
+  cards: PromiseCard[];
+};
+
 export type SiteSettings = {
   header: HeaderSettings;
   homeHero: HomeHeroSettings;
+  promise: PromiseSettings;
 };
 
 export const DEFAULT_HEADER_SETTINGS: HeaderSettings = {
@@ -80,9 +93,38 @@ export const DEFAULT_HOME_HERO_SETTINGS: HomeHeroSettings = {
   cards: DEFAULT_CARDS,
 };
 
+export const DEFAULT_PROMISE_SETTINGS: PromiseSettings = {
+  title: "Un accompagnement serieux, sobre, oriente resultats",
+  subtitle:
+    "Vous gardez l essentiel : une approche structuree, respectueuse du contexte, qui securise la livraison et renforce l autonomie.",
+  cards: [
+    {
+      id: "promise-card-1",
+      title: "Diagnostic rapide",
+      content: "Observer le flux, clarifier les irritants, choisir peu d actions a fort effet.",
+    },
+    {
+      id: "promise-card-2",
+      title: "Cadre de pilotage",
+      content: "Quelques metriques utiles, un rythme de revue, une decision plus fluide.",
+    },
+    {
+      id: "promise-card-3",
+      title: "Qualite",
+      content: "Stabiliser l execution : limiter le WIP, reduire les reprises, securiser le done.",
+    },
+    {
+      id: "promise-card-4",
+      title: "Transfert",
+      content: "Rendre l organisation autonome : pratiques, supports, routine d amelioration.",
+    },
+  ],
+};
+
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   header: DEFAULT_HEADER_SETTINGS,
   homeHero: DEFAULT_HOME_HERO_SETTINGS,
+  promise: DEFAULT_PROMISE_SETTINGS,
 };
 
 const listeners = new Set<() => void>();
@@ -232,6 +274,49 @@ function normalizeHomeHeroSettings(value: unknown): HomeHeroSettings {
   };
 }
 
+function normalizePromiseCards(value: unknown): PromiseCard[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_PROMISE_SETTINGS.cards;
+  }
+
+  const cards = value
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => {
+      const candidate = item as Partial<PromiseCard>;
+      const id =
+        typeof candidate.id === "string" && candidate.id.trim()
+          ? candidate.id.trim()
+          : `promise-card-${index + 1}`;
+      const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+      const content = typeof candidate.content === "string" ? candidate.content.trim() : "";
+      return { id, title, content };
+    })
+    .filter((card) => card.title || card.content)
+    .slice(0, 6);
+
+  if (cards.length === 0) {
+    return DEFAULT_PROMISE_SETTINGS.cards;
+  }
+
+  return cards;
+}
+
+function normalizePromiseSettings(value: unknown): PromiseSettings {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_PROMISE_SETTINGS;
+  }
+
+  const candidate = value as Partial<PromiseSettings>;
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+  const subtitle = typeof candidate.subtitle === "string" ? candidate.subtitle.trim() : "";
+
+  return {
+    title: title || DEFAULT_PROMISE_SETTINGS.title,
+    subtitle: subtitle || DEFAULT_PROMISE_SETTINGS.subtitle,
+    cards: normalizePromiseCards(candidate.cards),
+  };
+}
+
 function normalizeSiteSettings(value: unknown): SiteSettings {
   if (!value || typeof value !== "object") {
     return DEFAULT_SITE_SETTINGS;
@@ -241,6 +326,7 @@ function normalizeSiteSettings(value: unknown): SiteSettings {
   return {
     header: normalizeHeaderSettings(candidate.header),
     homeHero: normalizeHomeHeroSettings(candidate.homeHero),
+    promise: normalizePromiseSettings(candidate.promise),
   };
 }
 
@@ -248,6 +334,7 @@ function setCachedSiteSettings(next: SiteSettings) {
   cachedValue = {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
+    promise: normalizePromiseSettings(next.promise),
   };
   hasLoaded = true;
   notifyListeners();
@@ -313,6 +400,7 @@ export async function saveSiteSettings(next: SiteSettings, token: string): Promi
   const payload = {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
+    promise: normalizePromiseSettings(next.promise),
   };
 
   const response = await fetch(`${apiBase}/api/settings/admin/`, {
@@ -381,6 +469,24 @@ export function setHomeHeroSettings(next: HomeHeroSettings) {
   setCachedSiteSettings({
     ...cachedValue,
     homeHero: next,
+  });
+}
+
+export async function savePromiseSettings(next: PromiseSettings, token: string): Promise<SiteSettings> {
+  const current = await ensureSiteSettingsLoaded();
+  return saveSiteSettings(
+    {
+      ...current,
+      promise: next,
+    },
+    token,
+  );
+}
+
+export function setPromiseSettings(next: PromiseSettings) {
+  setCachedSiteSettings({
+    ...cachedValue,
+    promise: next,
   });
 }
 

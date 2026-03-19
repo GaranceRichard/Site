@@ -28,6 +28,7 @@ from .serializers import (
     HeaderSettingsSerializer,
     ImageUploadResponseSerializer,
     HomeHeroSettingsSerializer,
+    PromiseSettingsSerializer,
     ReferenceImageUploadSerializer,
     ReferenceSerializer,
     SiteSettingsSerializer,
@@ -232,6 +233,7 @@ class SiteSettingsAdminView(APIView):
             fields={
                 "header": HeaderSettingsSerializer(),
                 "homeHero": HomeHeroSettingsSerializer(),
+                "promise": PromiseSettingsSerializer(),
             },
         ),
         responses={200: SiteSettingsSerializer},

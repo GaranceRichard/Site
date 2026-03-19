@@ -14,8 +14,10 @@ from contact.site_settings_cache import (
 from contact.site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
+    DEFAULT_PROMISE_SETTINGS,
     default_header_settings,
     default_home_hero_settings,
+    default_promise_settings,
 )
 
 
@@ -52,6 +54,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
+        self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
         self.assertEqual(SiteSettings.objects.count(), 1)
 
     def test_public_endpoint_without_trailing_slash_returns_defaults(self):
@@ -60,6 +63,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
+        self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
 
     def test_admin_put_updates_settings(self):
         payload = {
@@ -81,6 +85,17 @@ class SiteSettingsApiTests(APITestCase):
                     {"id": "card-1", "title": "Carte A", "content": "Contenu A"},
                 ],
             },
+            "promise": {
+                "title": "Titre positionnement",
+                "subtitle": "Sous-titre positionnement",
+                "cards": [
+                    {
+                        "id": "promise-card-1",
+                        "title": "Encart A",
+                        "content": "Contenu A",
+                    }
+                ],
+            },
         }
 
         res = self.client.put(
@@ -94,11 +109,13 @@ class SiteSettingsApiTests(APITestCase):
         settings = SiteSettings.get_solo()
         self.assertEqual(settings.header["name"], "Jane Doe")
         self.assertEqual(settings.home_hero["eyebrow"], "Nouveau surtitre")
+        self.assertEqual(settings.promise["title"], "Titre positionnement")
 
         public_res = self.client.get(self.public_url)
         self.assertEqual(public_res.status_code, status.HTTP_200_OK)
         self.assertEqual(public_res.data["header"]["name"], "Jane Doe")
         self.assertEqual(public_res.data["homeHero"]["eyebrow"], "Nouveau surtitre")
+        self.assertEqual(public_res.data["promise"]["title"], "Titre positionnement")
 
     def test_admin_put_without_trailing_slash_updates_settings(self):
         payload = {
@@ -108,6 +125,7 @@ class SiteSettingsApiTests(APITestCase):
                 "bookingUrl": "https://example.com/booking",
             },
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "promise": DEFAULT_PROMISE_SETTINGS,
         }
 
         res = self.client.put(
@@ -127,6 +145,7 @@ class SiteSettingsApiTests(APITestCase):
             {
                 "header": DEFAULT_HEADER_SETTINGS,
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+                "promise": DEFAULT_PROMISE_SETTINGS,
             },
             format="json",
         )
@@ -149,6 +168,7 @@ class SiteSettingsApiTests(APITestCase):
                     "bookingUrl": DEFAULT_HEADER_SETTINGS["bookingUrl"],
                 },
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+                "promise": DEFAULT_PROMISE_SETTINGS,
             },
             format="json",
             HTTP_AUTHORIZATION=f"Bearer {self.token}",
@@ -195,6 +215,16 @@ class SiteSettingsDefaultsTests(TestCase):
         self.assertEqual(
             DEFAULT_HOME_HERO_SETTINGS["cards"][0]["title"],
             "Cadre d'intervention",
+        )
+
+    def test_default_promise_settings_returns_deep_copy(self):
+        promise = default_promise_settings()
+
+        promise["cards"][0]["title"] = "Changed title"
+
+        self.assertEqual(
+            DEFAULT_PROMISE_SETTINGS["cards"][0]["title"],
+            "Diagnostic rapide",
         )
 
 

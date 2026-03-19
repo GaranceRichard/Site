@@ -50,3 +50,50 @@ DEFAULT_HOME_HERO_SETTINGS = {
 
 def default_home_hero_settings():
     return deepcopy(DEFAULT_HOME_HERO_SETTINGS)
+
+
+DEFAULT_PROMISE_SETTINGS = {
+    "title": "Un accompagnement serieux, sobre, oriente resultats",
+    "subtitle": (
+        "Vous gardez l essentiel : une approche structuree, respectueuse du "
+        "contexte, qui securise la livraison et renforce l autonomie."
+    ),
+    "cards": [
+        {
+            "id": "promise-card-1",
+            "title": "Diagnostic rapide",
+            "content": (
+                "Observer le flux, clarifier les irritants, choisir peu "
+                "d actions a fort effet."
+            ),
+        },
+        {
+            "id": "promise-card-2",
+            "title": "Cadre de pilotage",
+            "content": (
+                "Quelques metriques utiles, un rythme de revue, une "
+                "decision plus fluide."
+            ),
+        },
+        {
+            "id": "promise-card-3",
+            "title": "Qualite",
+            "content": (
+                "Stabiliser l execution : limiter le WIP, reduire les "
+                "reprises, securiser le done."
+            ),
+        },
+        {
+            "id": "promise-card-4",
+            "title": "Transfert",
+            "content": (
+                "Rendre l organisation autonome : pratiques, supports, "
+                "routine d amelioration."
+            ),
+        },
+    ],
+}
+
+
+def default_promise_settings():
+    return deepcopy(DEFAULT_PROMISE_SETTINGS)

@@ -90,6 +90,19 @@ export default function Sidebar({
         </button>
         <button
           type="button"
+          onClick={() => onSelectSection("promise")}
+          className={[
+            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+            section === "promise"
+              ? "bg-neutral-900 text-white"
+              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+          ].join(" ")}
+        >
+          Positionnement
+        </button>
+        <button
+          type="button"
           onClick={() => onSelectSection("references")}
           className={[
             "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",

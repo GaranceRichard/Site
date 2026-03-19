@@ -8,6 +8,7 @@ from .models import ContactMessage, Reference, SiteSettings
 from .site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
+    DEFAULT_PROMISE_SETTINGS,
 )
 
 
@@ -206,16 +207,50 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
         return cards
 
 
+class PromiseCardSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=60, trim_whitespace=True)
+    title = serializers.CharField(max_length=160, trim_whitespace=True)
+    content = serializers.CharField(trim_whitespace=True)
+
+
+class PromiseSettingsSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=240, trim_whitespace=True)
+    subtitle = serializers.CharField(trim_whitespace=True)
+    cards = PromiseCardSerializer(many=True)
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_PROMISE_SETTINGS["title"]
+
+    def validate_subtitle(self, value: str) -> str:
+        return value.strip() or DEFAULT_PROMISE_SETTINGS["subtitle"]
+
+    def validate_cards(self, value):
+        cards = [
+            {
+                "id": item["id"].strip(),
+                "title": item["title"].strip(),
+                "content": item["content"].strip(),
+            }
+            for item in value
+            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
+        ][:6]
+        if not cards:
+            return DEFAULT_PROMISE_SETTINGS["cards"]
+        return cards
+
+
 class SiteSettingsSerializer(serializers.ModelSerializer):
     header = HeaderSettingsSerializer()
     homeHero = HomeHeroSettingsSerializer(source="home_hero")
+    promise = PromiseSettingsSerializer()
 
     class Meta:
         model = SiteSettings
-        fields = ["header", "homeHero", "updated_at"]
+        fields = ["header", "homeHero", "promise", "updated_at"]
 
     def update(self, instance, validated_data):
         instance.header = validated_data["header"]
         instance.home_hero = validated_data["home_hero"]
+        instance.promise = validated_data["promise"]
         instance.save()
         return instance

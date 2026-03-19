@@ -14,6 +14,7 @@ export type SortDir = "asc" | "desc";
 export type BackofficeSection =
   | "messages"
   | "home"
+  | "promise"
   | "references"
   | "header"
   | "stats"

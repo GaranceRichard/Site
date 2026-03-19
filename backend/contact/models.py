@@ -3,6 +3,7 @@ from django.db import models
 from .site_settings_defaults import (
     default_header_settings,
     default_home_hero_settings,
+    default_promise_settings,
 )
 
 
@@ -42,6 +43,7 @@ class Reference(models.Model):
 class SiteSettings(models.Model):
     header = models.JSONField(default=default_header_settings, blank=True)
     home_hero = models.JSONField(default=default_home_hero_settings, blank=True)
+    promise = models.JSONField(default=default_promise_settings, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
@@ -51,6 +53,7 @@ class SiteSettings(models.Model):
             defaults={
                 "header": default_header_settings(),
                 "home_hero": default_home_hero_settings(),
+                "promise": default_promise_settings(),
             },
         )
         return obj

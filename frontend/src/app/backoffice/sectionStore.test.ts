@@ -29,6 +29,11 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("home");
   });
 
+  it("returns promise when stored value is promise", () => {
+    window.localStorage.setItem(SECTION_KEY, "promise");
+    expect(getBackofficeSection()).toBe("promise");
+  });
+
   it("falls back to messages when stored value is invalid", () => {
     window.localStorage.setItem(SECTION_KEY, "invalid");
     expect(getBackofficeSection()).toBe("messages");

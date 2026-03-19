@@ -11,6 +11,7 @@ import HeaderSettingsManager from "./components/HeaderSettingsManager";
 import HomeSettingsManager from "./components/HomeSettingsManager";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
+import PromiseSettingsManager from "./components/PromiseSettingsManager";
 import ReferencesManager from "./components/ReferencesManager";
 import Sidebar from "./components/Sidebar";
 import StatusBlocks from "./components/StatusBlocks";
@@ -42,6 +43,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Header",
       subtitle: "Edition du nom, du titre et du lien de prise de rendez-vous.",
+    };
+  }
+
+  if (section === "promise") {
+    return {
+      title: "Positionnement",
+      subtitle: "Edition des titres et des encarts de la section positionnement.",
     };
   }
 
@@ -174,6 +182,7 @@ export default function BackofficePage() {
 
           {section === "header" ? <HeaderSettingsManager /> : null}
           {section === "home" ? <HomeSettingsManager /> : null}
+          {section === "promise" ? <PromiseSettingsManager /> : null}
         </section>
       </div>
 
