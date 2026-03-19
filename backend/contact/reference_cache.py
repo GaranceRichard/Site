@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.core.cache import cache
 
-
 REFERENCE_CACHE_VERSION_KEY = "references:public:version"
 REFERENCE_CACHE_TTL_SECONDS = 300
 

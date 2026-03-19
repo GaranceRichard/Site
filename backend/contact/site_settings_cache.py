@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.core.cache import cache
 
-
 SITE_SETTINGS_CACHE_VERSION_KEY = "site_settings:public:version"
 SITE_SETTINGS_CACHE_TTL_SECONDS = 300
 

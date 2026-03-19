@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-
 DEFAULT_HEADER_SETTINGS = {
     "name": "Garance Richard",
     "title": "Coach Lean-Agile",
