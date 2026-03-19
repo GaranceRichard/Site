@@ -185,9 +185,7 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
 
     def validate_keywords(self, value):
         keywords = [
-            item.strip()
-            for item in value
-            if isinstance(item, str) and item.strip()
+            item.strip() for item in value if isinstance(item, str) and item.strip()
         ][:5]
         if not keywords:
             raise serializers.ValidationError("At least one keyword is required.")
@@ -201,8 +199,7 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
                 "content": item["content"].strip(),
             }
             for item in value
-            if item["id"].strip()
-            and (item["title"].strip() or item["content"].strip())
+            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
         ][:4]
         if not cards:
             return DEFAULT_HOME_HERO_SETTINGS["cards"]
