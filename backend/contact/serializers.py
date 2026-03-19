@@ -184,7 +184,11 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
         return value
 
     def validate_keywords(self, value):
-        keywords = [item.strip() for item in value if isinstance(item, str) and item.strip()][:5]
+        keywords = [
+            item.strip()
+            for item in value
+            if isinstance(item, str) and item.strip()
+        ][:5]
         if not keywords:
             raise serializers.ValidationError("At least one keyword is required.")
         return keywords
