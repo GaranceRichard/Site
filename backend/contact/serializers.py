@@ -201,7 +201,8 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
                 "content": item["content"].strip(),
             }
             for item in value
-            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
+            if item["id"].strip()
+            and (item["title"].strip() or item["content"].strip())
         ][:4]
         if not cards:
             return DEFAULT_HOME_HERO_SETTINGS["cards"]
