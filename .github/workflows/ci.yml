@@ -93,7 +93,7 @@ jobs:
 
       - name: Black (check)
         run: |
-          python -m black --check \
+          python -m black --check --diff --verbose \
             contact/views.py \
             contact/serializers.py \
             contact/image_upload.py \
