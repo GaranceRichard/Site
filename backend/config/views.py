@@ -8,7 +8,6 @@ from rest_framework.throttling import AnonRateThrottle
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 
-
 HEALTHCHECK_STATUS = Gauge(
     "django_healthcheck_status",
     "Latest dependency health check status by component (1=up, 0=down).",

@@ -125,7 +125,7 @@ describe("BackofficeModal", () => {
 
   it("shows an auth error when the API rejects credentials", async () => {
     resolveApiBaseUrlMock.mockReturnValue("http://example.test");
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<BackofficeModal open={true} onClose={() => {}} />);
@@ -140,6 +140,30 @@ describe("BackofficeModal", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Identifiant ou mot de passe invalide.")).toBeInTheDocument();
+    });
+  });
+
+  it("shows a backend error when the auth endpoint is unavailable upstream", async () => {
+    resolveApiBaseUrlMock.mockReturnValue("/api-proxy");
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<BackofficeModal open={true} onClose={() => {}} />);
+
+    fireEvent.change(screen.getByPlaceholderText("Identifiant"), {
+      target: { value: "Garance" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Mot de passe"), {
+      target: { value: "ggg" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Connexion au backend impossible (/api-proxy). Verifiez que le backend Django tourne et que JWT est active.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 

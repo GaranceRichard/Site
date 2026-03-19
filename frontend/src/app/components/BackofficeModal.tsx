@@ -143,7 +143,13 @@ export default function BackofficeModal({
 
       if (!res.ok) {
         setStatus("error");
-        setErrorMsg("Identifiant ou mot de passe invalide.");
+        if (res.status === 401 || res.status === 403) {
+          setErrorMsg("Identifiant ou mot de passe invalide.");
+        } else {
+          setErrorMsg(
+            `Connexion au backend impossible (${apiBase}). Verifiez que le backend Django tourne et que JWT est active.`
+          );
+        }
         return;
       }
 

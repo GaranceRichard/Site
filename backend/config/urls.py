@@ -15,9 +15,11 @@ from drf_spectacular.views import (
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/contact/", include("contact.urls")),
+    path("api/settings", SiteSettingsPublicView.as_view()),
     path(
         "api/settings/", SiteSettingsPublicView.as_view(), name="site-settings-public"
     ),
+    path("api/settings/admin", SiteSettingsAdminView.as_view()),
     path(
         "api/settings/admin/",
         SiteSettingsAdminView.as_view(),

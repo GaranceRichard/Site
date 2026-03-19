@@ -93,6 +93,27 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(public_res.data["header"]["name"], "Jane Doe")
         self.assertEqual(public_res.data["homeHero"]["eyebrow"], "Nouveau surtitre")
 
+    def test_admin_put_without_trailing_slash_updates_settings(self):
+        payload = {
+            "header": {
+                "name": "Sans slash",
+                "title": "Coach Agile",
+                "bookingUrl": "https://example.com/booking",
+            },
+            "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+        }
+
+        res = self.client.put(
+            "/api/settings/admin",
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK, res.data)
+        settings = SiteSettings.get_solo()
+        self.assertEqual(settings.header["name"], "Sans slash")
+
     def test_admin_put_requires_authentication(self):
         res = self.client.put(
             self.admin_url,
