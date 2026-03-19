@@ -1,8 +1,10 @@
 from io import BytesIO
-import tempfile
+from contextlib import contextmanager
+from pathlib import Path
+import shutil
+import uuid
 
 from django.contrib.auth import get_user_model
-from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -13,6 +15,19 @@ from rest_framework.test import APITestCase
 from PIL import Image
 
 from contact.models import Reference
+
+TEST_TMP_ROOT = Path(__file__).resolve().parents[2] / ".tmp-test-media"
+TEST_TMP_ROOT.mkdir(exist_ok=True)
+
+
+@contextmanager
+def workspace_tempdir():
+    tempdir = TEST_TMP_ROOT / f"case-{uuid.uuid4().hex}"
+    tempdir.mkdir(parents=True, exist_ok=False)
+    try:
+        yield str(tempdir)
+    finally:
+        shutil.rmtree(tempdir, ignore_errors=True)
 
 
 class ReferenceApiTests(APITestCase):
@@ -39,7 +54,7 @@ class ReferenceApiTests(APITestCase):
         self.token = token_res.data["access"]
 
     def test_reference_create_and_list(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image_path = default_storage.save(
                     "references/ref-a.webp", ContentFile(b"image")
@@ -70,7 +85,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertEqual(len(list_res.data), 1)
 
     def test_reference_update_and_delete(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image_path = default_storage.save(
                     "references/ref-b.webp", ContentFile(b"image")
@@ -114,7 +129,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertEqual(Reference.objects.count(), 0)
 
     def test_reference_update_deletes_old_media_files(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 old_path = default_storage.save(
                     "references/old-image.webp", ContentFile(b"old")
@@ -169,7 +184,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertTrue(default_storage.exists(new_thumb))
 
     def test_reference_update_deletes_old_icon_file(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media"):
                 image_path = default_storage.save(
                     "references/ref-image.webp", ContentFile(b"image")
@@ -215,7 +230,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertTrue(default_storage.exists(new_icon_path))
 
     def test_reference_patch_keeps_media_files(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image_path = default_storage.save(
                     "references/ref-image.webp", ContentFile(b"image")
@@ -247,7 +262,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertTrue(default_storage.exists(icon_path))
 
     def test_reference_update_ignores_external_media_url(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image_path = default_storage.save(
                     "references/ref-ext.webp", ContentFile(b"image")
@@ -281,7 +296,7 @@ class ReferenceApiTests(APITestCase):
                 self.assertEqual(update_res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_reference_image_upload(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image = Image.new("RGB", (2000, 1200), color=(255, 0, 0))
                 buffer = BytesIO()
@@ -343,7 +358,7 @@ class ReferenceApiTests(APITestCase):
         self.assertEqual(first_public.status_code, status.HTTP_200_OK)
         self.assertEqual(len(first_public.data), 0)
 
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir, MEDIA_URL="/media/"):
                 image_path = default_storage.save(
                     "references/ref-cache.webp", ContentFile(b"image")

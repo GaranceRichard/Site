@@ -201,6 +201,16 @@ vi.mock("./components/StatusBlocks", () => ({
   default: () => <div data-testid="status-blocks" />,
 }));
 
+vi.mock("./components/StatsBlock", () => ({
+  default: ({ onRequestLogin }: { onRequestLogin: () => void }) => (
+    <div data-testid="stats-block">
+      <button onClick={onRequestLogin} type="button">
+        stats login
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock("./components/UndoToast", () => ({
   default: ({ onUndo }: { onUndo: () => void }) => (
     <button data-testid="undo-toast" onClick={onUndo} type="button">
@@ -316,6 +326,17 @@ describe("BackofficePage", () => {
     expect(screen.getByTestId("promise-settings-manager")).toBeInTheDocument();
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
+  });
+
+  it("renders stats section when stored", () => {
+    setBackofficeSection("stats");
+    render(<BackofficePage />);
+
+    expect(screen.getByRole("heading", { name: "Statistiques" })).toBeInTheDocument();
+    expect(screen.getByTestId("stats-block")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "stats login" }));
+    expect(setOpenLoginMock).toHaveBeenCalledWith(true);
   });
 
   it("closes the login modal through its close handler", () => {

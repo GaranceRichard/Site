@@ -3,6 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ContactForm from "./ContactForm";
 
+const trackEventMock = vi.fn();
+
+vi.mock("../lib/analytics", () => ({
+  ANALYTICS_EVENTS: {
+    CONTACT_FORM_ATTEMPT: "contact_form_attempt",
+    CONTACT_FORM_SUCCESS: "contact_form_success",
+  },
+  trackEvent: (...args: unknown[]) => trackEventMock(...args),
+}));
+
 describe("ContactForm", () => {
   const originalEnv = process.env;
 
@@ -13,6 +23,7 @@ describe("ContactForm", () => {
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    trackEventMock.mockReset();
     cleanup();
   });
 
@@ -96,6 +107,8 @@ describe("ContactForm", () => {
         method: "POST",
       }),
     );
+    expect(trackEventMock).toHaveBeenCalledWith("contact_form_attempt");
+    expect(trackEventMock).toHaveBeenCalledWith("contact_form_success");
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 

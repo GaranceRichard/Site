@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
+import { ANALYTICS_EVENTS, trackEvent } from "../lib/analytics";
 import { isAccessTokenValid, isBackofficeEnabled } from "../lib/backoffice";
 import { fetchReferencesOnce } from "../lib/references";
 import {
@@ -102,6 +103,11 @@ export default function TopNav({
     setOpen(false);
   }
 
+  function trackNavSection(href: string) {
+    const sectionTarget = href.startsWith("#") ? href.slice(1) : href;
+    trackEvent(ANALYTICS_EVENTS.NAV_CLICK, { section_target: sectionTarget });
+  }
+
   function onBrandClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
 
@@ -158,18 +164,42 @@ export default function TopNav({
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-3 md:flex">
-            <ScrollNav items={navItems} className={NAV_PILL} />
+            <ScrollNav
+              items={navItems}
+              className={NAV_PILL}
+              onItemClick={(item) => trackNavSection(item.href)}
+            />
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
-              <a href={bookingHref} target="_blank" rel="noopener noreferrer" className={NAV_PILL}>
+              <a
+                href={bookingHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                    cta_label: "echanger",
+                    cta_location: "topnav_desktop",
+                  })
+                }
+                className={NAV_PILL}
+              >
                 Échanger
               </a>
 
-              <Link href="/contact" className={NAV_PILL}>
+              <Link
+                href="/contact"
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                    cta_label: "contact",
+                    cta_location: "topnav_desktop",
+                  })
+                }
+                className={NAV_PILL}
+              >
                 Contact
               </Link>
 
@@ -198,19 +228,40 @@ export default function TopNav({
           ].join(" ")}
         >
           <div className="grid gap-2 pt-2">
-            <ScrollNav items={navItems} className={NAV_PILL} onNavigate={closeMenu} />
+            <ScrollNav
+              items={navItems}
+              className={NAV_PILL}
+              onNavigate={closeMenu}
+              onItemClick={(item) => trackNavSection(item.href)}
+            />
 
             <a
               href={bookingHref}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={closeMenu}
+              onClick={() => {
+                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                  cta_label: "echanger",
+                  cta_location: "topnav_mobile",
+                });
+                closeMenu();
+              }}
               className={NAV_PILL}
             >
               Échanger
             </a>
 
-            <Link href="/contact" onClick={() => closeMenu()} className={NAV_PILL}>
+            <Link
+              href="/contact"
+              onClick={() => {
+                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                  cta_label: "contact",
+                  cta_location: "topnav_mobile",
+                });
+                closeMenu();
+              }}
+              className={NAV_PILL}
+            >
               Contact
             </Link>
 

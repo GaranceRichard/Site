@@ -24,6 +24,7 @@ class ConfigUrlsTests(SimpleTestCase):
         self.assertIn("api-health", names)
         self.assertIn("api-health-live", names)
         self.assertIn("api-health-ready", names)
+        self.assertIn("api-stats-summary", names)
 
     @override_settings(ENABLE_JWT=True, DEBUG=False)
     def test_urls_include_jwt_routes_when_enabled(self):

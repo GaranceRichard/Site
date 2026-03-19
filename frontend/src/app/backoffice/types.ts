@@ -17,8 +17,7 @@ export type BackofficeSection =
   | "promise"
   | "references"
   | "header"
-  | "stats"
-  | "settings";
+  | "stats";
 
 export type Reference = {
   id: number;

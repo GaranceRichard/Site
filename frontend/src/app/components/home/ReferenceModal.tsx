@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReferenceItem } from "../../content/references";
+import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import ReferenceModalBackdrop from "./ReferenceModalBackdrop";
 import ReferenceModalBody from "./ReferenceModalBody";
 import ReferenceModalHeader from "./ReferenceModalHeader";
@@ -49,6 +50,16 @@ export default function ReferenceModal({
   );
 
   const requestClose = useCallback(() => beginClose(true), [beginClose]);
+
+  useEffect(() => {
+    if (!item) {
+      return;
+    }
+
+    trackEvent(ANALYTICS_EVENTS.REFERENCE_OPEN, {
+      reference_name: item.nameExpanded,
+    });
+  }, [item]);
 
   useEffect(() => {
     if (!item) {
