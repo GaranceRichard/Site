@@ -6,6 +6,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 2
+    ignore:
+      - dependency-name: Django
+        update-types:
+          - version-update:semver-major
     groups:
       backend-dependencies:
         patterns:
