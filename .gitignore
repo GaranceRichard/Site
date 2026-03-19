@@ -37,6 +37,7 @@ backend/media/
 .ruff_cache/
 .coverage
 .coverage.*
+backend/coverage*.json
 htmlcov/
 frontend/test-results/
 frontend/coverage-e2e/
