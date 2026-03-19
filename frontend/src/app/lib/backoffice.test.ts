@@ -38,6 +38,11 @@ describe("isBackofficeEnabled", () => {
     process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "yes";
     expect(isBackofficeEnabled()).toBe(true);
   });
+
+  it("treats blank values as enabled after trimming", () => {
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "   ";
+    expect(isBackofficeEnabled()).toBe(true);
+  });
 });
 
 describe("isAccessTokenValid", () => {
@@ -88,6 +93,25 @@ describe("isAccessTokenValid", () => {
     const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 60 });
     expect(isAccessTokenValid(token)).toBe(true);
   });
+
+  it("returns true when exp is present but not numeric", () => {
+    const token = buildToken({ exp: "tomorrow" });
+    expect(isAccessTokenValid(token)).toBe(true);
+  });
+
+  it("returns false when payload decoding fails", () => {
+    globalThis.atob = () => {
+      throw new Error("bad base64");
+    };
+
+    expect(isAccessTokenValid("header.payload.signature")).toBe(false);
+  });
+
+  it("returns false when payload json is invalid", () => {
+    globalThis.atob = () => "{not-json";
+
+    expect(isAccessTokenValid("header.payload.signature")).toBe(false);
+  });
 });
 
 describe("resolveApiBaseUrl", () => {
@@ -132,6 +156,14 @@ describe("resolveApiBaseUrl", () => {
 
   it("falls back to local Django on the server when env is missing", () => {
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    // @ts-expect-error test server branch
+    delete globalThis.window;
+
+    expect(resolveApiBaseUrl()).toBe("http://127.0.0.1:8000");
+  });
+
+  it("falls back to local Django on the server when env is blank", () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "   ";
     // @ts-expect-error test server branch
     delete globalThis.window;
 

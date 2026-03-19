@@ -210,6 +210,46 @@ describe("siteSettingsStore", () => {
     expect(result.promise.cards).toEqual(DEFAULT_PROMISE_SETTINGS.cards);
   });
 
+  it("normalizes promise title, subtitle and cards when the payload is partial", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: {
+            title: " ",
+            subtitle: null,
+            cards: [
+              null,
+              { id: "  promise-custom  ", title: " Promise custom ", content: " Body " },
+              { id: "", title: "", content: " Content only " },
+              { id: "", title: " Title only ", content: "" },
+              { id: "", title: " Card 4 ", content: " Body 4 " },
+              { id: "", title: " Card 5 ", content: " Body 5 " },
+              { id: "", title: " Card 6 ", content: " Body 6 " },
+              { id: "", title: " Card 7 ", content: " Body 7 " },
+            ],
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.promise.title).toBe(DEFAULT_PROMISE_SETTINGS.title);
+    expect(result.promise.subtitle).toBe(DEFAULT_PROMISE_SETTINGS.subtitle);
+    expect(result.promise.cards).toEqual([
+      { id: "promise-custom", title: "Promise custom", content: "Body" },
+      { id: "promise-card-2", title: "", content: "Content only" },
+      { id: "promise-card-3", title: "Title only", content: "" },
+      { id: "promise-card-4", title: "Card 4", content: "Body 4" },
+      { id: "promise-card-5", title: "Card 5", content: "Body 5" },
+      { id: "promise-card-6", title: "Card 6", content: "Body 6" },
+    ]);
+  });
+
   it("falls back when cleaned keywords and cards become empty", async () => {
     vi.stubGlobal(
       "fetch",
@@ -601,6 +641,79 @@ describe("siteSettingsStore", () => {
     );
     expect(savedPromise.promise.title).toBe("Promise wrapper");
     expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it("normalizes local setter values and stops notifying after unsubscribe", async () => {
+    const listener = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+        }),
+      }),
+    );
+
+    const unsubscribe = subscribeSiteSettings(listener);
+
+    setHeaderSettings({
+      name: "  Local header  ",
+      title: " ",
+      bookingUrl: "  https://example.com/local  ",
+    });
+    expect(getSiteSettings().header).toEqual({
+      name: "Local header",
+      title: DEFAULT_HEADER_SETTINGS.title,
+      bookingUrl: "https://example.com/local",
+    });
+
+    setHomeHeroSettings({
+      eyebrow: " ",
+      title: "  Hero title  ",
+      subtitle: "",
+      links: [
+        { id: "message", label: "  Me contacter  ", enabled: true },
+        { id: "message", label: "", enabled: false },
+      ],
+      keywords: [" ", "Flow"],
+      cards: [{ id: "", title: " ", content: " Body " }],
+    });
+    expect(getSiteSettings().homeHero).toEqual({
+      eyebrow: DEFAULT_HOME_HERO_SETTINGS.eyebrow,
+      title: "Hero title",
+      subtitle: DEFAULT_HOME_HERO_SETTINGS.subtitle,
+      links: [
+        { id: "message", label: "Message", enabled: false },
+        ...DEFAULT_HOME_HERO_SETTINGS.links.filter((link) => link.id !== "message"),
+      ],
+      keywords: ["Flow"],
+      cards: [{ id: "card-1", title: "", content: "Body" }],
+    });
+
+    setPromiseSettings({
+      title: " ",
+      subtitle: "  Promise subtitle  ",
+      cards: [{ id: "", title: " ", content: " Promise body " }],
+    });
+    expect(getSiteSettings().promise).toEqual({
+      title: DEFAULT_PROMISE_SETTINGS.title,
+      subtitle: "Promise subtitle",
+      cards: [{ id: "promise-card-1", title: "", content: "Promise body" }],
+    });
+
+    unsubscribe();
+    const callsBefore = listener.mock.calls.length;
+
+    setHeaderSettings({
+      name: "No listener anymore",
+      title: "Coach",
+      bookingUrl: "https://example.com/next",
+    });
+
+    expect(listener).toHaveBeenCalledTimes(callsBefore);
   });
 
   it("returns defaults when normalizing a completely invalid site settings object", async () => {

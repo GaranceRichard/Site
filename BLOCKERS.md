@@ -56,3 +56,40 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: reflexe de tooling generique applique a la place des commandes natives du repo.
 - Decision durable: privilegier d'abord les tasks VS Code, scripts `npm run ...` et commandes backend documentees dans le projet; ne pas introduire un runner alternatif par habitude.
 - Verification demandee: avant de lancer des tests, verifier que la commande choisie correspond bien au workflow documente du repo.
+
+## 2026-03-19 - Presence d'une venv backend non utilisee assez tot
+- Contexte: une verification backend a d'abord ete declaree non executable a cause du `python` global.
+- Symptomes: justification erronee du type "pas de python" alors qu'une venv projet etait disponible.
+- Cause racine: verification initiale faite sur le shim Python global Windows Store au lieu de chercher immediatement l'environnement du repo.
+- Decision durable: sur ce repo, toute impossibilite apparente d'executer Python doit d'abord etre re-verifiee contre `backend/.venv`; l'absence de Python global n'est pas un motif valable tant que cette venv existe.
+- Verification demandee: pour tout test backend, utiliser en priorite `backend/.venv/Scripts/python.exe` ou la task/documentation repo equivalente.
+
+## 2026-03-19 - Sous-correctif annonce trop tot comme tache terminee
+- Contexte: le fail backend initial etait corrige, mais un autre check du gate restait rouge cote frontend coverage.
+- Symptomes: formulation trop large laissant entendre que la tache etait finie alors que `npm run test:coverage` echouait encore.
+- Cause racine: confusion entre resolution du probleme initialement observe et validation complete de la demande dans le gate reel.
+- Decision durable: une correction locale ou partielle doit etre annoncee comme telle; les termes "fini", "termine" ou equivalent sont interdits tant que tous les checks pertinents demandes par la tache ne sont pas verts.
+- Verification demandee: avant toute formulation de cloture, verifier explicitement l'etat de tous les checks concernes et annoncer les zones encore rouges si elles existent.
+
+## 2026-03-19 - Regle binaire de statut de travail
+- Contexte: une reponse a introduit un etat intermediaire ambigu entre "fini" et "je continue".
+- Symptomes: confusion sur le fait d'arreter ou de poursuivre le travail.
+- Cause racine: formulation nuancée alors qu'une regle explicite avait ete donnee.
+- Decision durable: sur ce repo, le statut a annoncer est strictement binaire.
+  Soit c'est fini: j'arrete de travailler.
+  Soit ce n'est pas fini: je finis le travail.
+- Verification demandee: ne jamais presenter une troisieme option, un entre-deux, ou une cloture partielle quand cette regle s'applique.
+
+## 2026-03-19 - Interdiction des arrets intempestifs et des statuts passifs
+- Contexte: le travail s'est arrete sans fin de tache ni question bloquante strictement necessaire.
+- Symptomes: besoin pour l'utilisateur de demander "que fais-tu ?" ou de constater "tu ne travailles pas".
+- Cause racine: interruption non justifiee de l'execution au lieu de poursuivre jusqu'au critere de fin ou jusqu'a un vrai blocage informationnel.
+- Decision durable: soit la tache est finie et cela est annonce, soit une information necessaire et bloquante est demandee explicitement, soit le travail continue sans pause passive.
+- Verification demandee: aucun arret, aucune attente, aucun message intermediaire passif ne sont acceptables sans fin de tache ou question strictement necessaire.
+
+## 2026-03-19 - Rupture de confiance liee aux constats "tu ne travailles pas"
+- Contexte: l'utilisateur a indique que devoir constater une inaction non justifiee rompt le pacte de confiance de la collaboration.
+- Symptomes: degradation immediate de la confiance et de la collaboration.
+- Cause racine: manque d'endurance d'execution et absence de signal clair "fini" ou "question bloquante".
+- Decision durable: eviter absolument toute situation ou l'utilisateur doit diagnostiquer lui-meme l'inaction; maintenir un flux d'execution continu jusqu'a la fin ou jusqu'a une question necessaire.
+- Verification demandee: la collaboration ne doit exposer que deux etats visibles: "travail en cours" ou "fini", sauf question bloquante indispensable.

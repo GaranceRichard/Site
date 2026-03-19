@@ -104,7 +104,7 @@ def _build_ga4_client(service_account_key_json: str):
         from google.analytics.data_v1beta import BetaAnalyticsDataClient
         from google.analytics.data_v1beta import types as ga_types
         from google.oauth2 import service_account
-    except ImportError as exc:  # pragma: no cover - depends on environment
+    except (ImportError, KeyError) as exc:  # pragma: no cover - depends on environment
         raise GA4FetchError(
             "Le SDK google-analytics-data n'est pas installe sur le backend."
         ) from exc
