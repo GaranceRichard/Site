@@ -1,6 +1,7 @@
 import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import * as logic from "./logic";
 import { useBackofficeMessages } from "./useBackofficeMessages";
 import type { Msg } from "./types";
 
@@ -116,6 +117,21 @@ describe("useBackofficeMessages", () => {
     });
   });
 
+  it("signale une erreur si le chargement initial demarre sans API base", async () => {
+    sessionStorage.setItem("access_token", "token-a");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi, routerPush } = renderUseBackofficeMessages({ apiBase: undefined });
+
+    await waitFor(() => {
+      expect(getApi().status).toBe("error");
+    });
+    expect(getApi().errorMsg).toBe("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
+    expect(routerPush).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("redirige vers l'accueil quand le backoffice est desactive", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -140,6 +156,63 @@ describe("useBackofficeMessages", () => {
     expect(getApi().visibleItems).toEqual([]);
     expect(getApi().totalCount).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("charge les messages puis expose les actions de tri, recherche et selection", async () => {
+    const firstMessage = createMessage(1);
+    const secondMessage = createMessage(2);
+    sessionStorage.setItem("access_token", "token-a");
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        count: 2,
+        page: 1,
+        limit: 10,
+        results: [firstMessage, secondMessage],
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(2);
+    });
+    expect(getApi().status).toBe("idle");
+    expect(getApi().totalCount).toBe(2);
+    expect(getApi().pageSize).toBe(10);
+    expect(getApi().getSortArrow("created_at")).toBe("↓");
+    expect(getApi().getSortArrow("name")).toBeNull();
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+    expect(getApi().selectedIds.has(1)).toBe(true);
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+    expect(getApi().selectedIds.has(1)).toBe(false);
+
+    act(() => {
+      getApi().setPage(2);
+      getApi().onSearchChange("garance");
+    });
+
+    await waitFor(() => {
+      expect(getApi().query).toBe("garance");
+    });
+    expect(getApi().page).toBe(1);
+
+    act(() => {
+      getApi().changeSort("name");
+    });
+
+    await waitFor(() => {
+      expect(getApi().sortField).toBe("name");
+    });
+    expect(getApi().sortDir).toBe("asc");
+    expect(getApi().getSortArrow("name")).toBe("↑");
   });
 
   it("ouvre la reconnexion et vide les tokens sur erreur d'auth au chargement", async () => {
@@ -215,10 +288,77 @@ describe("useBackofficeMessages", () => {
 
     await act(async () => {
       await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     expect(getApi().openLogin).toBe(true);
     expect(getApi().authMsg).toBe("Connexion requise pour acceder au backoffice.");
+  }, 10000);
+
+  it("ignore deleteSelected quand aucune selection n'est presente", async () => {
+    const items = [createMessage(1), createMessage(2)];
+    sessionStorage.setItem("access_token", "token-a");
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        count: 2,
+        page: 1,
+        limit: 10,
+        results: items,
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(2);
+    });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+    });
+
+    expect(getApi().visibleItems.map((item) => item.id)).toEqual([1, 2]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("demande la reconnexion si sessionStorage.getItem echoue pendant deleteSelected", async () => {
+    const firstMessage = createMessage(1);
+    sessionStorage.setItem("access_token", "token-a");
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        count: 1,
+        page: 1,
+        limit: 10,
+        results: [firstMessage],
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(1);
+    });
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+
+    const getItemSpy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementationOnce(() => {
+        throw new Error("boom");
+      });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+    });
+
+    expect(getApi().openLogin).toBe(true);
+    expect(getApi().authMsg).toBe("Connexion requise pour acceder au backoffice.");
+    getItemSpy.mockRestore();
   });
 
   it("restore les messages et ouvre la reconnexion si la suppression differee retourne 401", async () => {
@@ -270,6 +410,8 @@ describe("useBackofficeMessages", () => {
 
     await act(async () => {
       await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     await waitFor(() => {
@@ -281,6 +423,118 @@ describe("useBackofficeMessages", () => {
     setTimeoutSpy.mockRestore();
     clearTimeoutSpy.mockRestore();
   });
+
+  it("termine la suppression differee puis recharge la page courante quand l'API repond OK", async () => {
+    const firstMessage = createMessage(1);
+    const secondMessage = createMessage(2);
+    sessionStorage.setItem("access_token", "token-a");
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [firstMessage, secondMessage],
+        })
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [secondMessage],
+        })
+      )
+      .mockResolvedValueOnce(createJsonResponse({ deleted: 1 }))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [secondMessage],
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(2);
+    });
+
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout").mockImplementation((handler: TimerHandler) => {
+      queueMicrotask(() => {
+        if (typeof handler === "function") {
+          void handler();
+        }
+      });
+      return 1;
+    });
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout").mockImplementation(() => {});
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(getApi().undoIds).toBeNull();
+    });
+    expect(getApi().status).toBe("idle");
+    expect(getApi().visibleItems.map((item) => item.id)).toEqual([2]);
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
+  });
+
+  it("affiche une erreur si loadWithExcluded echoue hors auth", async () => {
+    const firstMessage = createMessage(1);
+    const secondMessage = createMessage(2);
+    sessionStorage.setItem("access_token", "token-a");
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [firstMessage, secondMessage],
+        })
+      )
+      .mockResolvedValueOnce(createTextResponse("Reload failed", 500));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(2);
+    });
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(getApi().status).toBe("error");
+    });
+    expect(getApi().errorMsg).toBe("Reload failed");
+    expect(getApi().visibleItems.map((item) => item.id)).toEqual([2]);
+    expect(getApi().totalCount).toBe(1);
+  }, 10000);
 
   it("ouvre la reconnexion si loadWithExcluded recoit une reponse auth", async () => {
     const firstMessage = createMessage(1);
@@ -480,18 +734,148 @@ describe("useBackofficeMessages", () => {
     clearTimeoutSpy.mockRestore();
   }, 10000);
 
+  it("n'ajoute rien si restoreRemoved est appele sans elements retires", async () => {
+    const firstMessage = createMessage(1);
+    sessionStorage.setItem("access_token", "token-a");
+
+    const splitSelectedSpy = vi.spyOn(logic, "splitSelected").mockReturnValue({
+      kept: [firstMessage],
+      removed: [],
+      removedIds: [1],
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [firstMessage],
+        })
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 1,
+          page: 1,
+          limit: 10,
+          results: [firstMessage],
+        })
+      )
+      .mockResolvedValueOnce(createJsonResponse({}, 401));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(1);
+    });
+
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout").mockImplementation((handler: TimerHandler) => {
+      queueMicrotask(() => {
+        if (typeof handler === "function") {
+          void handler();
+        }
+      });
+      return 1;
+    });
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout").mockImplementation(() => {});
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(getApi().openLogin).toBe(true);
+    });
+    expect(getApi().undoIds).toBeNull();
+    splitSelectedSpy.mockRestore();
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
+  });
+
   it("n'effectue rien quand undoDelete est appele sans undo en cours", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const { getApi } = renderUseBackofficeMessages({ backofficeEnabled: false });
 
-    await act(async () => {
+    act(() => {
       getApi().undoDelete();
     });
 
     expect(getApi().undoIds).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
-  });
+  }, 10000);
+
+  it("annule la suppression differee puis recharge la page courante", async () => {
+    const firstMessage = createMessage(1);
+    const secondMessage = createMessage(2);
+    sessionStorage.setItem("access_token", "token-a");
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [firstMessage, secondMessage],
+        })
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [secondMessage],
+        })
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          count: 2,
+          page: 1,
+          limit: 10,
+          results: [firstMessage, secondMessage],
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getApi } = renderUseBackofficeMessages();
+
+    await waitFor(() => {
+      expect(getApi().visibleItems).toHaveLength(2);
+    });
+
+    act(() => {
+      getApi().toggleSelected(1);
+    });
+
+    await act(async () => {
+      await getApi().deleteSelected();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(getApi().undoIds).toEqual([1]);
+    });
+    expect(getApi().visibleItems.map((item) => item.id)).toEqual([2]);
+
+    act(() => {
+      getApi().undoDelete();
+    });
+
+    await waitFor(() => {
+      expect(getApi().undoIds).toBeNull();
+    });
+    expect(getApi().visibleItems.map((item) => item.id)).toEqual([1, 2]);
+  }, 10000);
 
   it("redirige vers l'accueil si sessionStorage.getItem echoue pendant loadWithExcluded", async () => {
     const items = [createMessage(1), createMessage(2)];

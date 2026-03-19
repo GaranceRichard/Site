@@ -15,6 +15,16 @@ function hasCoverageTmpError(output) {
   return output.includes("coverage\\.tmp") || output.includes("coverage/.tmp");
 }
 
+function hasTransientStartupError(output) {
+  return (
+    output.includes("failed to load config from") ||
+    output.includes("Startup Error") ||
+    output.includes("Error: spawn EPERM") ||
+    output.includes("The service was stopped") ||
+    output.includes("The system cannot find the file specified")
+  );
+}
+
 function testsPassed(output) {
   return (
     /Test Files\s+\d+\s+passed/.test(output) &&
@@ -75,24 +85,44 @@ function stripCoverageTmpUnhandledRejection(output) {
   return filtered.join("\n").trim();
 }
 
-rmSync(coverageDir, { recursive: true, force: true });
+function runVitest() {
+  rmSync(coverageDir, { recursive: true, force: true });
 
-const result = spawnSync(process.execPath, vitestArgs, {
-  cwd: process.cwd(),
-  stdio: "pipe",
-  env: { ...process.env, FORCE_COLOR: process.env.FORCE_COLOR || "1" },
-  encoding: "utf-8",
-});
+  return spawnSync(process.execPath, vitestArgs, {
+    cwd: process.cwd(),
+    stdio: "pipe",
+    env: { ...process.env, FORCE_COLOR: process.env.FORCE_COLOR || "1" },
+    encoding: "utf-8",
+  });
+}
+
+let result = runVitest();
 
 if (result.error) {
   console.error(result.error.message);
   process.exit(1);
 }
 
-const stdout = result.stdout || "";
-const stderr = result.stderr || "";
-const output = `${stdout}\n${stderr}`;
-const normalizedOutput = stripAnsi(output);
+let stdout = result.stdout || "";
+let stderr = result.stderr || "";
+let output = `${stdout}\n${stderr}`;
+let normalizedOutput = stripAnsi(output);
+
+if ((result.status ?? 1) !== 0 && hasTransientStartupError(normalizedOutput)) {
+  console.warn("Vitest coverage startup failed once, retrying...");
+  result = runVitest();
+
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
+
+  stdout = result.stdout || "";
+  stderr = result.stderr || "";
+  output = `${stdout}\n${stderr}`;
+  normalizedOutput = stripAnsi(output);
+}
+
 const knownCoverageTmpFailure =
   hasCoverageTmpError(normalizedOutput) &&
   hasPassingTests(normalizedOutput) &&

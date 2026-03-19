@@ -16,7 +16,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reportsDirectory: "coverage",
-      reporter: ["text", "lcov"],
+      reporter: [["text", { maxCols: 160 }], "lcov"],
       all: true,
       include: [
         "src/app/backoffice/**/*.{ts,tsx}",

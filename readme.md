@@ -512,3 +512,9 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - `curl -fsS https://<domaine>/api/health/ready`
 - `curl -fsS https://<domaine>/`
 - Verifier baisse des erreurs Sentry + retour des metriques a la normale (latence/5xx).
+
+## Notes de maintenance recentes
+- Le backend expose maintenant des `SiteSettings` publics/admin pour piloter le header et le hero de la page d'accueil.
+- La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
+- `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
+- Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.

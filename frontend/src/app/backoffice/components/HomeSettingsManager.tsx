@@ -4,12 +4,12 @@ import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import {
   getHomeHeroSettings,
   getHomeHeroSettingsServer,
-  setHomeHeroSettings,
   subscribeHomeHeroSettings,
   type HeroCard,
   type HeroSectionLink,
   type HomeHeroSettings,
 } from "../../content/homeHeroSettings";
+import { saveHomeHeroSettings } from "../../content/siteSettingsStore";
 
 export function moveItem<T>(items: T[], from: number, to: number): T[] {
   if (to < 0 || to >= items.length || from === to) {
@@ -55,6 +55,7 @@ export default function HomeSettingsManager() {
   const [form, setForm] = useState<HomeHeroSettings>(persisted);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setForm(persisted);
@@ -76,7 +77,7 @@ export default function HomeSettingsManager() {
     });
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
     setError(null);
@@ -91,8 +92,27 @@ export default function HomeSettingsManager() {
       return;
     }
 
-    setHomeHeroSettings(normalized);
-    setMessage("Accueil mis a jour.");
+    let token: string | null = null;
+    try {
+      token = sessionStorage.getItem("access_token");
+    } catch {
+      token = null;
+    }
+
+    if (!token) {
+      setError("Connexion requise pour enregistrer ces changements.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveHomeHeroSettings(normalized, token);
+      setMessage("Accueil mis a jour.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible d'enregistrer l'accueil.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -148,9 +168,10 @@ export default function HomeSettingsManager() {
               </div>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white"
               >
-                Enregistrer
+                {isSaving ? "Enregistrement..." : "Enregistrer"}
               </button>
             </div>
 

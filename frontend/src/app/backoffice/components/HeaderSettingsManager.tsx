@@ -5,10 +5,10 @@ import {
   DEFAULT_HEADER_SETTINGS,
   getHeaderSettings,
   getHeaderSettingsServer,
-  setHeaderSettings,
   subscribeHeaderSettings,
   type HeaderSettings,
 } from "../../content/headerSettings";
+import { saveHeaderSettings } from "../../content/siteSettingsStore";
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -28,12 +28,13 @@ export default function HeaderSettingsManager() {
   const [form, setForm] = useState<HeaderSettings>(persisted);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setForm(persisted);
   }, [persisted]);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
     setError(null);
@@ -52,14 +53,54 @@ export default function HeaderSettingsManager() {
       return;
     }
 
-    setHeaderSettings({ name, title, bookingUrl });
-    setMessage("Header mis a jour.");
+    let token: string | null = null;
+    try {
+      token = sessionStorage.getItem("access_token");
+    } catch {
+      token = null;
+    }
+
+    if (!token) {
+      setError("Connexion requise pour enregistrer ces changements.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveHeaderSettings({ name, title, bookingUrl }, token);
+      setMessage("Header mis a jour.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible d'enregistrer le header.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function onResetDefaults() {
-    setHeaderSettings(DEFAULT_HEADER_SETTINGS);
-    setMessage("Valeurs par defaut restaurees.");
+  async function onResetDefaults() {
+    setMessage(null);
     setError(null);
+
+    let token: string | null = null;
+    try {
+      token = sessionStorage.getItem("access_token");
+    } catch {
+      token = null;
+    }
+
+    if (!token) {
+      setError("Connexion requise pour enregistrer ces changements.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveHeaderSettings(DEFAULT_HEADER_SETTINGS, token);
+      setMessage("Valeurs par defaut restaurees.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible de reinitialiser le header.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -124,13 +165,15 @@ export default function HeaderSettingsManager() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="submit"
+              disabled={isSaving}
               className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white"
             >
-              Enregistrer
+              {isSaving ? "Enregistrement..." : "Enregistrer"}
             </button>
             <button
               type="button"
               onClick={onResetDefaults}
+              disabled={isSaving}
               className="rounded-lg border border-neutral-200 px-4 py-2 text-xs font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800"
             >
               Reinitialiser

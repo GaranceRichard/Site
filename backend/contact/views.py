@@ -9,19 +9,28 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 
 from .image_upload import MAX_UPLOAD_BYTES, get_upload_strategy
 from .models import ContactMessage, Reference
+from .models import SiteSettings
 from .pagination import ContactMessagePagination
 from .reference_cache import (
     REFERENCE_CACHE_TTL_SECONDS,
     bump_public_references_cache_version,
     get_public_references_cache_key,
 )
+from .site_settings_cache import (
+    SITE_SETTINGS_CACHE_TTL_SECONDS,
+    bump_public_site_settings_cache_version,
+    get_public_site_settings_cache_key,
+)
 from .serializers import (
     ContactMessageDeleteSerializer,
     ContactMessageSerializer,
     DeleteCountSerializer,
+    HeaderSettingsSerializer,
     ImageUploadResponseSerializer,
+    HomeHeroSettingsSerializer,
     ReferenceImageUploadSerializer,
     ReferenceSerializer,
+    SiteSettingsSerializer,
 )
 from .throttles import ContactAnonRateThrottle
 
@@ -197,3 +206,40 @@ class ReferenceImageUploadAdminView(APIView):
             request=request,
         )
         return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class SiteSettingsPublicView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(responses=SiteSettingsSerializer)
+    def get(self, request):
+        cache_key = get_public_site_settings_cache_key()
+        cached_payload = cache.get(cache_key)
+        if cached_payload is not None:
+            return Response(cached_payload, status=status.HTTP_200_OK)
+
+        payload = SiteSettingsSerializer(SiteSettings.get_solo()).data
+        cache.set(cache_key, payload, SITE_SETTINGS_CACHE_TTL_SECONDS)
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+class SiteSettingsAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    @extend_schema(
+        request=inline_serializer(
+            name="SiteSettingsUpdateRequest",
+            fields={
+                "header": HeaderSettingsSerializer(),
+                "homeHero": HomeHeroSettingsSerializer(),
+            },
+        ),
+        responses={200: SiteSettingsSerializer},
+    )
+    def put(self, request):
+        instance = SiteSettings.get_solo()
+        serializer = SiteSettingsSerializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        bump_public_site_settings_cache_version()
+        return Response(serializer.data, status=status.HTTP_200_OK)

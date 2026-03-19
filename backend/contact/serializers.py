@@ -4,7 +4,11 @@ from django.core.files.storage import default_storage
 from django.db import models
 
 from .media_cleanup import media_relative_path
-from .models import ContactMessage, Reference
+from .models import ContactMessage, Reference, SiteSettings
+from .site_settings_defaults import (
+    DEFAULT_HEADER_SETTINGS,
+    DEFAULT_HOME_HERO_SETTINGS,
+)
 
 
 class MediaPathField(serializers.ImageField):
@@ -135,3 +139,81 @@ class ReferenceImageUploadSerializer(serializers.Serializer):
 class ImageUploadResponseSerializer(serializers.Serializer):
     url = serializers.URLField()
     thumbnail_url = serializers.URLField()
+
+
+class HeaderSettingsSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=160, trim_whitespace=True)
+    title = serializers.CharField(max_length=160, trim_whitespace=True)
+    bookingUrl = serializers.URLField(max_length=500)
+
+    def validate_name(self, value: str) -> str:
+        return value.strip() or DEFAULT_HEADER_SETTINGS["name"]
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_HEADER_SETTINGS["title"]
+
+    def validate_bookingUrl(self, value: str) -> str:
+        return value.strip() or DEFAULT_HEADER_SETTINGS["bookingUrl"]
+
+
+class HeroSectionLinkSerializer(serializers.Serializer):
+    id = serializers.ChoiceField(
+        choices=["promise", "about", "services", "method", "references", "message"]
+    )
+    label = serializers.CharField(max_length=120, trim_whitespace=True)
+    enabled = serializers.BooleanField()
+
+
+class HeroCardSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=60, trim_whitespace=True)
+    title = serializers.CharField(max_length=160, trim_whitespace=True)
+    content = serializers.CharField(trim_whitespace=True)
+
+
+class HomeHeroSettingsSerializer(serializers.Serializer):
+    eyebrow = serializers.CharField(max_length=240, trim_whitespace=True)
+    title = serializers.CharField(trim_whitespace=True)
+    subtitle = serializers.CharField(trim_whitespace=True)
+    links = HeroSectionLinkSerializer(many=True)
+    keywords = serializers.ListField(child=serializers.CharField(trim_whitespace=True))
+    cards = HeroCardSerializer(many=True)
+
+    def validate_links(self, value):
+        if not value:
+            return DEFAULT_HOME_HERO_SETTINGS["links"]
+        return value
+
+    def validate_keywords(self, value):
+        keywords = [item.strip() for item in value if isinstance(item, str) and item.strip()][:5]
+        if not keywords:
+            raise serializers.ValidationError("At least one keyword is required.")
+        return keywords
+
+    def validate_cards(self, value):
+        cards = [
+            {
+                "id": item["id"].strip(),
+                "title": item["title"].strip(),
+                "content": item["content"].strip(),
+            }
+            for item in value
+            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
+        ][:4]
+        if not cards:
+            return DEFAULT_HOME_HERO_SETTINGS["cards"]
+        return cards
+
+
+class SiteSettingsSerializer(serializers.ModelSerializer):
+    header = HeaderSettingsSerializer()
+    homeHero = HomeHeroSettingsSerializer(source="home_hero")
+
+    class Meta:
+        model = SiteSettings
+        fields = ["header", "homeHero", "updated_at"]
+
+    def update(self, instance, validated_data):
+        instance.header = validated_data["header"]
+        instance.home_hero = validated_data["home_hero"]
+        instance.save()
+        return instance

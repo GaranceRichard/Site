@@ -45,6 +45,12 @@ npm run build
 - `Tests` : lance `Test coverage Backend`, `Test integration`, `Test coverage frontend`, `Test coverage e2e`, `Vitals compliance`, `npm lint` et `npm build`.
 - `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.ts`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
 
+## Notes recentes
+
+- `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, tolere le faux echec `coverage/.tmp` sous Windows et retente une fois si Vitest/Vite/esbuild echoue au demarrage.
+- Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
+- Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
+
 ## Audit de performance local
 
 Le kit local repose sur Lighthouse CI.
