@@ -415,6 +415,9 @@ Ne pas committer :
 - HTTPS en frontal
 
 ## Standards d'ingenierie (DoD)
+- Gate de finalisation obligatoire : `GATE.md`
+- Journal des blocages projet : `BLOCKERS.md`
+- Discipline d'execution : `docs/engineering-lifecycle-gate.md`
 - Definition of Done stricte : `docs/Definition-of-Done.md`
 - Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
 - Controle backend vital par fichier : `backend/scripts/check_vitals_coverage.py`

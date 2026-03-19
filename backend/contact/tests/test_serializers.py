@@ -1,5 +1,8 @@
-import tempfile
+from contextlib import contextmanager
 from io import BytesIO
+from pathlib import Path
+import shutil
+import uuid
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -17,6 +20,19 @@ from contact.serializers import (
     MediaPathField,
     ReferenceSerializer,
 )
+
+TEST_TMP_ROOT = Path(__file__).resolve().parents[2] / ".tmp-test-media"
+TEST_TMP_ROOT.mkdir(exist_ok=True)
+
+
+@contextmanager
+def workspace_tempdir():
+    tempdir = TEST_TMP_ROOT / f"case-{uuid.uuid4().hex}"
+    tempdir.mkdir(parents=True, exist_ok=False)
+    try:
+        yield str(tempdir)
+    finally:
+        shutil.rmtree(tempdir, ignore_errors=True)
 
 
 class ContactMessageSerializerTests(TestCase):
@@ -102,7 +118,7 @@ class ReferenceSerializerTests(TestCase):
 
     @override_settings(MEDIA_URL="/media/")
     def test_update_image_deletes_old_image_and_thumbnail(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 old_image = default_storage.save(
                     "references/old.webp", ContentFile(b"old-image")
@@ -138,7 +154,7 @@ class ReferenceSerializerTests(TestCase):
 
     @override_settings(MEDIA_URL="/media/")
     def test_update_same_image_keeps_existing_files(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 old_image = default_storage.save(
                     "references/same.webp", ContentFile(b"same-image")
@@ -257,7 +273,7 @@ class ReferenceSerializerTests(TestCase):
 
     @override_settings(MEDIA_URL="/media/")
     def test_update_deletes_old_thumbnail_and_icon(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 image_path = default_storage.save(
                     "references/base.webp", ContentFile(b"base")

@@ -9,15 +9,17 @@ export default function ScrollNav({
   items,
   className,
   onNavigate,
+  onItemClick,
 }: {
   items: NavItem[];
   className: string;
   onNavigate?: () => void;
+  onItemClick?: (item: NavItem) => void;
 }) {
-  function onClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
+  function onClick(e: MouseEvent<HTMLAnchorElement>, item: NavItem) {
     e.preventDefault();
 
-    const id = href.startsWith("#") ?href.slice(1) : href;
+    const id = item.href.startsWith("#") ? item.href.slice(1) : item.href;
     const el = document.getElementById(id);
     if (!el) return;
 
@@ -29,6 +31,7 @@ export default function ScrollNav({
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
 
+    onItemClick?.(item);
     onNavigate?.();
   }
 
@@ -38,7 +41,7 @@ export default function ScrollNav({
         <a
           key={item.href}
           href={item.href}
-          onClick={(e) => onClick(e, item.href)}
+          onClick={(e) => onClick(e, item)}
           className={className}
         >
           {item.label}

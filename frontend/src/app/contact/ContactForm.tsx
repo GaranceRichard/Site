@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { ANALYTICS_EVENTS, trackEvent } from "../lib/analytics";
 import { resolveApiBaseUrl } from "../lib/backoffice";
 
 type FormState = {
@@ -52,6 +53,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     setStatus("sending");
+    trackEvent(ANALYTICS_EVENTS.CONTACT_FORM_ATTEMPT);
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
       abortController.abort();
@@ -84,6 +86,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       setStatus("success");
+      trackEvent(ANALYTICS_EVENTS.CONTACT_FORM_SUCCESS);
       setForm((f) => ({
         ...f,
         name: "",

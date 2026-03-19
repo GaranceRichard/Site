@@ -14,6 +14,7 @@ import MessagesTable from "./components/MessagesTable";
 import PromiseSettingsManager from "./components/PromiseSettingsManager";
 import ReferencesManager from "./components/ReferencesManager";
 import Sidebar from "./components/Sidebar";
+import StatsBlock from "./components/StatsBlock";
 import StatusBlocks from "./components/StatusBlocks";
 import UndoToast from "./components/UndoToast";
 import { useBackofficeMessages } from "./useBackofficeMessages";
@@ -50,6 +51,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Positionnement",
       subtitle: "Edition des titres et des encarts de la section positionnement.",
+    };
+  }
+
+  if (section === "stats") {
+    return {
+      title: "Statistiques",
+      subtitle: "Synthese trafic GA4 et sante systeme du site.",
     };
   }
 
@@ -183,6 +191,9 @@ export default function BackofficePage() {
           {section === "header" ? <HeaderSettingsManager /> : null}
           {section === "home" ? <HomeSettingsManager /> : null}
           {section === "promise" ? <PromiseSettingsManager /> : null}
+          {section === "stats" ? (
+            <StatsBlock apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
+          ) : null}
         </section>
       </div>
 

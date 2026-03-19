@@ -465,6 +465,13 @@ SPECTACULAR_SETTINGS = {
 
 
 # -------------------------------------------------
+# Optional Google Analytics 4
+# -------------------------------------------------
+GA4_PROPERTY_ID = os.getenv("GA4_PROPERTY_ID", "").strip()
+GA4_SERVICE_ACCOUNT_KEY_JSON = os.getenv("GA4_SERVICE_ACCOUNT_KEY_JSON", "").strip()
+
+
+# -------------------------------------------------
 # Hardening production
 # -------------------------------------------------
 if IS_PROD:

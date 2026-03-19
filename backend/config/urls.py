@@ -5,7 +5,11 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 
 from config.views import HealthLiveView, HealthReadyView, HealthView
-from contact.views import SiteSettingsAdminView, SiteSettingsPublicView
+from contact.views import (
+    SiteSettingsAdminView,
+    SiteSettingsPublicView,
+    StatsSummaryAdminView,
+)
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -24,6 +28,11 @@ urlpatterns = [
         r"^api/settings/admin/?$",
         SiteSettingsAdminView.as_view(),
         name="site-settings-admin",
+    ),
+    re_path(
+        r"^api/stats/summary/?$",
+        StatsSummaryAdminView.as_view(),
+        name="api-stats-summary",
     ),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(

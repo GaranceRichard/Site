@@ -1,5 +1,8 @@
-import tempfile
+from contextlib import contextmanager
 from io import StringIO
+from pathlib import Path
+import shutil
+import uuid
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -9,11 +12,24 @@ from rest_framework.test import APITestCase
 
 from contact.models import Reference
 
+TEST_TMP_ROOT = Path(__file__).resolve().parents[2] / ".tmp-test-media"
+TEST_TMP_ROOT.mkdir(exist_ok=True)
+
+
+@contextmanager
+def workspace_tempdir():
+    tempdir = TEST_TMP_ROOT / f"case-{uuid.uuid4().hex}"
+    tempdir.mkdir(parents=True, exist_ok=False)
+    try:
+        yield str(tempdir)
+    finally:
+        shutil.rmtree(tempdir, ignore_errors=True)
+
 
 class ReferenceMediaCleanupTests(APITestCase):
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_removes_media_files(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 image_path = default_storage.save(
                     "references/test-image.webp", ContentFile(b"image")
@@ -68,7 +84,7 @@ class MediaCleanupUnitTests(APITestCase):
     def test_cleanup_orphan_reference_media_handles_missing_dir(self):
         from contact.media_cleanup import cleanup_orphan_reference_media
 
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 self.assertEqual(cleanup_orphan_reference_media(), 0)
 
@@ -76,7 +92,7 @@ class MediaCleanupUnitTests(APITestCase):
     def test_cleanup_orphan_reference_media_removes_unused(self):
         from contact.media_cleanup import cleanup_orphan_reference_media
 
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")
@@ -112,7 +128,7 @@ class MediaCleanupUnitTests(APITestCase):
 
     @override_settings(MEDIA_URL="/media/")
     def test_cleanup_reference_media_command(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")
@@ -130,7 +146,7 @@ class MediaCleanupUnitTests(APITestCase):
 
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_cleans_orphaned_media(self):
-        with tempfile.TemporaryDirectory() as tempdir:
+        with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 orphan_path = default_storage.save(
                     "references/orphan.webp", ContentFile(b"orphan")

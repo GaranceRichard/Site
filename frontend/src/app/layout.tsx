@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import AnalyticsInit from "./components/AnalyticsInit";
 import FlashToast from "./components/FlashToast";
 import SentryInit from "./components/SentryInit";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <SentryInit />
+        <AnalyticsInit />
         <Script
           id="theme-init"
           strategy="beforeInteractive"

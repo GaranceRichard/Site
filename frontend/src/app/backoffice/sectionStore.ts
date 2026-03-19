@@ -10,8 +10,7 @@ function normalizeSection(value: string | null): BackofficeSection {
     value === "promise" ||
     value === "references" ||
     value === "header" ||
-    value === "stats" ||
-    value === "settings"
+    value === "stats"
   ) {
     return value;
   }

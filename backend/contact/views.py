@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 
+from .ga4 import GA4FetchError, fetch_ga4_summary, is_ga4_configured
 from .image_upload import MAX_UPLOAD_BYTES, get_upload_strategy
 from .models import ContactMessage, Reference
 from .models import SiteSettings
@@ -20,6 +21,12 @@ from .site_settings_cache import (
     SITE_SETTINGS_CACHE_TTL_SECONDS,
     bump_public_site_settings_cache_version,
     get_public_site_settings_cache_key,
+)
+from .stats_cache import (
+    STATS_SUMMARY_CACHE_TTL_SECONDS,
+    STATS_SUMMARY_LAST_SUCCESS_TTL_SECONDS,
+    get_stats_summary_cache_key,
+    get_stats_summary_last_success_cache_key,
 )
 from .serializers import (
     ContactMessageDeleteSerializer,
@@ -245,3 +252,67 @@ class SiteSettingsAdminView(APIView):
         serializer.save()
         bump_public_site_settings_cache_version()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StatsSummaryAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name="StatsSummaryResponse",
+                fields={
+                    "configured": serializers.BooleanField(),
+                    "stale": serializers.BooleanField(required=False),
+                    "warning": serializers.CharField(required=False),
+                    "cachedAt": serializers.CharField(required=False),
+                    "data": serializers.JSONField(required=False),
+                },
+            )
+        }
+    )
+    def get(self, request):
+        fresh_cache_key = get_stats_summary_cache_key()
+        stale_cache_key = get_stats_summary_last_success_cache_key()
+
+        cached_payload = cache.get(fresh_cache_key)
+        if cached_payload is not None:
+            return Response(cached_payload, status=status.HTTP_200_OK)
+
+        if not is_ga4_configured():
+            return Response({"configured": False}, status=status.HTTP_200_OK)
+
+        try:
+            payload = {
+                "configured": True,
+                "stale": False,
+                **fetch_ga4_summary(),
+            }
+        except GA4FetchError as exc:
+            stale_payload = cache.get(stale_cache_key)
+            if stale_payload is not None:
+                return Response(
+                    {
+                        **stale_payload,
+                        "stale": True,
+                        "warning": str(exc),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            return Response(
+                {
+                    "configured": True,
+                    "stale": True,
+                    "warning": str(exc),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        cache.set(fresh_cache_key, payload, STATS_SUMMARY_CACHE_TTL_SECONDS)
+        cache.set(
+            stale_cache_key,
+            payload,
+            STATS_SUMMARY_LAST_SUCCESS_TTL_SECONDS,
+        )
+        return Response(payload, status=status.HTTP_200_OK)

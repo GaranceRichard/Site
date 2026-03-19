@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import ScrollTo from "../ScrollTo";
+import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import { Container } from "./ui";
 import AuthLoginButton from "../auth/LoginButton";
 import {
@@ -39,6 +40,12 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
               href={bookingHref}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                  cta_label: "echanger",
+                  cta_location: "footer",
+                })
+              }
               className="hover:text-neutral-900 dark:hover:text-neutral-50"
             >
               Échanger
@@ -46,6 +53,12 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
 
             <Link
               href="/contact"
+              onClick={() =>
+                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                  cta_label: "contact",
+                  cta_location: "footer",
+                })
+              }
               className="hover:text-neutral-900 dark:hover:text-neutral-50"
             >
               Contact

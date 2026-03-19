@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import { fetchReferencesOnce } from "../../lib/references";
 import {
   getHomeHeroSettings,
@@ -99,6 +100,12 @@ export default function HeroSection() {
                   <a
                     key={link.id}
                     href={link.id === "message" ? "/contact" : `#${link.id}`}
+                    onClick={() =>
+                      trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                        cta_label: link.label,
+                        cta_location: "hero",
+                      })
+                    }
                     className={
                       index === 0
                         ? "rounded-xl border border-neutral-200 bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-800 dark:border-neutral-800"

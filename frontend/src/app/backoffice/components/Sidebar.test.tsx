@@ -32,6 +32,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Accueil" }));
     fireEvent.click(screen.getByRole("button", { name: "Positionnement" }));
     fireEvent.click(screen.getByRole("button", { name: "References" }));
+    fireEvent.click(screen.getByRole("button", { name: "Statistiques" }));
     fireEvent.click(screen.getByRole("button", { name: "Header" }));
     fireEvent.click(screen.getByRole("button", { name: "Retour au site" }));
     fireEvent.click(screen.getByRole("button", { name: "Rafraîchir" }));
@@ -41,6 +42,7 @@ describe("Sidebar", () => {
     expect(onSelectSection).toHaveBeenCalledWith("home");
     expect(onSelectSection).toHaveBeenCalledWith("promise");
     expect(onSelectSection).toHaveBeenCalledWith("references");
+    expect(onSelectSection).toHaveBeenCalledWith("stats");
     expect(onSelectSection).toHaveBeenCalledWith("header");
     expect(onGoHome).toHaveBeenCalled();
     expect(onRefresh).toHaveBeenCalled();
@@ -73,8 +75,7 @@ describe("Sidebar", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: "Header" });
-    expect(button.className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Header" }).className).toContain("bg-neutral-900 text-white");
   });
 
   it("affiche le style actif pour Accueil", () => {
@@ -88,8 +89,7 @@ describe("Sidebar", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: "Accueil" });
-    expect(button.className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Accueil" }).className).toContain("bg-neutral-900 text-white");
   });
 
   it("affiche le style actif pour Positionnement", () => {
@@ -103,8 +103,7 @@ describe("Sidebar", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: "Positionnement" });
-    expect(button.className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Positionnement" }).className).toContain("bg-neutral-900 text-white");
   });
 
   it("affiche le style actif pour References", () => {
@@ -118,7 +117,20 @@ describe("Sidebar", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: "References" });
-    expect(button.className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "References" }).className).toContain("bg-neutral-900 text-white");
+  });
+
+  it("affiche le style actif pour Statistiques", () => {
+    render(
+      <Sidebar
+        section="stats"
+        onSelectSection={vi.fn()}
+        onGoHome={vi.fn()}
+        onRefresh={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Statistiques" }).className).toContain("bg-neutral-900 text-white");
   });
 });

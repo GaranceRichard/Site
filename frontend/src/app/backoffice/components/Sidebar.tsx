@@ -12,6 +12,16 @@ type SidebarProps = {
   onLogout: () => void;
 };
 
+function getSectionButtonClass(isActive: boolean): string {
+  return [
+    "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
+    isActive
+      ? "bg-neutral-900 text-white"
+      : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+    "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
+  ].join(" ");
+}
+
 export default function Sidebar({
   section,
   onSelectSection,
@@ -50,83 +60,47 @@ export default function Sidebar({
         <button
           type="button"
           onClick={() => onSelectSection("messages")}
-          className={[
-            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-            section === "messages"
-              ? "bg-neutral-900 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-          ].join(" ")}
+          className={getSectionButtonClass(section === "messages")}
         >
           Messages contact
         </button>
       </div>
+
       <div className="mt-4 space-y-2">
         <button
           type="button"
           onClick={() => onSelectSection("header")}
-          className={[
-            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-            section === "header"
-              ? "bg-neutral-900 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-          ].join(" ")}
+          className={getSectionButtonClass(section === "header")}
         >
           Header
         </button>
         <button
           type="button"
           onClick={() => onSelectSection("home")}
-          className={[
-            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-            section === "home"
-              ? "bg-neutral-900 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-          ].join(" ")}
+          className={getSectionButtonClass(section === "home")}
         >
           Accueil
         </button>
         <button
           type="button"
           onClick={() => onSelectSection("promise")}
-          className={[
-            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-            section === "promise"
-              ? "bg-neutral-900 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-          ].join(" ")}
+          className={getSectionButtonClass(section === "promise")}
         >
           Positionnement
         </button>
         <button
           type="button"
           onClick={() => onSelectSection("references")}
-          className={[
-            "w-full rounded-xl px-3 py-2 text-left text-sm font-semibold",
-            section === "references"
-              ? "bg-neutral-900 text-white"
-              : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-            "dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900",
-          ].join(" ")}
+          className={getSectionButtonClass(section === "references")}
         >
           References
         </button>
         <button
           type="button"
-          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
-          disabled
+          onClick={() => onSelectSection("stats")}
+          className={getSectionButtonClass(section === "stats")}
         >
-          Statistiques (bientôt)
-        </button>
-        <button
-          type="button"
-          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold text-neutral-400"
-          disabled
-        >
-          Réglages (bientôt)
+          Statistiques
         </button>
       </div>
 
@@ -134,26 +108,25 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onGoHome}
-          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                     dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
         >
           Retour au site
         </button>
         <button
           type="button"
           onClick={onRefresh}
-          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                     dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+          aria-label="Rafraîchir"
+          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
         >
-          Rafraîchir
+          Rafraichir
         </button>
         <button
           type="button"
           onClick={onLogout}
-          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50
-                     dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+          aria-label="Se déconnecter"
+          className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
         >
-          Se déconnecter
+          Se deconnecter
         </button>
       </div>
     </aside>

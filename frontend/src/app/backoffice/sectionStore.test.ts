@@ -55,7 +55,7 @@ describe("sectionStore", () => {
       throw new Error("boom");
     });
 
-    expect(() => setBackofficeSection("settings")).not.toThrow();
+    expect(() => setBackofficeSection("stats")).not.toThrow();
     expect(listener).toHaveBeenCalledTimes(1);
 
     unsubscribe();
