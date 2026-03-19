@@ -3,7 +3,9 @@ from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
 
 from .models import Reference
-from .media_cleanup import cleanup_orphan_reference_media as cleanup_orphan_reference_media_files
+from .media_cleanup import (
+    cleanup_orphan_reference_media as cleanup_orphan_reference_media_files,
+)
 from .media_cleanup import media_relative_path
 
 

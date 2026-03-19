@@ -1,11 +1,10 @@
 from django.db import models
 
 from .site_settings_defaults import (
-    DEFAULT_HEADER_SETTINGS,
-    DEFAULT_HOME_HERO_SETTINGS,
     default_header_settings,
     default_home_hero_settings,
 )
+
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=120)
@@ -25,7 +24,9 @@ class Reference(models.Model):
     reference_short = models.CharField(max_length=120, blank=True, default="")
     order_index = models.IntegerField(default=0, db_index=True)
     image = models.ImageField(upload_to="references/", max_length=500)
-    image_thumb = models.ImageField(upload_to="references/thumbs/", max_length=500, blank=True, null=True)
+    image_thumb = models.ImageField(
+        upload_to="references/thumbs/", max_length=500, blank=True, null=True
+    )
     icon = models.URLField(max_length=500, blank=True)
     situation = models.TextField(blank=True, default="")
     tasks = models.JSONField(default=list, blank=True)

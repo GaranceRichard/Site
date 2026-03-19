@@ -12,7 +12,11 @@ from rest_framework.test import APIRequestFactory
 from PIL import Image
 
 from contact.models import Reference
-from contact.serializers import ContactMessageSerializer, MediaPathField, ReferenceSerializer
+from contact.serializers import (
+    ContactMessageSerializer,
+    MediaPathField,
+    ReferenceSerializer,
+)
 
 
 class ContactMessageSerializerTests(TestCase):
@@ -100,8 +104,12 @@ class ReferenceSerializerTests(TestCase):
     def test_update_image_deletes_old_image_and_thumbnail(self):
         with tempfile.TemporaryDirectory() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
-                old_image = default_storage.save("references/old.webp", ContentFile(b"old-image"))
-                old_thumb = default_storage.save("references/thumbs/old.webp", ContentFile(b"old-thumb"))
+                old_image = default_storage.save(
+                    "references/old.webp", ContentFile(b"old-image")
+                )
+                old_thumb = default_storage.save(
+                    "references/thumbs/old.webp", ContentFile(b"old-thumb")
+                )
 
                 ref = Reference.objects.create(
                     reference="Ref update",
@@ -132,8 +140,12 @@ class ReferenceSerializerTests(TestCase):
     def test_update_same_image_keeps_existing_files(self):
         with tempfile.TemporaryDirectory() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
-                old_image = default_storage.save("references/same.webp", ContentFile(b"same-image"))
-                old_thumb = default_storage.save("references/thumbs/same.webp", ContentFile(b"same-thumb"))
+                old_image = default_storage.save(
+                    "references/same.webp", ContentFile(b"same-image")
+                )
+                old_thumb = default_storage.save(
+                    "references/thumbs/same.webp", ContentFile(b"same-thumb")
+                )
 
                 ref = Reference.objects.create(
                     reference="Ref unchanged",
@@ -216,14 +228,18 @@ class ReferenceSerializerTests(TestCase):
         serializer_with_request = DummySerializer(context={"request": request})
         field_with_request = serializer_with_request.fields["image"]
         self.assertEqual(
-            field_with_request.to_representation(DummyValue("/media/references/from-attr.webp")),
+            field_with_request.to_representation(
+                DummyValue("/media/references/from-attr.webp")
+            ),
             "http://testserver/media/references/from-attr.webp",
         )
 
         serializer_without_request = DummySerializer()
         field_without_request = serializer_without_request.fields["image"]
         self.assertEqual(
-            field_without_request.to_representation(DummyValue("https://cdn.example.com/img.webp")),
+            field_without_request.to_representation(
+                DummyValue("https://cdn.example.com/img.webp")
+            ),
             "https://cdn.example.com/img.webp",
         )
 
@@ -243,9 +259,15 @@ class ReferenceSerializerTests(TestCase):
     def test_update_deletes_old_thumbnail_and_icon(self):
         with tempfile.TemporaryDirectory() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
-                image_path = default_storage.save("references/base.webp", ContentFile(b"base"))
-                old_thumb = default_storage.save("references/thumbs/old.webp", ContentFile(b"old-thumb"))
-                old_icon = default_storage.save("references/old-icon.webp", ContentFile(b"old-icon"))
+                image_path = default_storage.save(
+                    "references/base.webp", ContentFile(b"base")
+                )
+                old_thumb = default_storage.save(
+                    "references/thumbs/old.webp", ContentFile(b"old-thumb")
+                )
+                old_icon = default_storage.save(
+                    "references/old-icon.webp", ContentFile(b"old-icon")
+                )
 
                 ref = Reference.objects.create(
                     reference="Ref media update",

@@ -107,7 +107,10 @@ class ReferenceApiTests(APITestCase):
                     self.detail_url,
                     HTTP_AUTHORIZATION=f"Bearer {self.token}",
                 )
-                self.assertIn(delete_res.status_code, [status.HTTP_204_NO_CONTENT, status.HTTP_200_OK])
+                self.assertIn(
+                    delete_res.status_code,
+                    [status.HTTP_204_NO_CONTENT, status.HTTP_200_OK],
+                )
                 self.assertEqual(Reference.objects.count(), 0)
 
     def test_reference_update_deletes_old_media_files(self):
@@ -157,7 +160,9 @@ class ReferenceApiTests(APITestCase):
                     HTTP_AUTHORIZATION=f"Bearer {self.token}",
                 )
 
-                self.assertEqual(update_res.status_code, status.HTTP_200_OK, update_res.data)
+                self.assertEqual(
+                    update_res.status_code, status.HTTP_200_OK, update_res.data
+                )
                 self.assertFalse(default_storage.exists(old_path))
                 self.assertFalse(default_storage.exists(old_thumb))
                 self.assertTrue(default_storage.exists(new_path))
@@ -358,7 +363,9 @@ class ReferenceApiTests(APITestCase):
                     format="json",
                     HTTP_AUTHORIZATION=f"Bearer {self.token}",
                 )
-                self.assertEqual(create_res.status_code, status.HTTP_201_CREATED, create_res.data)
+                self.assertEqual(
+                    create_res.status_code, status.HTTP_201_CREATED, create_res.data
+                )
 
         second_public = self.client.get("/api/contact/references")
         self.assertEqual(second_public.status_code, status.HTTP_200_OK)

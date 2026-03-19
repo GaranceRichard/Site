@@ -8,7 +8,9 @@ THRESHOLD = 95.0
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python backend/scripts/check_vitals_coverage.py <coverage-json-path>")
+        print(
+            "Usage: python backend/scripts/check_vitals_coverage.py <coverage-json-path>"
+        )
         return 1
 
     report_path = Path(sys.argv[1])

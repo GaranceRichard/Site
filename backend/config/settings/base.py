@@ -28,7 +28,13 @@ def _csv(name: str) -> list[str]:
 
 
 def _bool(name: str, default: bool = False) -> bool:
-    return os.getenv(name, str(default)).strip().lower() in ("1", "true", "yes", "y", "on")
+    return os.getenv(name, str(default)).strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    )
 
 
 def _int(name: str, default: int) -> int:
@@ -88,7 +94,9 @@ def _validate_origins(label: str, origins: list[str], require_https: bool) -> No
         if IS_PROD:
             raise RuntimeError(f"{label} vide en production.")
         return
-    allow_insecure_in_prod = _bool("DJANGO_ALLOW_INSECURE_ORIGINS_IN_PROD", default=False)
+    allow_insecure_in_prod = _bool(
+        "DJANGO_ALLOW_INSECURE_ORIGINS_IN_PROD", default=False
+    )
     for o in origins:
         if o == "*" or o.endswith("://*"):
             raise RuntimeError(f"{label} ne doit pas contenir de wildcard. Valeur: {o}")
@@ -117,8 +125,12 @@ def _validate_dev_local_origins(label: str, origins: list[str]) -> None:
             )
 
 
-_validate_origins("DJANGO_CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS, require_https=IS_PROD)
-_validate_origins("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS, require_https=IS_PROD)
+_validate_origins(
+    "DJANGO_CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS, require_https=IS_PROD
+)
+_validate_origins(
+    "DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS, require_https=IS_PROD
+)
 _validate_dev_local_origins("DJANGO_CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS)
 _validate_dev_local_origins("DJANGO_CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)
 
@@ -227,7 +239,10 @@ def _db_from_database_url(db_url: str) -> dict:
         return cfg
 
     if scheme == "sqlite":
-        return {"ENGINE": "django.db.backends.sqlite3", "NAME": _sqlite_name_from_url(u)}
+        return {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": _sqlite_name_from_url(u),
+        }
 
     raise RuntimeError(
         f"DATABASE_URL non supporte: {db_url}\n"
@@ -254,7 +269,12 @@ if IS_PROD:
             )
         }
 else:
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # -------------------------------------------------
@@ -268,7 +288,9 @@ if IS_TEST:
     CACHES = _locmem_cache()
 else:
     REDIS_URL = os.getenv("REDIS_URL", "").strip()
-    ALLOW_LOC_MEM_CACHE_IN_PROD = _bool("DJANGO_ALLOW_LOC_MEM_CACHE_IN_PROD", default=False)
+    ALLOW_LOC_MEM_CACHE_IN_PROD = _bool(
+        "DJANGO_ALLOW_LOC_MEM_CACHE_IN_PROD", default=False
+    )
 
     if IS_PROD and not REDIS_URL and not ALLOW_LOC_MEM_CACHE_IN_PROD:
         raise RuntimeError(
@@ -284,7 +306,9 @@ else:
                 raise RuntimeError(
                     "django-redis requis quand REDIS_URL est defini en production."
                 )
-            logger.warning("django-redis non installe, LocMemCache en prod (non recommande)")
+            logger.warning(
+                "django-redis non installe, LocMemCache en prod (non recommande)"
+            )
             CACHES = _locmem_cache()
         else:
             CACHES = {
@@ -302,7 +326,9 @@ else:
 # Password validation
 # -------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -361,7 +387,7 @@ if IS_PROD:
             },
             "staticfiles": {
                 "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-            }
+            },
         }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -380,8 +406,12 @@ USER_THROTTLE_RATE = os.getenv("DJANGO_USER_THROTTLE_RATE", "2400/hour")
 
 # E2E mode: relax throttling to avoid flaky end-to-end suites.
 if _bool("DJANGO_E2E_MODE", default=False):
-    GLOBAL_ANON_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_ANON_THROTTLE_RATE", "10000/min")
-    GLOBAL_USER_THROTTLE_RATE = os.getenv("DJANGO_GLOBAL_USER_THROTTLE_RATE", "20000/min")
+    GLOBAL_ANON_THROTTLE_RATE = os.getenv(
+        "DJANGO_GLOBAL_ANON_THROTTLE_RATE", "10000/min"
+    )
+    GLOBAL_USER_THROTTLE_RATE = os.getenv(
+        "DJANGO_GLOBAL_USER_THROTTLE_RATE", "20000/min"
+    )
     CONTACT_THROTTLE_RATE = os.getenv("DJANGO_CONTACT_THROTTLE_RATE", "600/min")
     HEALTH_THROTTLE_RATE = os.getenv("DJANGO_HEALTH_THROTTLE_RATE", "600/min")
     ANON_THROTTLE_RATE = os.getenv("DJANGO_ANON_THROTTLE_RATE", "10000/hour")
@@ -394,7 +424,9 @@ if ENABLE_JWT:
     try:
         import rest_framework_simplejwt  # noqa: F401
     except ImportError:
-        raise RuntimeError("DJANGO_ENABLE_JWT=True mais djangorestframework-simplejwt non installe.")
+        raise RuntimeError(
+            "DJANGO_ENABLE_JWT=True mais djangorestframework-simplejwt non installe."
+        )
     auth_classes = ("rest_framework_simplejwt.authentication.JWTAuthentication",)
 
 REST_FRAMEWORK = {
@@ -446,7 +478,9 @@ if IS_PROD:
     CSRF_COOKIE_SAMESITE = os.getenv("DJANGO_CSRF_COOKIE_SAMESITE", "Lax")
 
     SECURE_HSTS_SECONDS = _int("DJANGO_SECURE_HSTS_SECONDS", 31536000)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = _bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _bool(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False
+    )
     SECURE_HSTS_PRELOAD = _bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
 
     SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -487,12 +521,22 @@ LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO" if IS_PROD else "DEBUG").upper(
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"default": {"format": "{levelname} {asctime} {name} {message}", "style": "{"}},
+    "formatters": {
+        "default": {"format": "{levelname} {asctime} {name} {message}", "style": "{"}
+    },
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "default"}},
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
-        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
-        "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
         "PIL": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }
@@ -532,4 +576,3 @@ if not IS_TEST and _bool("DJANGO_STARTUP_BANNER", default=not IS_PROD):
         cache_backend,
         "yes" if auth_classes else "no",
     )
-

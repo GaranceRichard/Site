@@ -45,6 +45,8 @@ class ReferenceMediaCleanupTests(APITestCase):
                 self.assertFalse(default_storage.exists(image_path))
                 self.assertFalse(default_storage.exists(icon_path))
                 self.assertFalse(default_storage.exists(thumb_path))
+
+
 class MediaCleanupUnitTests(APITestCase):
     def test_media_relative_path_variants(self):
         from contact.media_cleanup import media_relative_path

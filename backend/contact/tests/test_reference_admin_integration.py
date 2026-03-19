@@ -45,7 +45,9 @@ class ReferenceAdminIntegrationTests(APITestCase):
             format="json",
             **self.auth_headers(),
         )
-        self.assertEqual(create_res.status_code, status.HTTP_201_CREATED, create_res.data)
+        self.assertEqual(
+            create_res.status_code, status.HTTP_201_CREATED, create_res.data
+        )
 
         list_res = self.client.get(
             "/api/contact/references/admin",
@@ -90,7 +92,9 @@ class ReferenceAdminIntegrationTests(APITestCase):
         self.assertEqual(res.data["detail"], "Aucun fichier fourni.")
 
     @patch("contact.views.get_upload_strategy")
-    def test_reference_image_upload_rejects_unsupported_format(self, get_upload_strategy_mock):
+    def test_reference_image_upload_rejects_unsupported_format(
+        self, get_upload_strategy_mock
+    ):
         strategy = Mock()
         strategy.process_reference_image.side_effect = ValueError("unsupported")
         get_upload_strategy_mock.return_value = strategy
@@ -106,7 +110,9 @@ class ReferenceAdminIntegrationTests(APITestCase):
         self.assertIn("Format non support", upload.data["detail"])
 
     @patch("contact.views.get_upload_strategy")
-    def test_reference_image_upload_rejects_processing_failures(self, get_upload_strategy_mock):
+    def test_reference_image_upload_rejects_processing_failures(
+        self, get_upload_strategy_mock
+    ):
         strategy = Mock()
         strategy.process_reference_image.side_effect = RuntimeError("boom")
         get_upload_strategy_mock.return_value = strategy
@@ -122,7 +128,9 @@ class ReferenceAdminIntegrationTests(APITestCase):
         self.assertEqual(upload.data["detail"], "Impossible de traiter l'image.")
 
     @patch("contact.views.get_upload_strategy")
-    def test_reference_image_upload_returns_saved_payload(self, get_upload_strategy_mock):
+    def test_reference_image_upload_returns_saved_payload(
+        self, get_upload_strategy_mock
+    ):
         strategy = Mock()
         strategy.process_reference_image.return_value = (b"image", b"thumb")
         strategy.save_reference_images.return_value = {
@@ -140,7 +148,9 @@ class ReferenceAdminIntegrationTests(APITestCase):
 
         self.assertEqual(upload.status_code, status.HTTP_201_CREATED, upload.data)
         self.assertEqual(upload.data["url"], "https://example.test/ref.webp")
-        self.assertEqual(upload.data["thumbnail_url"], "https://example.test/thumb.webp")
+        self.assertEqual(
+            upload.data["thumbnail_url"], "https://example.test/thumb.webp"
+        )
         strategy.save_reference_images.assert_called_once()
 
     @staticmethod

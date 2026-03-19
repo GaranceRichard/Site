@@ -17,4 +17,3 @@ class GlobalUserRateThrottle(UserRateThrottle):
     """
 
     scope = "global_user"
-

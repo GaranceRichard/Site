@@ -25,12 +25,16 @@ class UploadStrategyTests(SimpleTestCase):
             self.assertIsInstance(strategy, LocalUploadStrategy)
 
     def test_get_upload_strategy_supports_ovh_alias(self):
-        with patch.dict("os.environ", {"CONTACT_UPLOAD_STRATEGY": "ovh_s3"}, clear=False):
+        with patch.dict(
+            "os.environ", {"CONTACT_UPLOAD_STRATEGY": "ovh_s3"}, clear=False
+        ):
             strategy = get_upload_strategy()
             self.assertIsInstance(strategy, OvhS3UploadStrategy)
 
     def test_ovh_strategy_applies_prefix(self):
-        with patch.dict("os.environ", {"OVH_UPLOAD_PREFIX": "ovh/custom-prefix"}, clear=False):
+        with patch.dict(
+            "os.environ", {"OVH_UPLOAD_PREFIX": "ovh/custom-prefix"}, clear=False
+        ):
             strategy = OvhS3UploadStrategy()
             self.assertEqual(strategy.image_prefix, "ovh/custom-prefix")
             self.assertEqual(strategy.thumb_prefix, "ovh/custom-prefix/thumbs")
@@ -45,7 +49,9 @@ class UploadStrategyTests(SimpleTestCase):
 
     def test_process_reference_image_returns_webp_full_and_thumbnail(self):
         image_buffer = BytesIO()
-        Image.new("RGBA", (1200, 800), color=(10, 20, 30, 128)).save(image_buffer, format="PNG")
+        Image.new("RGBA", (1200, 800), color=(10, 20, 30, 128)).save(
+            image_buffer, format="PNG"
+        )
         image_buffer.seek(0)
 
         image_bytes, thumb_bytes = UploadStrategy.process_reference_image(image_buffer)
@@ -70,7 +76,9 @@ class UploadStrategyTests(SimpleTestCase):
             "references/thumbs/thumb.webp",
         ]
         request = Mock()
-        request.build_absolute_uri.side_effect = lambda path: f"https://example.test{path}"
+        request.build_absolute_uri.side_effect = (
+            lambda path: f"https://example.test{path}"
+        )
 
         payload = LocalUploadStrategy().save_reference_images(
             image_bytes=b"image-bytes",
@@ -78,10 +86,17 @@ class UploadStrategyTests(SimpleTestCase):
             request=request,
         )
 
-        self.assertEqual(payload["url"], "https://example.test/media/references/full.webp")
-        self.assertEqual(payload["thumbnail_url"], "https://example.test/media/references/thumbs/thumb.webp")
+        self.assertEqual(
+            payload["url"], "https://example.test/media/references/full.webp"
+        )
+        self.assertEqual(
+            payload["thumbnail_url"],
+            "https://example.test/media/references/thumbs/thumb.webp",
+        )
         self.assertTrue(save_mock.call_args_list[0].args[0].startswith("references/"))
-        self.assertTrue(save_mock.call_args_list[1].args[0].startswith("references/thumbs/"))
+        self.assertTrue(
+            save_mock.call_args_list[1].args[0].startswith("references/thumbs/")
+        )
 
     def test_base_strategy_save_reference_images_raises(self):
         strategy = MinimalUploadStrategy()

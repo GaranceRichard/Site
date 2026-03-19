@@ -12,9 +12,6 @@ def default_header_settings():
     return deepcopy(DEFAULT_HEADER_SETTINGS)
 
 
-def default_home_hero_settings():
-    return deepcopy(DEFAULT_HOME_HERO_SETTINGS)
-
 DEFAULT_HOME_HERO_SETTINGS = {
     "eyebrow": "Lean-Agile - transformation pragmatique, ancree dans le reel",
     "title": "Des equipes plus sereines.\nDes livraisons plus fiables.",
@@ -50,3 +47,7 @@ DEFAULT_HOME_HERO_SETTINGS = {
         },
     ],
 }
+
+
+def default_home_hero_settings():
+    return deepcopy(DEFAULT_HOME_HERO_SETTINGS)

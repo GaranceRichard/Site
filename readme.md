@@ -33,14 +33,16 @@ garancerichard-site/
 ## CI (GitHub Actions)
 - PR et main : tests unitaires backend + frontend + lint + build front
 - Nightly (02:00 UTC) : E2E Playwright
-- main seulement : build des images Docker (sans push registry)
+- Push sur `main` : smoke E2E rapide + build des images Docker dans la CI
+- Workflow CD separe : push des images GHCR puis deploiement staging optionnel
 
 
 ## Quality & CI
+- Le workflow `.github/workflows/deploy.yml` pousse les images vers GHCR; le deploiement staging ne s'execute que si la variable GitHub `ENABLE_STAGING_DEPLOY=true`.
 - Pull requests: lint + tests + coverage gates avant merge.
 - Front quality gate: npm run test:coverage avec seuil 80% (lines/statements/branches/functions) dans Vitest, avec enforcement `perFile`.
 - Back quality gate: coverage report --fail-under=80.
-- Sur main: tests/build puis build Docker backend + frontend.
+- Sur `main`: tests/build, smoke E2E, puis build Docker backend + frontend dans la CI.
 - Nightly (02:00 UTC): suite E2E Playwright complete.
 - Push sur `main`: E2E smoke rapide (contact + login invalide backoffice).
 - En cas d'echec E2E: logs serveurs + traces/screenshots Playwright en artifacts.
@@ -184,7 +186,10 @@ Créer un fichier frontend/.env.local (non versionné) avec :
 
 ```ini
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-NEXT_PUBLIC_BACKOFFICE_ENABLED=true
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_BOOKING_URL=https://example.com/booking
+NEXT_DEV_ALLOWED_ORIGINS=
+NEXT_PUBLIC_BACKOFFICE_ENABLED=false
 NEXT_PUBLIC_SENTRY_DSN=
 ```
 
@@ -261,11 +266,15 @@ Exemple réponse :
 ```
 
 ## API — Backoffice
+- Settings de site :
+  - GET /api/settings/ (public: header + hero)
+  - PUT /api/settings/admin/ (admin uniquement)
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
 - POST /api/contact/messages/admin/delete (supprime une liste d'IDs, admin uniquement)
-- Références (admin uniquement) :
+- Références :
   - GET /api/contact/references (liste publique)
+  - Les endpoints `/api/contact/references/admin*` ci-dessous sont admin uniquement.
   - POST /api/contact/references/admin/upload (upload image)
   - GET /api/contact/references/admin (liste)
   - POST /api/contact/references/admin (création)
@@ -393,6 +402,7 @@ Ne pas committer :
 - REDIS_URL configuré (throttling global cohérent)
 - CSP + Permissions-Policy configurées
 - HTTPS en frontal + DJANGO_SECURE_SSL_REDIRECT=True
+- Certificat TLS monte dans le conteneur Nginx + redirection 80 -> 443
 - Sauvegardes DB + logs centralisés
 - (Optionnel) SENTRY_DSN pour monitoring
 
@@ -433,12 +443,15 @@ Ne pas committer :
 
 ### 2) Deploiement
 - Workflow recommande:
-- `main` -> workflow `.github/workflows/deploy.yml` -> build/push GHCR -> deploiement staging -> smoke tests.
+- `main` -> workflow `.github/workflows/deploy.yml` -> build/push GHCR -> deploiement staging optionnel -> smoke tests.
+- Le job de deploiement staging est garde par la variable GitHub `ENABLE_STAGING_DEPLOY=true`.
 - Commandes locales "prod-like":
 ```bash
 cp docs/env.prod.example .env.prod
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
+- Mise en place detaillee:
+- Suivre le pas-a-pas de `docs/deployment.md`, notamment la creation de `.env.prod`, le parametrage TLS et la validation `docker compose ... config`.
 - Commandes avec monitoring:
 ```bash
 docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod up -d
@@ -453,6 +466,8 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL`, `REDIS_URL`.
 - Variables clefs frontend:
 - `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SENTRY_DSN`.
+- Variables clefs proxy TLS:
+- `NGINX_SSL_CERTIFICATE`, `NGINX_SSL_CERTIFICATE_KEY`, `NGINX_SSL_CERTIFICATE_PATH`, `NGINX_SSL_CERTIFICATE_KEY_PATH`.
 - Variables observabilite:
 - `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`, `PROMETHEUS_RETENTION_DAYS`.
 - Stockage des secrets:

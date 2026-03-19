@@ -6,6 +6,8 @@ import subprocess
 from django.test.utils import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+
 class SecurityBootTests(APITestCase):
     def test_django_refuses_to_start_without_secret_key(self):
         """
@@ -76,6 +78,8 @@ class SecurityBootTests(APITestCase):
 
         self.assertEqual(p.returncode, 0)
         self.assertIn("BOOT_OK", p.stdout or "")
+
+
 class SecurityCorsTests(APITestCase):
     def test_cors_preflight_on_jwt_token_endpoint(self):
         """
@@ -98,6 +102,8 @@ class SecurityCorsTests(APITestCase):
             "Access-Control-Allow-Origin"
         )
         self.assertEqual(allow_origin, origin)
+
+
 class SecurityHeadersTests(APITestCase):
     @override_settings(
         SECURITY_CSP="default-src 'self'",

@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contact', '0004_reference_order_index'),
+        ("contact", "0004_reference_order_index"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='reference',
-            name='image',
+            model_name="reference",
+            name="image",
             field=models.URLField(max_length=500),
         ),
         migrations.AlterField(
-            model_name='reference',
-            name='situation',
-            field=models.TextField(blank=True, default=''),
+            model_name="reference",
+            name="situation",
+            field=models.TextField(blank=True, default=""),
         ),
     ]

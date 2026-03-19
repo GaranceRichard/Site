@@ -108,7 +108,9 @@ class SiteSettingsApiTests(APITestCase):
     def test_admin_put_invalidates_public_cache(self):
         first_res = self.client.get(self.public_url)
         self.assertEqual(first_res.status_code, status.HTTP_200_OK)
-        self.assertEqual(first_res.data["header"]["name"], DEFAULT_HEADER_SETTINGS["name"])
+        self.assertEqual(
+            first_res.data["header"]["name"], DEFAULT_HEADER_SETTINGS["name"]
+        )
 
         update_res = self.client.put(
             self.admin_url,
@@ -159,7 +161,9 @@ class SiteSettingsDefaultsTests(TestCase):
             DEFAULT_HOME_HERO_SETTINGS["links"][0]["label"],
             "Voir les offres",
         )
-        self.assertEqual(DEFAULT_HOME_HERO_SETTINGS["keywords"], ["Clarte", "Flux", "Ancrage"])
+        self.assertEqual(
+            DEFAULT_HOME_HERO_SETTINGS["keywords"], ["Clarte", "Flux", "Ancrage"]
+        )
         self.assertEqual(
             DEFAULT_HOME_HERO_SETTINGS["cards"][0]["title"],
             "Cadre d'intervention",
@@ -182,10 +186,16 @@ class SiteSettingsCacheTests(TestCase):
         bump_public_site_settings_cache_version()
 
         self.assertEqual(cache.get(SITE_SETTINGS_CACHE_VERSION_KEY), 2)
-        self.assertEqual(get_public_site_settings_cache_key(), "site_settings:public:v2")
+        self.assertEqual(
+            get_public_site_settings_cache_key(), "site_settings:public:v2"
+        )
 
-    def test_bump_public_site_settings_cache_version_initializes_missing_value_to_two(self):
+    def test_bump_public_site_settings_cache_version_initializes_missing_value_to_two(
+        self,
+    ):
         bump_public_site_settings_cache_version()
 
         self.assertEqual(cache.get(SITE_SETTINGS_CACHE_VERSION_KEY), 2)
-        self.assertEqual(get_public_site_settings_cache_key(), "site_settings:public:v2")
+        self.assertEqual(
+            get_public_site_settings_cache_key(), "site_settings:public:v2"
+        )

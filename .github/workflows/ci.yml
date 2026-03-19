@@ -93,12 +93,7 @@ jobs:
 
       - name: Black (check)
         run: |
-          python -m black --check --diff --verbose \
-            contact/views.py \
-            contact/serializers.py \
-            contact/image_upload.py \
-            contact/pagination.py \
-            contact/reference_cache.py
+          python -m black --check --diff --verbose .
 
   frontend_unit:
     name: Frontend (Next/Vitest)

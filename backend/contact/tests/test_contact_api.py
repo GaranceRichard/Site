@@ -7,6 +7,8 @@ from rest_framework.test import APITestCase
 from django.utils import timezone
 
 from contact.models import ContactMessage
+
+
 class ContactApiTests(APITestCase):
     def setUp(self):
         self.url = reverse("contact-message-create")
@@ -337,7 +339,9 @@ class ContactApiTests(APITestCase):
         }
 
         last = None
-        for _ in range(11):  # 10/min autorisés, le 11e peut tomber en 429 selon config/cache
+        for _ in range(
+            11
+        ):  # 10/min autorisés, le 11e peut tomber en 429 selon config/cache
             last = self.client.post(self.url, payload, format="json")
 
         self.assertIn(

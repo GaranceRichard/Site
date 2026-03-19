@@ -4,13 +4,92 @@
 - Docker + Docker Compose sur le serveur.
 - Un fichier `.env.prod` sur le serveur (ne pas versionner).
 - Acces SSH pour le pipeline CD (cle privee).
+- Un certificat TLS et sa cle privee accessibles par Docker.
 
 Exemple: voir `docs/env.prod.example`.
+
+## Installation serveur pas a pas
+1) Copier les fichiers de deploiement sur le serveur dans un dossier dedie, par exemple `/home/ubuntu/mon-site`.
+2) Se placer dans ce dossier:
+```bash
+cd /home/ubuntu/mon-site
+```
+3) Creer le fichier `.env.prod` a partir du modele versionne:
+```bash
+cp docs/env.prod.example .env.prod
+```
+4) Ouvrir `.env.prod` et remplacer tous les placeholders `<change-me>` par des valeurs reelles.
+5) Verifier au minimum ces variables avant le premier demarrage:
+   - `DJANGO_SECRET_KEY`
+   - `DJANGO_ALLOWED_HOSTS`
+   - `DJANGO_CORS_ALLOWED_ORIGINS`
+   - `DJANGO_CSRF_TRUSTED_ORIGINS`
+   - `DATABASE_URL`
+   - `REDIS_URL`
+   - `NEXT_PUBLIC_API_BASE_URL`
+   - `BACKEND_IMAGE`
+   - `FRONTEND_IMAGE`
+   - `NGINX_SSL_CERTIFICATE`
+   - `NGINX_SSL_CERTIFICATE_KEY`
+   - `NGINX_SSL_CERTIFICATE_PATH`
+   - `NGINX_SSL_CERTIFICATE_KEY_PATH`
+6) Verifier que les certificats existent bien sur le serveur aux chemins indiques dans `.env.prod`.
+7) Valider la configuration Docker Compose avant demarrage:
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod config
+```
+8) Demarrer la stack:
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+9) Verifier que les conteneurs sont sains:
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f nginx backend frontend
+```
 
 ## Deploiement local (prod-like)
 ```bash
 cp docs/env.prod.example .env.prod
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+## Contenu minimal de `.env.prod`
+Variables indispensables au premier deploiement:
+- `DJANGO_SECRET_KEY`: cle secrete Django forte et unique.
+- `DJANGO_ALLOWED_HOSTS`: domaine(s) publics autorises, par exemple `example.com,www.example.com`.
+- `DJANGO_CORS_ALLOWED_ORIGINS`: origines frontend autorisees, en HTTPS.
+- `DJANGO_CSRF_TRUSTED_ORIGINS`: origines CSRF de confiance, en HTTPS.
+- `DATABASE_URL`: connexion PostgreSQL de production.
+- `REDIS_URL`: connexion Redis de production.
+- `NEXT_PUBLIC_API_BASE_URL`: URL publique du site, idealement `https://<domaine>`.
+- `BACKEND_IMAGE` et `FRONTEND_IMAGE`: images a lancer en production.
+- `NGINX_SSL_CERTIFICATE_PATH` et `NGINX_SSL_CERTIFICATE_KEY_PATH`: chemins reels sur le serveur.
+
+Si une de ces variables est absente ou incorrecte, le demarrage peut echouer ou l'application peut rester joignable de facon partielle.
+
+## HTTPS / TLS
+- `nginx/prod.conf` force la redirection `80 -> 443` et termine TLS sur Nginx.
+- Le certificat et la cle sont injectes via `.env.prod`:
+  - `NGINX_SSL_CERTIFICATE_PATH`
+  - `NGINX_SSL_CERTIFICATE_KEY_PATH`
+  - `NGINX_SSL_CERTIFICATE`
+  - `NGINX_SSL_CERTIFICATE_KEY`
+- Django reste aligne cote application avec `DJANGO_SECURE_SSL_REDIRECT=true` et `DJANGO_SECURE_HSTS_SECONDS=31536000`.
+- Exemple Let's Encrypt:
+```bash
+NGINX_SSL_CERTIFICATE=/etc/nginx/ssl/fullchain.pem
+NGINX_SSL_CERTIFICATE_KEY=/etc/nginx/ssl/privkey.pem
+NGINX_SSL_CERTIFICATE_PATH=/etc/letsencrypt/live/example.com/fullchain.pem
+NGINX_SSL_CERTIFICATE_KEY_PATH=/etc/letsencrypt/live/example.com/privkey.pem
+```
+- Interpretation:
+  - `NGINX_SSL_CERTIFICATE_PATH` et `NGINX_SSL_CERTIFICATE_KEY_PATH` designent les fichiers existants sur l'hote.
+  - `NGINX_SSL_CERTIFICATE` et `NGINX_SSL_CERTIFICATE_KEY` designent les chemins de montage dans le conteneur Nginx.
+- Si vous utilisez un certificat fourni par un hebergeur au lieu de Let's Encrypt, adaptez simplement `*_PATH` vers les bons fichiers.
+- Exemple de renouvellement automatique Let's Encrypt sur le serveur:
+```bash
+0 4 * * * certbot renew --quiet && cd /chemin/vers/deploy && docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T nginx nginx -s reload
 ```
 
 ## Observabilite (Prometheus + Grafana)
@@ -39,7 +118,7 @@ Important:
 ## CD GitHub Actions (staging)
 Le workflow `deploy.yml`:
 1) Build & push des images vers GHCR.
-2) Deploiement automatique vers staging (merge/push sur `main`).
+2) Deploiement automatique vers staging (merge/push sur `main`) uniquement si la variable de repo `ENABLE_STAGING_DEPLOY=true`.
 3) Smoke tests post-deploiement.
 
 ### Secrets requis (GitHub Actions)
@@ -93,6 +172,12 @@ Configurer un cron serveur pour supprimer les medias orphelins:
 ## Smoke tests
 Apres deploiement:
 ```bash
+curl -I http://<domaine>
 curl -fsS https://<domaine>/api/health
 curl -fsS https://<domaine>/
 ```
+
+Resultat attendu:
+- `http://<domaine>` repond avec une redirection `301` vers `https://<domaine>`.
+- `https://<domaine>/api/health` repond en `200`.
+- `https://<domaine>/` renvoie le frontend public.

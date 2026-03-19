@@ -7,17 +7,37 @@ import contact.site_settings_defaults
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contact', '0006_reference_imagefield_thumb'),
+        ("contact", "0006_reference_imagefield_thumb"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SiteSettings',
+            name="SiteSettings",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('header', models.JSONField(blank=True, default=contact.site_settings_defaults.default_header_settings)),
-                ('home_hero', models.JSONField(blank=True, default=contact.site_settings_defaults.default_home_hero_settings)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "header",
+                    models.JSONField(
+                        blank=True,
+                        default=contact.site_settings_defaults.default_header_settings,
+                    ),
+                ),
+                (
+                    "home_hero",
+                    models.JSONField(
+                        blank=True,
+                        default=contact.site_settings_defaults.default_home_hero_settings,
+                    ),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
             ],
         ),
     ]

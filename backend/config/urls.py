@@ -6,17 +6,34 @@ from django.urls import include, path
 
 from config.views import HealthLiveView, HealthReadyView, HealthView
 from contact.views import SiteSettingsAdminView, SiteSettingsPublicView
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/contact/", include("contact.urls")),
-    path("api/settings/", SiteSettingsPublicView.as_view(), name="site-settings-public"),
-    path("api/settings/admin/", SiteSettingsAdminView.as_view(), name="site-settings-admin"),
+    path(
+        "api/settings/", SiteSettingsPublicView.as_view(), name="site-settings-public"
+    ),
+    path(
+        "api/settings/admin/",
+        SiteSettingsAdminView.as_view(),
+        name="site-settings-admin",
+    ),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
-    path("api/redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="api-redoc"),
-
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="api-schema"),
+        name="api-docs",
+    ),
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="api-schema"),
+        name="api-redoc",
+    ),
     # ✅ Health check (DRF) — utile prod + tests throttling
     path("api/health", HealthView.as_view(), name="api-health"),
     path("api/health/live", HealthLiveView.as_view(), name="api-health-live"),
@@ -29,7 +46,9 @@ if settings.ENABLE_JWT:
 
     urlpatterns += [
         # ✅ Auth JWT (login admin via username/password Django)
-        path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+        path(
+            "api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"
+        ),
         path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     ]
 

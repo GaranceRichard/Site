@@ -299,7 +299,9 @@ class AuthJwtTests(APITestCase):
     )
     def test_messages_admin_requires_auth(self):
         res_list = self.client.get("/api/contact/messages/admin")
-        res_delete = self.client.post("/api/contact/messages/admin/delete", {"ids": [1]})
+        res_delete = self.client.post(
+            "/api/contact/messages/admin/delete", {"ids": [1]}
+        )
         self.assertEqual(res_list.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(res_delete.status_code, status.HTTP_401_UNAUTHORIZED)
 

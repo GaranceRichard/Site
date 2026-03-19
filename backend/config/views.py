@@ -7,6 +7,7 @@ from rest_framework.throttling import AnonRateThrottle
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 
+
 class HealthAnonThrottle(AnonRateThrottle):
     # ✅ rate déterminé par un setting Django (pas par REST_FRAMEWORK)
     def get_rate(self):
@@ -99,7 +100,9 @@ def _check_dependencies() -> dict:
         try:
             import redis  # lazy import to avoid hard dependency in minimal envs
 
-            client = redis.Redis.from_url(redis_url, socket_connect_timeout=1, socket_timeout=1)
+            client = redis.Redis.from_url(
+                redis_url, socket_connect_timeout=1, socket_timeout=1
+            )
             client.ping()
         except Exception as exc:  # pragma: no cover - defensive
             redis_ok = False
