@@ -32,6 +32,81 @@ afterEach(() => {
 });
 
 describe("useReferencesManager", () => {
+  it("reports missing API base and missing auth token during load", async () => {
+    const onRequestLogin = vi.fn();
+
+    const { result: missingApiBase } = renderHook(() =>
+      useReferencesManager({ apiBase: undefined, onRequestLogin }),
+    );
+
+    await waitFor(() => {
+      expect(missingApiBase.current.status).toBe("error");
+    });
+    expect(missingApiBase.current.errorMsg).toBe(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL.",
+    );
+
+    setupSessionStorage("");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result: missingToken } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    await waitFor(() => {
+      expect(missingToken.current.status).toBe("error");
+    });
+    expect(missingToken.current.errorMsg).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(onRequestLogin).toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("requests login when load returns unauthorized and supports empty optional arrays", async () => {
+    setupSessionStorage();
+    const onRequestLogin = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue("Unauthorized"),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("error");
+    });
+    expect(result.current.errorMsg).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(onRequestLogin).toHaveBeenCalled();
+
+    act(() => {
+      result.current.onRowClick({
+        id: 1,
+        order_index: 1,
+        reference: "Ref empty arrays",
+        reference_short: "",
+        image: "/media/ref.webp",
+        image_thumb: "",
+        icon: "",
+        situation: "",
+        tasks: undefined,
+        actions: undefined,
+        results: undefined,
+      });
+    });
+
+    expect(result.current.form.tasks).toBe("");
+    expect(result.current.form.actions).toBe("");
+    expect(result.current.form.results).toBe("");
+  });
+
   it("stores modal errors instead of page errors when the form is open", async () => {
     setupSessionStorage();
     vi.stubGlobal(
@@ -179,6 +254,27 @@ describe("useReferencesManager", () => {
       expect(result.current.status).toBe("error");
     });
     expect(result.current.errorMsg).toBe("Erreur inattendue");
+  });
+
+  it("surfaces API load errors with fallback text", async () => {
+    setupSessionStorage();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: vi.fn().mockResolvedValue(""),
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin: vi.fn() }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("error");
+    });
+    expect(result.current.errorMsg).toBe("Erreur API (500)");
   });
 
   it("reports API fallback messages for delete, submit and upload", async () => {
@@ -466,6 +562,263 @@ describe("useReferencesManager", () => {
     expect(result.current.errorMsg).toBe("Erreur inattendue");
   });
 
+  it("ignores invalid move targets and requests login when move auth is missing", async () => {
+    setupSessionStorage();
+    const onRequestLogin = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue([
+        {
+          id: 1,
+          order_index: 1,
+          reference: "Ref A",
+          reference_short: "",
+          image: "/media/ref-a.webp",
+          image_thumb: "",
+          icon: "",
+          situation: "",
+          tasks: [],
+          actions: [],
+          results: [],
+        },
+        {
+          id: 2,
+          order_index: 2,
+          reference: "Ref B",
+          reference_short: "",
+          image: "/media/ref-b.webp",
+          image_thumb: "",
+          icon: "",
+          situation: "",
+          tasks: [],
+          actions: [],
+          results: [],
+        },
+      ]),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.items).toHaveLength(2);
+    });
+
+    await act(async () => {
+      await result.current.moveItem(0, "up");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    setupSessionStorage("");
+    await act(async () => {
+      await result.current.moveItem(0, "down");
+    });
+
+    expect(result.current.errorMsg).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(onRequestLogin).toHaveBeenCalled();
+  });
+
+  it("restores list after move API failures on either patch request", async () => {
+    setupSessionStorage();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            order_index: 1,
+            reference: "Ref A",
+            reference_short: "",
+            image: "/media/ref-a.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+          {
+            id: 2,
+            order_index: 2,
+            reference: "Ref B",
+            reference_short: "",
+            image: "/media/ref-b.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+        ]),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: vi.fn().mockResolvedValue(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            order_index: 1,
+            reference: "Ref A",
+            reference_short: "",
+            image: "/media/ref-a.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+          {
+            id: 2,
+            order_index: 2,
+            reference: "Ref B",
+            reference_short: "",
+            image: "/media/ref-b.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+        ]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: vi.fn(),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: vi.fn().mockResolvedValue(""),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            order_index: 1,
+            reference: "Ref A",
+            reference_short: "",
+            image: "/media/ref-a.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+          {
+            id: 2,
+            order_index: 2,
+            reference: "Ref B",
+            reference_short: "",
+            image: "/media/ref-b.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+        ]),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin: vi.fn() }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.items).toHaveLength(2);
+    });
+
+    await act(async () => {
+      await result.current.moveItem(0, "down");
+    });
+    await waitFor(() => {
+      expect(result.current.items.map((item) => item.reference)).toEqual([
+        "Ref A",
+        "Ref B",
+      ]);
+    });
+
+    await act(async () => {
+      await result.current.moveItem(0, "down");
+    });
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(6);
+    });
+  });
+
+  it("closes the modal after deleting the edited reference", async () => {
+    setupSessionStorage();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([
+          {
+            id: 1,
+            order_index: 1,
+            reference: "Ref A",
+            reference_short: "",
+            image: "/media/ref-a.webp",
+            image_thumb: "",
+            icon: "",
+            situation: "",
+            tasks: [],
+            actions: [],
+            results: [],
+          },
+        ]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        text: vi.fn().mockResolvedValue(""),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin: vi.fn() }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.items).toHaveLength(1);
+    });
+
+    act(() => {
+      result.current.onRowClick(result.current.items[0]);
+      result.current.toggleSelected(1, true);
+    });
+    await waitFor(() => {
+      expect(result.current.modalOpen).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.onDeleteSelected();
+    });
+
+    expect(result.current.modalOpen).toBe(false);
+    expect(result.current.form.reference).toBe("");
+    expect(result.current.selectedIds.size).toBe(0);
+  });
+
   it("reports unexpected move failures and updates an existing item in edit mode", async () => {
     setupSessionStorage();
     const fetchMock = vi
@@ -588,5 +941,204 @@ describe("useReferencesManager", () => {
     });
 
     expect(result.current.items.some((item) => item.reference === "Ref B+")).toBe(true);
+  });
+
+  it("reports missing API base and missing auth token during submit", async () => {
+    const onRequestLogin = vi.fn();
+    const { result: missingApiBase } = renderHook(() =>
+      useReferencesManager({ apiBase: undefined, onRequestLogin }),
+    );
+
+    act(() => {
+      missingApiBase.current.openCreateModal();
+      missingApiBase.current.setForm((prev) => ({
+        ...prev,
+        reference: "Ref submit",
+        image: "/media/ref.webp",
+      }));
+    });
+
+    await act(async () => {
+      await missingApiBase.current.onSubmit({
+        preventDefault() {},
+      } as FormEvent<HTMLFormElement>);
+    });
+    expect(missingApiBase.current.errorMsg).toBe(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL.",
+    );
+
+    setupSessionStorage("");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { result: missingToken } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    act(() => {
+      missingToken.current.openCreateModal();
+      missingToken.current.setForm((prev) => ({
+        ...prev,
+        reference: "Ref submit",
+        image: "/media/ref.webp",
+      }));
+    });
+    await waitFor(() => {
+      expect(missingToken.current.modalOpen).toBe(true);
+    });
+
+    await act(async () => {
+      await missingToken.current.onSubmit({
+        preventDefault() {},
+      } as FormEvent<HTMLFormElement>);
+    });
+
+    expect(missingToken.current.modalError).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(onRequestLogin).toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("requests login when submit is unauthorized", async () => {
+    setupSessionStorage();
+    const onRequestLogin = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([]),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        text: vi.fn().mockResolvedValue("Forbidden"),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("idle");
+    });
+
+    act(() => {
+      result.current.openCreateModal();
+      result.current.setForm((prev) => ({
+        ...prev,
+        reference: "Ref submit",
+        image: "/media/ref.webp",
+      }));
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({ preventDefault() {} } as FormEvent<HTMLFormElement>);
+    });
+
+    expect(result.current.modalError).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(onRequestLogin).toHaveBeenCalled();
+  });
+
+  it("reports missing API base, missing auth and missing upload URL during uploads", async () => {
+    const onRequestLogin = vi.fn();
+    const imageFile = new File(["x"], "image.png", { type: "image/png" });
+    const iconFile = new File(["y"], "icon.png", { type: "image/png" });
+
+    const { result: missingApiBase } = renderHook(() =>
+      useReferencesManager({ apiBase: undefined, onRequestLogin }),
+    );
+
+    await act(async () => {
+      await missingApiBase.current.onImageChange({
+        target: { files: [imageFile], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+    });
+    expect(missingApiBase.current.errorMsg).toBe(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL.",
+    );
+
+    setupSessionStorage("");
+    const fetchWithoutToken = vi.fn();
+    vi.stubGlobal("fetch", fetchWithoutToken);
+    const { result: missingToken } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin }),
+    );
+
+    await act(async () => {
+      await missingToken.current.onImageChange({
+        target: { files: [imageFile], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+    });
+    expect(missingToken.current.errorMsg).toBe(
+      "Connexion requise pour accéder aux références.",
+    );
+    expect(fetchWithoutToken).not.toHaveBeenCalled();
+
+    setupSessionStorage();
+    const fetchMissingUrl = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ thumbnail_url: "/media/thumb.webp" }),
+      });
+
+    vi.stubGlobal("fetch", fetchMissingUrl);
+    const { result: missingUrl } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin: vi.fn() }),
+    );
+
+    await waitFor(() => {
+      expect(missingUrl.current.status).toBe("idle");
+    });
+
+    await act(async () => {
+      await missingUrl.current.onImageChange({
+        target: { files: [imageFile], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+    });
+    expect(missingUrl.current.errorMsg).toBe("URL d'image manquante.");
+
+    await act(async () => {
+      await missingUrl.current.onIconChange({
+        target: { files: [iconFile], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+    });
+  });
+
+  it("ignores empty upload change events", async () => {
+    setupSessionStorage();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue([]),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useReferencesManager({ apiBase: "http://example.test", onRequestLogin: vi.fn() }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("idle");
+    });
+
+    act(() => {
+      result.current.onImageChange({
+        target: { files: [], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+      result.current.onIconChange({
+        target: { files: [], value: "fake" },
+      } as unknown as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

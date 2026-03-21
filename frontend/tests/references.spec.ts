@@ -1,6 +1,8 @@
+import fs from "node:fs";
 import path from "node:path";
 import { expect, test } from "./fixtures";
-import { loginAsAdmin, requireAdminCreds } from "./helpers";
+import { getE2EPaths, getE2EUrls } from "../src/e2e/config";
+import { getAdminAccessToken, loginAsAdmin, requireAdminCreds } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -91,6 +93,59 @@ async function maybeGetLoadedImageSrc(cardButton: import("@playwright/test").Loc
     .poll(async () => cardImage.evaluate((img) => (img as HTMLImageElement).naturalWidth))
     .toBeGreaterThan(0);
   return (await cardImage.getAttribute("src")) ?? null;
+}
+
+type AdminReference = {
+  id: number;
+  reference: string;
+  icon: string;
+};
+
+function mediaPathFromUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return "";
+  const { apiBaseURL } = getE2EUrls(process.env);
+  const normalized = trimmed.startsWith("http")
+    ? new URL(trimmed)
+    : new URL(trimmed, apiBaseURL);
+  const [, relPath = ""] = normalized.pathname.split("/media/");
+  return relPath;
+}
+
+function absoluteMediaPath(relPath: string) {
+  const normalized = relPath.replaceAll("/", path.sep);
+  return path.join(getE2EPaths(process.env).djangoMediaRoot, normalized);
+}
+
+async function fetchAdminReferenceByName(
+  request: import("@playwright/test").APIRequestContext,
+  referenceName: string,
+) {
+  const accessToken = await getAdminAccessToken();
+  const { apiBaseURL } = getE2EUrls(process.env);
+  const response = await request.get(`${apiBaseURL}/api/contact/references/admin`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  expect(response.ok()).toBeTruthy();
+  const payload = (await response.json()) as AdminReference[];
+  const reference = payload.find((item) => item.reference === referenceName) ?? null;
+  expect(reference).not.toBeNull();
+  return reference as AdminReference;
+}
+
+async function fetchPublicReferenceByName(
+  request: import("@playwright/test").APIRequestContext,
+  referenceName: string,
+) {
+  const { apiBaseURL } = getE2EUrls(process.env);
+  const response = await request.get(`${apiBaseURL}/api/contact/references`);
+
+  expect(response.ok()).toBeTruthy();
+  const payload = (await response.json()) as AdminReference[];
+  const reference = payload.find((item) => item.reference === referenceName) ?? null;
+  expect(reference).not.toBeNull();
+  return reference as AdminReference;
 }
 
 test("backoffice references create and delete", async ({ page }) => {
@@ -185,4 +240,66 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.goto("/");
   await expect(page.locator("header").getByRole("link", { name: /R.f.rences/i })).toHaveCount(0);
   await expect(page.locator("section#references")).toHaveCount(0);
+});
+
+test("reference icon replacement keeps front modal and media integrity", async ({
+  page,
+  request,
+}) => {
+  requireAdminCreds();
+  await loginAsAdmin(page);
+
+  const referenceName = `Ref Icon E2E ${Date.now()}`;
+  const firstIconPath = path.join(process.cwd(), "public", "badges", "french-tech.png");
+  const secondIconPath = path.join(process.cwd(), "public", "les-castas.png");
+
+  await createReference(page, referenceName, "Situation icon E2E");
+
+  await openReferencesManager(page);
+  await page.getByRole("row", { name: new RegExp(referenceName) }).click();
+  await expect(page.getByText(/Modifier la r.f.rence/i)).toBeVisible();
+  await uploadWithChooser(page, /Charger l.?ic.ne/i, firstIconPath);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page.getByText(referenceName)).toBeVisible();
+
+  const firstAdminReference = await fetchAdminReferenceByName(request, referenceName);
+  const firstPublicReference = await fetchPublicReferenceByName(request, referenceName);
+  const firstIconMediaPath = mediaPathFromUrl(firstAdminReference.icon);
+
+  expect(firstIconMediaPath).not.toBe("");
+  expect(mediaPathFromUrl(firstPublicReference.icon)).toBe(firstIconMediaPath);
+  expect(fs.existsSync(absoluteMediaPath(firstIconMediaPath))).toBeTruthy();
+
+  await openReferencesManager(page);
+  await page.getByRole("row", { name: new RegExp(referenceName) }).click();
+  await uploadWithChooser(page, /Charger l.?ic.ne/i, secondIconPath);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page.getByText(referenceName)).toBeVisible();
+
+  const updatedAdminReference = await fetchAdminReferenceByName(request, referenceName);
+  const updatedPublicReference = await fetchPublicReferenceByName(request, referenceName);
+  const updatedIconMediaPath = mediaPathFromUrl(updatedAdminReference.icon);
+
+  expect(updatedIconMediaPath).not.toBe("");
+  expect(updatedIconMediaPath).not.toBe(firstIconMediaPath);
+  expect(mediaPathFromUrl(updatedPublicReference.icon)).toBe(updatedIconMediaPath);
+  expect(fs.existsSync(absoluteMediaPath(updatedIconMediaPath))).toBeTruthy();
+  expect(fs.existsSync(absoluteMediaPath(firstIconMediaPath))).toBeFalsy();
+  expect(updatedAdminReference.icon).not.toContain(firstIconMediaPath);
+
+  await page.goto("/");
+  await page.locator("section#references").scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: `Ouvrir la mission : ${referenceName}` }).click();
+
+  const modal = page.getByRole("dialog", { name: new RegExp(referenceName) });
+  await expect(modal).toBeVisible();
+  const icon = modal.getByRole("img", { name: /Ic.ne|Badge/i });
+  await expect(icon).toBeVisible();
+  await expect
+    .poll(async () => icon.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0);
+  await expect(icon).toHaveAttribute("src", new RegExp(updatedIconMediaPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+  await openReferencesManager(page);
+  await deleteReference(page, referenceName);
 });

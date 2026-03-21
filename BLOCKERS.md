@@ -135,3 +135,10 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: execution de checks isoles a la place de la task de reference complete du projet.
 - Decision durable: avant toute completion de travail, la task VS Code `Tests` doit etre lancee dans son ensemble; tous ses checks doivent etre verts dans la session courante.
 - Verification demandee: aucune completion n'est autorisee sans mention explicite du lancement de la task complete `Tests` et de son resultat integralement vert.
+
+## 2026-03-21 - Les tests backend ne doivent jamais utiliser `backend/media`
+- Contexte: `python -m coverage run manage.py test` pouvait encore vider ou remplacer les medias locaux alors meme que les E2E etaient isoles.
+- Symptomes: apres `Test coverage Backend`, l'audit media passait de vert a rouge et `backend/media/` se retrouvait vide alors que la base locale pointait encore vers des chemins existants avant le run.
+- Cause racine: en mode test Django utilisait encore le `MEDIA_ROOT` par defaut du projet pour les tests qui ne surchargeaient pas explicitement ce setting.
+- Decision durable: en mode test, le backend doit utiliser un `MEDIA_ROOT` dedie (`backend/.test-media/`) ou un override explicite de test; `backend/media/` est interdit pour tout run `manage.py test`.
+- Verification demandee: apres tout changement touchant aux tests backend ou au stockage media, relancer `Test coverage Backend` puis `audit_reference_media --format=json` pour verifier que les medias locaux restent intacts.

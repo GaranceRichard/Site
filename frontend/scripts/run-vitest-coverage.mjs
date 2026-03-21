@@ -5,7 +5,15 @@ import path from "node:path";
 const forwardedArgs = process.argv.slice(2);
 const vitestArgs = ["./node_modules/vitest/vitest.mjs", "run", "--coverage", ...forwardedArgs];
 const ansiPattern = /\u001B\[[0-9;]*[A-Za-z]/g;
-const coverageDir = path.join(process.cwd(), "coverage");
+const configArgIndex = forwardedArgs.indexOf("--config");
+const configPath =
+  configArgIndex >= 0 && forwardedArgs[configArgIndex + 1]
+    ? forwardedArgs[configArgIndex + 1]
+    : "";
+const coverageDir = path.join(
+  process.cwd(),
+  configPath.includes("vitals") ? "coverage-vitals" : "coverage",
+);
 
 function stripAnsi(output) {
   return output.replaceAll(ansiPattern, "");

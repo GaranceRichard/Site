@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 
 from .media_cleanup import media_relative_path
@@ -45,6 +47,42 @@ class MediaPathField(serializers.ImageField):
         return f"{media_url}{value}"
 
 
+class MediaUrlField(serializers.CharField):
+    default_error_messages = {
+        "invalid": "Saisissez une URL valide.",
+    }
+
+    def to_internal_value(self, data):
+        value = str(data or "").strip()
+        if not value:
+            return ""
+
+        rel_path = media_relative_path(value)
+        if rel_path:
+            return rel_path
+
+        try:
+            URLValidator(schemes=["http", "https"])(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(self.error_messages["invalid"]) from exc
+        return value
+
+    def to_representation(self, value):
+        raw_value = str(value or "").strip()
+        if not raw_value:
+            return ""
+
+        rel_path = media_relative_path(raw_value)
+        if not rel_path:
+            return raw_value
+
+        request = self.context.get("request")
+        media_url = settings.MEDIA_URL or "/media/"
+        if request:
+            return request.build_absolute_uri(f"{media_url}{rel_path}")
+        return f"{media_url}{rel_path}"
+
+
 class ContactMessageSerializer(serializers.ModelSerializer):
     def validate_consent(self, value: bool) -> bool:
         if value is not True:
@@ -59,6 +97,7 @@ class ContactMessageSerializer(serializers.ModelSerializer):
 class ReferenceSerializer(serializers.ModelSerializer):
     image = MediaPathField()
     image_thumb = MediaPathField(required=False, allow_null=True)
+    icon = MediaUrlField(required=False, allow_blank=True)
     tasks = serializers.ListField(child=serializers.CharField(), required=False)
     actions = serializers.ListField(child=serializers.CharField(), required=False)
     results = serializers.ListField(child=serializers.CharField(), required=False)

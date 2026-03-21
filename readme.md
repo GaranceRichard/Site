@@ -290,6 +290,9 @@ Depuis `backend/` :
 ```powershell
 python manage.py test
 ```
+- Isolation media de test :
+  les runs `manage.py test` utilisent un `MEDIA_ROOT` dedie sous `backend/.test-media/`, afin de proteger `backend/media/`.
+  Un override explicite reste possible via `DJANGO_TEST_MEDIA_ROOT`.
 - Couverture :
 ```powershell
 python -m coverage run manage.py test
@@ -557,3 +560,4 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
 - Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.
+- Les tests backend utilisent maintenant un `MEDIA_ROOT` dedie (`backend/.test-media/`) pour ne plus jamais toucher aux medias locaux du projet pendant `manage.py test`.

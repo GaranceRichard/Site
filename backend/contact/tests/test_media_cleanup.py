@@ -145,7 +145,9 @@ class MediaCleanupUnitTests(APITestCase):
                 )
                 self.assertIn(orphan_path, report["orphan_media_files"])
                 self.assertIn(orphan_thumb, report["orphan_media_files"])
-                self.assertEqual(report["broken_references"][0]["reference"], "Ref broken")
+                self.assertEqual(
+                    report["broken_references"][0]["reference"], "Ref broken"
+                )
 
     @override_settings(MEDIA_URL="/media/")
     def test_cleanup_orphan_reference_media_removes_unused(self):
@@ -477,7 +479,7 @@ class DataAuditTests(APITestCase):
             consent=True,
             source="site",
         )
-        ContactMessage.objects.create(
+        missing_consent_message = ContactMessage.objects.create(
             name="Client",
             email="client@company.test",
             subject="Question",
@@ -490,7 +492,7 @@ class DataAuditTests(APITestCase):
 
         self.assertEqual(report["summary"]["probable_test_message_count"], 1)
         self.assertEqual(report["summary"]["consent_false_count"], 1)
-        self.assertEqual(report["consent_false_ids"], [2])
+        self.assertEqual(report["consent_false_ids"], [missing_consent_message.id])
 
     def test_audit_contact_messages_ignores_regular_messages(self):
         from contact.data_audit import audit_contact_messages
@@ -541,7 +543,9 @@ class DataAuditTests(APITestCase):
                 self.assertIn("Ref broken", payload)
 
     @override_settings(MEDIA_URL="/media/")
-    def test_audit_project_data_command_text_with_site_settings_and_duplicate_order(self):
+    def test_audit_project_data_command_text_with_site_settings_and_duplicate_order(
+        self,
+    ):
         SiteSettings.get_solo()
         Reference.objects.create(
             reference="Ref one",

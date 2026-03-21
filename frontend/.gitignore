@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/coverage-vitals
 /.lighthouseci
 
 # next.js

@@ -43,6 +43,10 @@ async function getAdminTokens(): Promise<AdminTokens> {
   return adminTokensPromise;
 }
 
+export async function getAdminAccessToken(): Promise<string> {
+  return (await getAdminTokens()).access;
+}
+
 async function injectAdminSession(page: import("@playwright/test").Page) {
   const tokens = await getAdminTokens();
 

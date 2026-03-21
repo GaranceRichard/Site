@@ -18,6 +18,7 @@ from contact.models import Reference
 from contact.serializers import (
     ContactMessageSerializer,
     MediaPathField,
+    MediaUrlField,
     ReferenceSerializer,
 )
 
@@ -257,6 +258,44 @@ class ReferenceSerializerTests(TestCase):
                 DummyValue("https://cdn.example.com/img.webp")
             ),
             "https://cdn.example.com/img.webp",
+        )
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_media_url_field_normalizes_local_media_and_keeps_external_urls(self):
+        field = MediaUrlField()
+
+        self.assertEqual(
+            field.to_internal_value("http://example.test/media/references/icon.webp"),
+            "references/icon.webp",
+        )
+        self.assertEqual(
+            field.to_internal_value("https://cdn.example.com/icon.webp"),
+            "https://cdn.example.com/icon.webp",
+        )
+        self.assertEqual(field.to_internal_value(""), "")
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_media_url_field_representation_rebuilds_local_media_urls(self):
+        class DummySerializer(serializers.Serializer):
+            icon = MediaUrlField()
+
+        request = APIRequestFactory().get("/api/contact/references")
+        serializer_with_request = DummySerializer(context={"request": request})
+        field_with_request = serializer_with_request.fields["icon"]
+        self.assertEqual(
+            field_with_request.to_representation("references/icon.webp"),
+            "http://testserver/media/references/icon.webp",
+        )
+
+        serializer_without_request = DummySerializer()
+        field_without_request = serializer_without_request.fields["icon"]
+        self.assertEqual(
+            field_without_request.to_representation("references/icon.webp"),
+            "/media/references/icon.webp",
+        )
+        self.assertEqual(
+            field_without_request.to_representation("https://cdn.example.com/icon.webp"),
+            "https://cdn.example.com/icon.webp",
         )
 
     def test_delete_media_if_changed_skips_non_local_paths(self):

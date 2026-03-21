@@ -34,6 +34,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "References" }));
     fireEvent.click(screen.getByRole("button", { name: "Statistiques" }));
     fireEvent.click(screen.getByRole("button", { name: "Header" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retour au site (logo)" }));
     fireEvent.click(screen.getByRole("button", { name: "Retour au site" }));
     fireEvent.click(screen.getByRole("button", { name: "Rafraîchir" }));
     fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
@@ -44,7 +45,7 @@ describe("Sidebar", () => {
     expect(onSelectSection).toHaveBeenCalledWith("references");
     expect(onSelectSection).toHaveBeenCalledWith("stats");
     expect(onSelectSection).toHaveBeenCalledWith("header");
-    expect(onGoHome).toHaveBeenCalled();
+    expect(onGoHome).toHaveBeenCalledTimes(2);
     expect(onRefresh).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();
   });

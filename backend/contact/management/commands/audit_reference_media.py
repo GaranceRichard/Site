@@ -25,9 +25,7 @@ class Command(BaseCommand):
 
         summary = report["summary"]
         self.stdout.write("Audit Reference media")
-        self.stdout.write(
-            f"- Références totales: {summary['references_total']}"
-        )
+        self.stdout.write(f"- Références totales: {summary['references_total']}")
         self.stdout.write(
             f"- Références avec média cassé: {summary['references_with_broken_media']}"
         )
@@ -35,9 +33,7 @@ class Command(BaseCommand):
         self.stdout.write(
             f"- Chemins média référencés: {summary['referenced_media_paths']}"
         )
-        self.stdout.write(
-            f"- Fichiers média présents: {summary['stored_media_files']}"
-        )
+        self.stdout.write(f"- Fichiers média présents: {summary['stored_media_files']}")
         self.stdout.write(
             f"- Chemins référencés manquants: {summary['missing_media_files']}"
         )

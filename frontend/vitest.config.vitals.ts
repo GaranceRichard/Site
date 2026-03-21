@@ -15,7 +15,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8",
-      reportsDirectory: "coverage",
+      reportsDirectory: "coverage-vitals",
       reporter: [["text", { maxCols: 160 }], "lcov"],
       all: true,
       include: [

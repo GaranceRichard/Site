@@ -37,6 +37,24 @@ class ReferencePublicApiTests(APITestCase):
         self.assertEqual(len(res.data), 2)
         self.assertTrue(res.data[0]["image"].startswith("http://testserver/media/"))
 
+    def test_public_reference_list_builds_icon_url_for_local_media(self):
+        Reference.objects.create(
+            reference="Ref Icon",
+            image="references/a.webp",
+            icon="references/icon-a.webp",
+            situation="Situation A",
+            tasks=["T1"],
+            actions=["A1"],
+            results=["R1"],
+        )
+
+        res = self.client.get("/api/contact/references")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            res.data[0]["icon"], "http://testserver/media/references/icon-a.webp"
+        )
+
     def test_reference_requires_auth(self):
         res = self.client.get("/api/contact/references/admin")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)

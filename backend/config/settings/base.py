@@ -356,7 +356,12 @@ STATIC_URL = "static/"
 STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media")))
+if IS_TEST:
+    MEDIA_ROOT = Path(
+        os.getenv("DJANGO_TEST_MEDIA_ROOT", str(BASE_DIR / ".test-media"))
+    )
+else:
+    MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media")))
 
 # -------------------------------------------------
 # Media storage (S3 optional)

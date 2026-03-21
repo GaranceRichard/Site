@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import Image from "next/image";
 import ThemeToggle from "../../components/ThemeToggle";
 import type { BackofficeSection } from "../types";
@@ -11,6 +12,15 @@ type SidebarProps = {
   onRefresh: () => void;
   onLogout: () => void;
 };
+
+const SECTIONS: Array<{ id: BackofficeSection; label: string }> = [
+  { id: "messages", label: "Messages contact" },
+  { id: "header", label: "Header" },
+  { id: "home", label: "Accueil" },
+  { id: "promise", label: "Positionnement" },
+  { id: "references", label: "References" },
+  { id: "stats", label: "Statistiques" },
+];
 
 function getSectionButtonClass(isActive: boolean): string {
   return [
@@ -29,6 +39,15 @@ export default function Sidebar({
   onRefresh,
   onLogout,
 }: SidebarProps) {
+  function handleSectionClick(event: MouseEvent<HTMLButtonElement>) {
+    const nextSection = event.currentTarget.dataset.section as
+      | BackofficeSection
+      | undefined;
+    if (nextSection) {
+      onSelectSection(nextSection);
+    }
+  }
+
   return (
     <aside className="w-64 shrink-0 border-r border-neutral-200 bg-white px-5 py-6 dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-start justify-between gap-3">
@@ -57,51 +76,17 @@ export default function Sidebar({
       </div>
 
       <div className="mt-8 space-y-2">
-        <button
-          type="button"
-          onClick={() => onSelectSection("messages")}
-          className={getSectionButtonClass(section === "messages")}
-        >
-          Messages contact
-        </button>
-      </div>
-
-      <div className="mt-4 space-y-2">
-        <button
-          type="button"
-          onClick={() => onSelectSection("header")}
-          className={getSectionButtonClass(section === "header")}
-        >
-          Header
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectSection("home")}
-          className={getSectionButtonClass(section === "home")}
-        >
-          Accueil
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectSection("promise")}
-          className={getSectionButtonClass(section === "promise")}
-        >
-          Positionnement
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectSection("references")}
-          className={getSectionButtonClass(section === "references")}
-        >
-          References
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectSection("stats")}
-          className={getSectionButtonClass(section === "stats")}
-        >
-          Statistiques
-        </button>
+        {SECTIONS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            data-section={item.id}
+            onClick={handleSectionClick}
+            className={getSectionButtonClass(section === item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       <div className="mt-auto space-y-2 pt-6">
