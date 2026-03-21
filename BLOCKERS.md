@@ -142,3 +142,10 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: en mode test Django utilisait encore le `MEDIA_ROOT` par defaut du projet pour les tests qui ne surchargeaient pas explicitement ce setting.
 - Decision durable: en mode test, le backend doit utiliser un `MEDIA_ROOT` dedie (`backend/.test-media/`) ou un override explicite de test; `backend/media/` est interdit pour tout run `manage.py test`.
 - Verification demandee: apres tout changement touchant aux tests backend ou au stockage media, relancer `Test coverage Backend` puis `audit_reference_media --format=json` pour verifier que les medias locaux restent intacts.
+
+## 2026-03-21 - Le boot backend E2E doit etre multiplateforme
+- Contexte: le job CI `e2e smoke` tournait sous Linux et ne pouvait pas demarrer le backend Playwright.
+- Symptomes: `powershell: not found` puis echec immediat de `config.webServer` avec code `127`.
+- Cause racine: `playwright.config.ts` dependait d'un script `start-e2e-backend.ps1` Windows-only.
+- Decision durable: le demarrage backend E2E doit passer par un lanceur portable (`node`/`python`) compatible Windows et Linux; aucun binaire shell specifique a un OS ne doit etre requis dans `webServer.command`.
+- Verification demandee: relancer les commandes Playwright reelles du repo sur la task complete `Tests`; le smoke E2E doit pouvoir demarrer sans PowerShell.

@@ -294,7 +294,9 @@ class ReferenceSerializerTests(TestCase):
             "/media/references/icon.webp",
         )
         self.assertEqual(
-            field_without_request.to_representation("https://cdn.example.com/icon.webp"),
+            field_without_request.to_representation(
+                "https://cdn.example.com/icon.webp"
+            ),
             "https://cdn.example.com/icon.webp",
         )
 

@@ -31,7 +31,7 @@ export default defineConfig({
   timeout: 30_000,
   webServer: [
     {
-      command: "powershell -ExecutionPolicy Bypass -File .\\scripts\\start-e2e-backend.ps1",
+      command: "node ./scripts/start-e2e-backend.mjs",
       cwd: __dirname,
       url: `${e2eUrls.apiBaseURL}/api/health`,
       reuseExistingServer: false,

@@ -339,6 +339,7 @@ npm run test:e2e
 - Isolation automatique :
 - les E2E demarrent un backend Django dedie sur `127.0.0.1:8100` avec une DB SQLite et des medias sous `frontend/.e2e-virtual/`.
 - les E2E demarrent aussi un frontend dedie sur `127.0.0.1:3100` avec un dossier Next distinct de `.next/`.
+- le bootstrap backend E2E passe par `frontend/scripts/start-e2e-backend.mjs`, afin de rester compatible Windows et Linux.
 - le backend de dev (`backend/db.sqlite3`, `backend/media/`) n'est plus partage avec la suite E2E.
 - les variables d'environnement heritees potentiellement dangereuses (`DATABASE_URL`, `DJANGO_MEDIA_ROOT`, `E2E_API_BASE_URL`, ports `3000/8000`) sont ecrasees par la config E2E pour imposer la sandbox.
 - Alternative locale (sans retaper) :
@@ -561,3 +562,4 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
 - Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.
 - Les tests backend utilisent maintenant un `MEDIA_ROOT` dedie (`backend/.test-media/`) pour ne plus jamais toucher aux medias locaux du projet pendant `manage.py test`.
+- Le backend E2E Playwright est maintenant demarre via un lanceur Node multiplateforme, pour que le smoke CI fonctionne aussi sous Linux sans dependre de PowerShell.

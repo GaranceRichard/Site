@@ -29,7 +29,7 @@ npm run build
 ## E2E coverage
 
 - Les E2E utilisent un sandbox local dedie: backend sur `127.0.0.1:8100`, frontend sur `127.0.0.1:3100`, DB/media dans `frontend/.e2e-virtual/`.
-- Le script [start-e2e-backend.ps1](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/start-e2e-backend.ps1) prepare la DB, les medias et l'admin E2E sans toucher au backend de dev.
+- Le script [start-e2e-backend.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/start-e2e-backend.mjs) prepare la DB, les medias et l'admin E2E sans toucher au backend de dev, avec un lancement compatible Windows et Linux.
 - La config E2E ecrase volontairement les overrides d'environnement dangereux (`DATABASE_URL`, `DJANGO_MEDIA_ROOT`, `E2E_API_BASE_URL`, ports `3000/8000`) pour empecher tout retour vers `backend/db.sqlite3` ou `backend/media`.
 - `frontend/.env.e2e.local` peut contenir `E2E_ADMIN_USER`, `E2E_ADMIN_PASS` et, si besoin, `E2E_FRONTEND_PORT`, `E2E_BACKEND_PORT`, `E2E_API_BASE_URL`, `E2E_SANDBOX_ROOT`.
 - `npm run test:e2e:smoke` : filet rapide des parcours critiques transverses.
@@ -55,6 +55,7 @@ npm run build
 - `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, tolere le faux echec `coverage/.tmp` sous Windows et retente une fois si Vitest/Vite/esbuild echoue au demarrage.
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
+- Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 
 ## Audit de performance local
 
