@@ -93,3 +93,45 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: manque d'endurance d'execution et absence de signal clair "fini" ou "question bloquante".
 - Decision durable: eviter absolument toute situation ou l'utilisateur doit diagnostiquer lui-meme l'inaction; maintenir un flux d'execution continu jusqu'a la fin ou jusqu'a une question necessaire.
 - Verification demandee: la collaboration ne doit exposer que deux etats visibles: "travail en cours" ou "fini", sauf question bloquante indispensable.
+
+## 2026-03-21 - Les E2E ne doivent jamais reutiliser la DB ou les medias de dev
+- Contexte: la suite Playwright pouvait demarrer sur le backend de developpement et alterer les donnees locales du site.
+- Symptomes: creations/suppressions visibles dans `backend/db.sqlite3` et `backend/media` apres les tests E2E.
+- Cause racine: backend E2E lance sans isolation explicite de la DB, des medias et des ports.
+- Decision durable: les E2E doivent toujours utiliser un backend dedie avec DB/media dans le workspace (`frontend/.e2e-virtual/`) et des ports distincts du dev local.
+- Verification demandee: aucun run E2E ne doit ecrire dans `backend/db.sqlite3`, `backend/media/` ou reutiliser un serveur local partage.
+
+## 2026-03-21 - Les runners E2E frontend doivent isoler leur dossier Next et eviter les helpers non compatibles Playwright
+- Contexte: apres isolation des E2E, le gate a bute sur un lock `.next/dev` partage et sur un helper TS charge differemment par Vitest et Playwright.
+- Symptomes: erreur `Unable to acquire lock ... .next\\dev\\lock` puis erreur `exports is not defined in ES module scope` pendant le chargement de `playwright.config.ts`.
+- Cause racine: partage du meme `distDir` que le frontend de dev et usage de primitives module (`import.meta`) non robustes dans un helper importe par des loaders differents.
+- Decision durable: un frontend E2E doit utiliser un `NEXT_DIST_DIR` dedie; tout helper partage entre Vitest et Playwright doit rester compatible avec leurs modes de chargement respectifs.
+- Verification demandee: `npm run test:e2e` et `npm run test:e2e:coverage:report` doivent passer sans lock `.next` ni erreur de module.
+
+## 2026-03-21 - Les nouvelles zones backend couvertes doivent etre rattachees aux suites integration et vitals
+- Contexte: de nouveaux modules backend d'audit etaient testes localement, mais restaient a `0%` dans le gate.
+- Symptomes: `Test integration` et `Vitals compliance` rouges alors que les tests cibles passaient et que la couverture globale backend etait verte.
+- Cause racine: la task VS Code d'integration/vitals utilisait une liste statique de modules de test qui n'incluait pas `contact.tests.test_media_cleanup`.
+- Decision durable: toute nouvelle zone backend ajoutee pour satisfaire le gate doit etre reliee explicitement aux commandes `Test integration` et `Vitals compliance` si ces commandes filtrent les modules de test.
+- Verification demandee: apres ajout d'un nouveau module de test backend, relancer les commandes integration/vitals reelles du repo et verifier que les nouveaux fichiers n'apparaissent pas a `0%`.
+
+## 2026-03-21 - Les E2E ne doivent jamais honorer des overrides d'environnement qui pointent vers la DB ou les medias locaux
+- Contexte: une suite E2E a de nouveau laisse les references locales avec des chemins medias morts.
+- Symptomes: apres `playwright test` ou `test:e2e:coverage:report`, les references locales existent encore en base mais `backend/media/references` est vide.
+- Cause racine: la config E2E acceptait encore des overrides herites (`DATABASE_URL`, `DJANGO_MEDIA_ROOT`, `E2E_API_BASE_URL`, ports dev) au lieu d'imposer strictement la sandbox.
+- Decision durable: les runners E2E doivent ecraser ces variables avec des valeurs isolees et refuser les ports/URLs de dev partages (`3000`/`8000`).
+- Verification demandee: relancer les tests de config E2E et les commandes E2E reelles avec la sandbox imposee; aucun run ne doit pouvoir cibler `backend/db.sqlite3` ou `backend/media`.
+
+## 2026-03-21 - Aucun statut ou reassurance ne doit remplacer le rerun du check source de verite
+- Contexte: plusieurs reponses ont laisse entendre qu'un sujet etait regle alors que le check reel du gate n'avait pas encore ete rejoue ou etait encore rouge.
+- Symptomes: l'utilisateur a du controler lui-meme la couverture, relever les rouges restants et corriger le pilotage de l'execution.
+- Cause racine: ecart de discipline d'execution; des validations locales ou des lectures partielles ont ete traitees comme suffisantes a la place du rerun systematique de la commande qui fait foi.
+- Decision durable: sur ce repo, aucune reassurance, aucun "ok", aucun statut de fin ou de conformite n'est autorise sans sortie verte du check source de verite correspondant, relance dans la session courante.
+- Verification demandee: toute reponse de statut doit citer explicitement la commande relancee et son resultat binaire (`vert` ou `rouge`); si c'est rouge, le travail continue sans conclusion.
+
+## 2026-03-21 - Toute completion de travail exige le lancement prealable de la task complete `Tests`
+- Contexte: une exigence explicite a ete formulee pour supprimer toute ambiguite sur le critere de fin.
+- Symptomes: des validations partielles ont oblige l'utilisateur a recontroler lui-meme l'etat reel du repo avant completion.
+- Cause racine: execution de checks isoles a la place de la task de reference complete du projet.
+- Decision durable: avant toute completion de travail, la task VS Code `Tests` doit etre lancee dans son ensemble; tous ses checks doivent etre verts dans la session courante.
+- Verification demandee: aucune completion n'est autorisee sans mention explicite du lancement de la task complete `Tests` et de son resultat integralement vert.

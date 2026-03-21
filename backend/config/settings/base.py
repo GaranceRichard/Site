@@ -270,12 +270,16 @@ if IS_PROD:
             )
         }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+    DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+    if DATABASE_URL:
+        DATABASES = {"default": _db_from_database_url(DATABASE_URL)}
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
         }
-    }
 
 
 # -------------------------------------------------
@@ -349,10 +353,10 @@ USE_TZ = True
 # Static files
 # -------------------------------------------------
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media")))
 
 # -------------------------------------------------
 # Media storage (S3 optional)

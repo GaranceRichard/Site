@@ -40,4 +40,19 @@ describe("headerSettings", () => {
   it("returns defaults on server snapshot", () => {
     expect(getHeaderSettingsServer()).toEqual(DEFAULT_HEADER_SETTINGS);
   });
+
+  it("returns the unsubscribe function from the shared store subscription", () => {
+    const listener = vi.fn();
+
+    const unsubscribe = subscribeHeaderSettings(listener);
+    unsubscribe();
+
+    setHeaderSettings({
+      name: "After unsubscribe",
+      title: "No notify",
+      bookingUrl: "https://example.com/after",
+    });
+
+    expect(listener).not.toHaveBeenCalled();
+  });
 });

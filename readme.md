@@ -151,6 +151,7 @@ Utiliser les tasks VS Code :
 
 Tasks de verification utiles :
 - `Tests` : lance les couvertures backend, integration, frontend, E2E, `Vitals compliance`, `npm lint` et `npm build`.
+- Regle de completion : aucune tache n'est consideree complete tant que la task VS Code `Tests` n'a pas ete relancee en entier et tout au vert dans la session courante.
 - `Vitals compliance` : valide la couverture vitale frontend (`95/95/95/95` avec `perFile`) puis la couverture d'integration backend avec un seuil global backend de `95%` et un controle backend vital par fichier.
 
 ### Makefile (raccourcis)
@@ -326,22 +327,27 @@ Depuis `frontend/` :
 ```powershell
 npx playwright install
 ```
-- Pre-requis backend (dans `backend/.env`) :
-```ini
-DJANGO_ENABLE_JWT=true
-DJANGO_E2E_MODE=true
-```
 - Lancer les tests E2E :
 ```powershell
 $env:E2E_ADMIN_USER="votre_admin"
 $env:E2E_ADMIN_PASS="votre_mdp"
 npm run test:e2e
 ```
+- Isolation automatique :
+- les E2E demarrent un backend Django dedie sur `127.0.0.1:8100` avec une DB SQLite et des medias sous `frontend/.e2e-virtual/`.
+- les E2E demarrent aussi un frontend dedie sur `127.0.0.1:3100` avec un dossier Next distinct de `.next/`.
+- le backend de dev (`backend/db.sqlite3`, `backend/media/`) n'est plus partage avec la suite E2E.
+- les variables d'environnement heritees potentiellement dangereuses (`DATABASE_URL`, `DJANGO_MEDIA_ROOT`, `E2E_API_BASE_URL`, ports `3000/8000`) sont ecrasees par la config E2E pour imposer la sandbox.
 - Alternative locale (sans retaper) :
   Creer `frontend/.env.e2e.local` (non versionne) :
 ```ini
 E2E_ADMIN_USER=votre_admin
 E2E_ADMIN_PASS=votre_mdp
+# Optionnel :
+# E2E_FRONTEND_PORT=3100
+# E2E_BACKEND_PORT=8100
+# E2E_API_BASE_URL=http://127.0.0.1:8100
+# E2E_SANDBOX_ROOT=.e2e-virtual
 ```
 - Couverture E2E (collecte brute) :
 ```powershell
@@ -378,6 +384,18 @@ Nettoyer les medias orphelins des references :
 ```powershell
 cd backend
 python manage.py cleanup_reference_media
+```
+
+Auditer l'integrite des medias references :
+```powershell
+cd backend
+python manage.py audit_reference_media --format=json
+```
+
+Auditer l'integrite locale plus large du projet :
+```powershell
+cd backend
+python manage.py audit_project_data --format=json
 ```
 
 ## Test rapide (curl)
@@ -470,6 +488,8 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, `DATABASE_URL`, `REDIS_URL`.
 - Variables clefs frontend:
 - `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SENTRY_DSN`.
+- Variables clefs E2E local:
+- `E2E_ADMIN_USER`, `E2E_ADMIN_PASS`, `E2E_FRONTEND_PORT`, `E2E_BACKEND_PORT`, `E2E_API_BASE_URL`, `E2E_SANDBOX_ROOT`.
 - Variables clefs proxy TLS:
 - `NGINX_SSL_CERTIFICATE`, `NGINX_SSL_CERTIFICATE_KEY`, `NGINX_SSL_CERTIFICATE_PATH`, `NGINX_SSL_CERTIFICATE_KEY_PATH`.
 - Variables observabilite:

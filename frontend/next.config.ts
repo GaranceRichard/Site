@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const rawCdnUrl = process.env.NEXT_PUBLIC_CDN_URL?.trim() ?? "";
 const cdnUrl = rawCdnUrl.replace(/\/$/, "");
+const rawDistDir = process.env.NEXT_DIST_DIR?.trim() ?? "";
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ?? "";
 const backendOrigin = (rawApiBaseUrl || "http://127.0.0.1:8000").replace(/\/$/, "");
 const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() ?? "";
@@ -106,6 +107,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins,
   assetPrefix: process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
   compress: true,
+  distDir: rawDistDir || undefined,
   poweredByHeader: false,
   async rewrites() {
     return [

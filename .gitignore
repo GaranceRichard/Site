@@ -18,6 +18,7 @@ backend/.env.*
 # Frontend (Next)
 frontend/node_modules/
 frontend/.next/
+frontend/.e2e-virtual/
 frontend/out/
 frontend/.turbo/
 frontend/.vercel/

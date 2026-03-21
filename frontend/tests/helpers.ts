@@ -1,8 +1,9 @@
 import { expect, test } from "./fixtures";
+import { getE2EUrls } from "../src/e2e/config";
 
 const adminUser = process.env.E2E_ADMIN_USER;
 const adminPass = process.env.E2E_ADMIN_PASS;
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const apiBase = getE2EUrls(process.env).apiBaseURL;
 
 type AdminTokens = {
   access: string;

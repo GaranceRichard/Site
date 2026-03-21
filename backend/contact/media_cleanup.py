@@ -47,6 +47,79 @@ def referenced_media_paths() -> set[str]:
     return paths
 
 
+def _storage_exists(path: str) -> bool:
+    try:
+        return default_storage.exists(path)
+    except Exception:
+        return False
+
+
+def _storage_files(prefix: str) -> list[str]:
+    try:
+        _, files = default_storage.listdir(prefix)
+    except Exception:
+        return []
+    return [f"{prefix}/{name}" for name in files]
+
+
+def audit_reference_media() -> dict:
+    referenced_paths = referenced_media_paths()
+    stored_paths = set(_storage_files("references")) | set(
+        _storage_files("references/thumbs")
+    )
+
+    broken_references: list[dict] = []
+    for ref in Reference.objects.all().only(
+        "id",
+        "reference",
+        "image",
+        "image_thumb",
+        "icon",
+    ):
+        fields: list[dict] = []
+        for field_name in ("image", "image_thumb", "icon"):
+            raw_value = getattr(ref, field_name)
+            rel_path = media_relative_path(raw_value)
+            if not rel_path:
+                continue
+            if not _storage_exists(rel_path):
+                fields.append(
+                    {
+                        "field": field_name,
+                        "value": _as_str(raw_value),
+                        "relative_path": rel_path,
+                    }
+                )
+        if fields:
+            broken_references.append(
+                {
+                    "id": ref.id,
+                    "reference": ref.reference,
+                    "broken_fields": fields,
+                }
+            )
+
+    orphan_files = sorted(stored_paths - referenced_paths)
+    missing_files = sorted(referenced_paths - stored_paths)
+
+    return {
+        "summary": {
+            "references_total": Reference.objects.count(),
+            "references_with_broken_media": len(broken_references),
+            "broken_field_count": sum(
+                len(item["broken_fields"]) for item in broken_references
+            ),
+            "referenced_media_paths": len(referenced_paths),
+            "stored_media_files": len(stored_paths),
+            "missing_media_files": len(missing_files),
+            "orphan_media_files": len(orphan_files),
+        },
+        "broken_references": broken_references,
+        "missing_media_files": missing_files,
+        "orphan_media_files": orphan_files,
+    }
+
+
 def cleanup_orphan_reference_media() -> int:
     used = referenced_media_paths()
     deleted = 0

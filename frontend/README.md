@@ -28,6 +28,10 @@ npm run build
 
 ## E2E coverage
 
+- Les E2E utilisent un sandbox local dedie: backend sur `127.0.0.1:8100`, frontend sur `127.0.0.1:3100`, DB/media dans `frontend/.e2e-virtual/`.
+- Le script [start-e2e-backend.ps1](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/start-e2e-backend.ps1) prepare la DB, les medias et l'admin E2E sans toucher au backend de dev.
+- La config E2E ecrase volontairement les overrides d'environnement dangereux (`DATABASE_URL`, `DJANGO_MEDIA_ROOT`, `E2E_API_BASE_URL`, ports `3000/8000`) pour empecher tout retour vers `backend/db.sqlite3` ou `backend/media`.
+- `frontend/.env.e2e.local` peut contenir `E2E_ADMIN_USER`, `E2E_ADMIN_PASS` et, si besoin, `E2E_FRONTEND_PORT`, `E2E_BACKEND_PORT`, `E2E_API_BASE_URL`, `E2E_SANDBOX_ROOT`.
 - `npm run test:e2e:smoke` : filet rapide des parcours critiques transverses.
 - `npm run test:e2e:coverage` : KPI browser court, limite au front visible (`ContactForm`, `ReferenceModal`) et collecte brute V8 dans `coverage-e2e/`.
 - `npm run test:e2e:coverage:report` : collecte + aggregation Istanbul (text/json/html) dans `coverage-e2e-report/`.
@@ -43,6 +47,7 @@ npm run build
 
 - `dev:all` : lance `Backend`, `Frontend`, `Monitor` et `Perf Loop` dans 4 terminaux distincts.
 - `Tests` : lance `Test coverage Backend`, `Test integration`, `Test coverage frontend`, `Test coverage e2e`, `Vitals compliance`, `npm lint` et `npm build`.
+- Regle de completion du repo : aucune tache n'est complete tant que la task complete `Tests` n'a pas ete relancee et integralement verte dans la session courante.
 - `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.ts`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
 
 ## Notes recentes

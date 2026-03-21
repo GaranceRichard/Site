@@ -10,45 +10,56 @@ Mon site/
 |   |-- Dockerfile
 |   |-- app/
 |   |-- contact/
+|   |   |-- data_audit.py
+|   |   |-- media_cleanup.py
+|   |   `-- management/
+|   |       `-- commands/
+|   |           |-- audit_project_data.py
+|   |           `-- audit_reference_media.py
 |   |-- config/
 |   `-- scripts/
 |-- frontend/
 |   |-- package.json
 |   |-- playwright.config.ts
+|   |-- next.config.ts
 |   |-- eslint.config.mjs
 |   |-- README.md
 |   |-- public/
 |   |-- scripts/
 |   |   |-- run-lhci.cjs
+|   |   |-- start-e2e-backend.ps1
 |   |   `-- e2e-coverage-report.mjs
 |   |-- src/
-|   |   `-- app/
-|   |       |-- backoffice/
-|   |       |   |-- page.tsx
-|   |       |   |-- sectionStore.ts
-|   |       |   |-- types.ts
-|   |       |   `-- components/
-|   |       |       |-- HeaderSettingsManager.tsx
-|   |       |       |-- HomeSettingsManager.tsx
-|   |       |       |-- ReferencesManager.tsx
-|   |       |       `-- references/
-|   |       |           `-- useReferencesManager.ts
-|   |       |-- components/
-|   |       |   |-- TopNav.tsx
-|   |       |   |-- ScrollNav.tsx
-|   |       |   `-- home/
-|   |       |       |-- HeroSection.tsx
-|   |       |       |-- PromiseSection.tsx
-|   |       |       |-- MethodSection.tsx
-|   |       |       |-- ServicesSection.tsx
-|   |       |       `-- ReferencesSection.tsx
-|   |       |-- content/
-|   |       |   |-- headerSettings.ts
-|   |       |   |-- homeHeroSettings.ts
-|   |       |   `-- homeSections.tsx
-|   |       |-- contact/
-|   |       |   `-- ContactForm.tsx
-|   |       `-- page.tsx
+|   |   |-- app/
+|   |   |   |-- backoffice/
+|   |   |   |   |-- page.tsx
+|   |   |   |   |-- sectionStore.ts
+|   |   |   |   |-- types.ts
+|   |   |   |   `-- components/
+|   |   |   |       |-- HeaderSettingsManager.tsx
+|   |   |   |       |-- HomeSettingsManager.tsx
+|   |   |   |       |-- ReferencesManager.tsx
+|   |   |   |       `-- references/
+|   |   |   |           `-- useReferencesManager.ts
+|   |   |   |-- components/
+|   |   |   |   |-- TopNav.tsx
+|   |   |   |   |-- ScrollNav.tsx
+|   |   |   |   `-- home/
+|   |   |   |       |-- HeroSection.tsx
+|   |   |   |       |-- PromiseSection.tsx
+|   |   |   |       |-- MethodSection.tsx
+|   |   |   |       |-- ServicesSection.tsx
+|   |   |   |       `-- ReferencesSection.tsx
+|   |   |   |-- content/
+|   |   |   |   |-- headerSettings.ts
+|   |   |   |   |-- homeHeroSettings.ts
+|   |   |   |   |-- promiseSettings.ts
+|   |   |   |   `-- homeSections.tsx
+|   |   |   |-- contact/
+|   |   |   |   `-- ContactForm.tsx
+|   |   |   `-- page.tsx
+|   |   `-- e2e/
+|   |       `-- config.ts
 |   `-- tests/
 |       |-- helpers.ts
 |       |-- fixtures.ts

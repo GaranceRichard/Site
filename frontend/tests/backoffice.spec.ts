@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { getE2EUrls } from "../src/e2e/config";
 import {
   fillStableValue,
   loginAsAdmin,
@@ -7,7 +8,7 @@ import {
   submitAdminLogin,
 } from "./helpers";
 
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const apiBase = getE2EUrls(process.env).apiBaseURL;
 
 test.describe.configure({ mode: "serial" });
 

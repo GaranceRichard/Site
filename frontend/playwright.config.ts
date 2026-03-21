@@ -1,9 +1,28 @@
 import { defineConfig } from "@playwright/test";
 import path from "path";
 import dotenv from "dotenv";
+import { getE2EBackendEnv, getE2EPaths, getE2EPorts, getE2EUrls } from "./src/e2e/config";
 
 dotenv.config({ path: path.resolve(__dirname, ".env.local"), quiet: true });
 dotenv.config({ path: path.resolve(__dirname, ".env.e2e.local"), quiet: true });
+
+const e2ePorts = getE2EPorts(process.env);
+
+process.env.E2E_FRONTEND_PORT = String(e2ePorts.frontendPort);
+process.env.E2E_BACKEND_PORT = String(e2ePorts.backendPort);
+process.env.E2E_BASE_URL = `http://127.0.0.1:${e2ePorts.frontendPort}`;
+process.env.E2E_API_BASE_URL = `http://127.0.0.1:${e2ePorts.backendPort}`;
+process.env.NEXT_PUBLIC_API_BASE_URL = process.env.E2E_API_BASE_URL;
+
+const e2eUrls = getE2EUrls(process.env);
+const e2ePaths = getE2EPaths(process.env);
+const backendEnv = getE2EBackendEnv(process.env);
+
+process.env.E2E_SANDBOX_ROOT = e2ePaths.sandboxRoot;
+
+for (const [key, value] of Object.entries(backendEnv)) {
+  process.env[key] = value;
+}
 
 export default defineConfig({
   testDir: path.resolve(__dirname, "tests"),
@@ -12,23 +31,23 @@ export default defineConfig({
   timeout: 30_000,
   webServer: [
     {
-      command:
-        'powershell -ExecutionPolicy Bypass -Command "if (Test-Path .\\\\.venv\\\\Scripts\\\\Activate.ps1) { . .\\\\.venv\\\\Scripts\\\\Activate.ps1 }; python manage.py runserver 127.0.0.1:8000 --noreload"',
-      cwd: path.resolve(__dirname, "..", "backend"),
-      url: "http://127.0.0.1:8000/api/health",
-      reuseExistingServer: true,
+      command: "powershell -ExecutionPolicy Bypass -File .\\scripts\\start-e2e-backend.ps1",
+      cwd: __dirname,
+      url: `${e2eUrls.apiBaseURL}/api/health`,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: "npm run dev -- --port 3000",
+      command:
+        `npx cross-env NEXT_DIST_DIR=.e2e-virtual/.next NEXT_DEV_ALLOWED_ORIGINS=${e2eUrls.baseURL},http://localhost:${e2eUrls.frontendPort} npm run dev -- --port ${e2eUrls.frontendPort}`,
       cwd: __dirname,
-      url: process.env.E2E_BASE_URL || "http://localhost:3000",
-      reuseExistingServer: true,
+      url: e2eUrls.baseURL,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],
   use: {
-    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
+    baseURL: e2eUrls.baseURL,
     trace: "on-first-retry",
   },
   expect: {

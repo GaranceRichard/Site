@@ -34,6 +34,16 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("promise");
   });
 
+  it("returns messages when stored value is messages", () => {
+    window.localStorage.setItem(SECTION_KEY, "messages");
+    expect(getBackofficeSection()).toBe("messages");
+  });
+
+  it("returns stats when stored value is stats", () => {
+    window.localStorage.setItem(SECTION_KEY, "stats");
+    expect(getBackofficeSection()).toBe("stats");
+  });
+
   it("falls back to messages when stored value is invalid", () => {
     window.localStorage.setItem(SECTION_KEY, "invalid");
     expect(getBackofficeSection()).toBe("messages");
@@ -60,6 +70,26 @@ describe("sectionStore", () => {
 
     unsubscribe();
     spy.mockRestore();
+  });
+
+  it("supports multiple listeners on write", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const unsubscribeFirst = subscribeBackofficeSection(first);
+    const unsubscribeSecond = subscribeBackofficeSection(second);
+
+    setBackofficeSection("references");
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+
+    unsubscribeFirst();
+    unsubscribeSecond();
+  });
+
+  it("allows writing without listeners", () => {
+    expect(() => setBackofficeSection("messages")).not.toThrow();
+    expect(window.localStorage.getItem(SECTION_KEY)).toBe("messages");
   });
 
   it("stops notifying a listener after unsubscribe", () => {

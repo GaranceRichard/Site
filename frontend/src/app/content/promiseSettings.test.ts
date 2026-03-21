@@ -1,24 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("./siteSettingsStore", () => ({
-  DEFAULT_PROMISE_SETTINGS: { title: "Default title", subtitle: "Default subtitle", cards: [] },
-  getSiteSettings: vi.fn(() => ({
-    header: { name: "", title: "", bookingUrl: "" },
-    homeHero: { eyebrow: "", title: "", subtitle: "", links: [], keywords: [], cards: [] },
-    promise: { title: "Promise title", subtitle: "Promise subtitle", cards: [{ id: "1", title: "Card", content: "Body" }] },
-  })),
-  getSiteSettingsServer: vi.fn(() => ({
-    header: { name: "", title: "", bookingUrl: "" },
-    homeHero: { eyebrow: "", title: "", subtitle: "", links: [], keywords: [], cards: [] },
-    promise: { title: "Server title", subtitle: "Server subtitle", cards: [] },
-  })),
-  setPromiseSettings: vi.fn(),
-  subscribeSiteSettings: vi.fn((listener: () => void) => {
-    listener();
-    return () => "unsubscribed";
-  }),
-}));
-
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_PROMISE_SETTINGS,
   getPromiseSettings,
@@ -26,36 +6,53 @@ import {
   setPromiseSettings,
   subscribePromiseSettings,
 } from "./promiseSettings";
+import { resetSiteSettingsStoreForTests } from "./siteSettingsStore";
 
 describe("promiseSettings", () => {
-  it("returns the client promise settings", () => {
+  beforeEach(() => {
+    resetSiteSettingsStoreForTests();
+    vi.restoreAllMocks();
+  });
+
+  it("returns defaults before the API load completes", () => {
+    expect(getPromiseSettings()).toEqual(DEFAULT_PROMISE_SETTINGS);
+  });
+
+  it("writes to the in-memory store and notifies listeners", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribePromiseSettings(listener);
+
+    setPromiseSettings({
+      title: "Promise title",
+      subtitle: "Promise subtitle",
+      cards: [{ id: "1", title: "Card", content: "Body" }],
+    });
+
     expect(getPromiseSettings()).toEqual({
       title: "Promise title",
       subtitle: "Promise subtitle",
       cards: [{ id: "1", title: "Card", content: "Body" }],
     });
+    expect(listener).toHaveBeenCalled();
+    unsubscribe();
   });
 
-  it("returns the server promise settings", () => {
-    expect(getPromiseSettingsServer()).toEqual({
-      title: "Server title",
-      subtitle: "Server subtitle",
-      cards: [],
-    });
+  it("returns defaults on server snapshot", () => {
+    expect(getPromiseSettingsServer()).toEqual(DEFAULT_PROMISE_SETTINGS);
   });
 
-  it("re-exports the default settings and setter/subscription wrappers", () => {
-    expect(DEFAULT_PROMISE_SETTINGS).toEqual({
-      title: "Default title",
-      subtitle: "Default subtitle",
-      cards: [],
-    });
-    expect(typeof setPromiseSettings).toBe("function");
-
+  it("returns the unsubscribe function from the shared store subscription", () => {
     const listener = vi.fn();
-    const unsubscribe = subscribePromiseSettings(listener);
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(unsubscribe()).toBe("unsubscribed");
+    const unsubscribe = subscribePromiseSettings(listener);
+    unsubscribe();
+
+    setPromiseSettings({
+      title: "After unsubscribe",
+      subtitle: "No notify",
+      cards: [{ id: "2", title: "Silent", content: "Listener removed" }],
+    });
+
+    expect(listener).not.toHaveBeenCalled();
   });
 });
