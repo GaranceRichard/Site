@@ -27,10 +27,14 @@ Mon site/
 |   |-- public/
 |   |-- scripts/
 |   |   |-- run-lhci.cjs
-|   |   |-- start-e2e-backend.ps1
+|   |   |-- start-e2e-backend.mjs
 |   |   `-- e2e-coverage-report.mjs
 |   |-- src/
 |   |   |-- app/
+|   |   |   |-- api-proxy/
+|   |   |   |   `-- media/
+|   |   |   |       `-- [...path]/
+|   |   |   |           `-- route.ts
 |   |   |   |-- backoffice/
 |   |   |   |   |-- page.tsx
 |   |   |   |   |-- sectionStore.ts
@@ -57,6 +61,8 @@ Mon site/
 |   |   |   |   `-- homeSections.tsx
 |   |   |   |-- contact/
 |   |   |   |   `-- ContactForm.tsx
+|   |   |   |-- lib/
+|   |   |   |   `-- media.ts
 |   |   |   `-- page.tsx
 |   |   `-- e2e/
 |   |       `-- config.ts

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Container, SectionTitle } from "./ui";
 import type { ReferenceItem } from "../../content/references";
 import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
+import { toProxiedMediaUrl } from "../../lib/media";
 
 const ReferenceModal = dynamic(() => import("./ReferenceModal"), { ssr: false });
 
@@ -22,8 +23,8 @@ function toReferenceItem(item: ApiReference): ReferenceItem {
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
-    imageSrc: imageSrc || "",
-    badgeSrc: item.icon || undefined,
+    imageSrc: toProxiedMediaUrl(imageSrc),
+    badgeSrc: toProxiedMediaUrl(item.icon) || undefined,
     badgeAlt: item.icon ? "Icône" : undefined,
     situation: item.situation || "",
     tasks: item.tasks ?? [],

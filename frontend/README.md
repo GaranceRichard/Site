@@ -36,6 +36,7 @@ npm run build
 - `npm run test:e2e:coverage` : KPI browser court, limite au front visible (`ContactForm`, `ReferenceModal`) et collecte brute V8 dans `coverage-e2e/`.
 - `npm run test:e2e:coverage:report` : collecte + aggregation Istanbul (text/json/html) dans `coverage-e2e-report/`.
 - `npm run test:e2e:full` : suite Playwright exhaustive, hors KPI coverage.
+- Les medias backend exposes via `/media/...` sont remappes cote frontend vers `/api-proxy/media/...` pour garder un chargement same-origin fiable dans la modale de references et en CI.
 
 ## Pyramide de tests
 
@@ -56,6 +57,7 @@ npm run build
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
+- Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
 
 ## Audit de performance local
 

@@ -26,6 +26,8 @@ garancerichard-site/
 - frontend/src/app/content/homeHeroSettings.ts
 - frontend/src/app/content/headerSettings.ts
 - frontend/src/app/components/home/ (Hero, sections, references, footer)
+- frontend/src/app/api-proxy/media/[...path]/route.ts (proxy same-origin des medias backend)
+- frontend/src/app/lib/media.ts (normalisation/proxy des URLs media backend cote frontend)
 - frontend/tests/ (Playwright: backoffice, references, contact, admin-home-header)
 - frontend/tests/helpers.ts (helpers E2E partages)
 - frontend/scripts/e2e-coverage-report.mjs (agregation coverage E2E)
@@ -282,6 +284,7 @@ Exemple réponse :
   - GET /api/contact/references/admin/<id> (détail)
   - PUT /api/contact/references/admin/<id> (mise à jour)
   - DELETE /api/contact/references/admin/<id> (suppression)
+  - Le frontend remappe les URLs locales `/media/...` vers un proxy same-origin Next (`/api-proxy/media/...`) pour fiabiliser le chargement des médias et des icônes de références en dev, CI et E2E.
 
 ## Tests (socle minimal)
 ### Backend (Django)
@@ -563,3 +566,4 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.
 - Les tests backend utilisent maintenant un `MEDIA_ROOT` dedie (`backend/.test-media/`) pour ne plus jamais toucher aux medias locaux du projet pendant `manage.py test`.
 - Le backend E2E Playwright est maintenant demarre via un lanceur Node multiplateforme, pour que le smoke CI fonctionne aussi sous Linux sans dependre de PowerShell.
+- Les médias locaux des références passent désormais par un proxy Next same-origin (`frontend/src/app/api-proxy/media/[...path]/route.ts`) pour éviter les flakes de chargement d'icônes/images entre frontend et backend en E2E/CI.
