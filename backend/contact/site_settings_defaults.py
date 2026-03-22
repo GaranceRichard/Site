@@ -97,3 +97,55 @@ DEFAULT_PROMISE_SETTINGS = {
 
 def default_promise_settings():
     return deepcopy(DEFAULT_PROMISE_SETTINGS)
+
+
+DEFAULT_METHOD_SETTINGS = {
+    "eyebrow": "Approche",
+    "title": "Un chemin clair, etape par etape",
+    "subtitle": (
+        "Diagnostiquer, decider, mettre en oeuvre, stabiliser - avec rigueur "
+        "et sobriete."
+    ),
+    "steps": [
+        {
+            "id": "method-step-1",
+            "step": "01",
+            "title": "Observer",
+            "text": (
+                "Cartographier le flux, clarifier les irritants, comprendre "
+                "les contraintes."
+            ),
+        },
+        {
+            "id": "method-step-2",
+            "step": "02",
+            "title": "Choisir",
+            "text": (
+                "Definir 2-3 leviers maximum : priorisation, WIP, qualite, "
+                "gouvernance."
+            ),
+        },
+        {
+            "id": "method-step-3",
+            "step": "03",
+            "title": "Executer",
+            "text": (
+                "Mettre en place des routines utiles, ajuster, renforcer l "
+                "autonomie."
+            ),
+        },
+        {
+            "id": "method-step-4",
+            "step": "04",
+            "title": "Ancrer",
+            "text": (
+                "Stabiliser : standards legers, suivi, transfert et montee "
+                "en competence."
+            ),
+        },
+    ],
+}
+
+
+def default_method_settings():
+    return deepcopy(DEFAULT_METHOD_SETTINGS)

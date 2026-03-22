@@ -353,9 +353,14 @@ class DataAuditTests(APITestCase):
     def test_audit_site_settings_reports_invalid_singleton_state(self):
         from contact.data_audit import audit_site_settings
 
-        fake_one = SiteSettings(header={}, home_hero={}, promise={})
+        fake_one = SiteSettings(header={}, home_hero={}, promise={}, method={})
         fake_one.pk = 1
-        fake_two = SiteSettings(header={"name": "X"}, home_hero={}, promise={})
+        fake_two = SiteSettings(
+            header={"name": "X"},
+            home_hero={},
+            promise={},
+            method={},
+        )
         fake_two.pk = 2
 
         with patch("contact.data_audit.SiteSettings.objects.all") as all_mock:
@@ -403,6 +408,19 @@ class DataAuditTests(APITestCase):
                         "id": "promise-card-1",
                         "title": "Titre",
                         "content": "Contenu",
+                    }
+                ],
+            },
+            method={
+                "eyebrow": "Approche",
+                "title": "Titre",
+                "subtitle": "Sous-titre",
+                "steps": [
+                    {
+                        "id": "method-step-1",
+                        "step": "01",
+                        "title": "Observer",
+                        "text": "Comprendre",
                     }
                 ],
             },

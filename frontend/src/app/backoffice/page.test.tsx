@@ -102,6 +102,10 @@ vi.mock("./components/HomeSettingsManager", () => ({
   default: () => <div data-testid="home-settings-manager" />,
 }));
 
+vi.mock("./components/MethodSettingsManager", () => ({
+  default: () => <div data-testid="method-settings-manager" />,
+}));
+
 vi.mock("./components/MessageModal", () => ({
   default: ({ onClose }: { onClose: () => void }) => (
     <button data-testid="message-modal" onClick={onClose} type="button">
@@ -324,6 +328,15 @@ describe("BackofficePage", () => {
     render(<BackofficePage />);
     expect(screen.getByRole("heading", { name: "Positionnement" })).toBeInTheDocument();
     expect(screen.getByTestId("promise-settings-manager")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
+    expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
+  });
+
+  it("renders method section when stored", () => {
+    setBackofficeSection("method");
+    render(<BackofficePage />);
+    expect(screen.getByRole("heading", { name: "Approche" })).toBeInTheDocument();
+    expect(screen.getByTestId("method-settings-manager")).toBeInTheDocument();
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
   });

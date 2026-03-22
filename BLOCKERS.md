@@ -149,3 +149,10 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: `playwright.config.ts` dependait d'un script `start-e2e-backend.ps1` Windows-only.
 - Decision durable: le demarrage backend E2E doit passer par un lanceur portable (`node`/`python`) compatible Windows et Linux; aucun binaire shell specifique a un OS ne doit etre requis dans `webServer.command`.
 - Verification demandee: relancer les commandes Playwright reelles du repo sur la task complete `Tests`; le smoke E2E doit pouvoir demarrer sans PowerShell.
+
+## 2026-03-22 - Une ligne rouge de coverage frontend rend le test rouge
+- Contexte: un statut a ete donne trop tot alors que le coverage frontend affichait encore des lignes rouges dans un fichier cible.
+- Symptomes: `npm run test:coverage` ou un rerun cible pouvait sembler acceptable globalement alors qu'un fichier frontend restait partiellement non couvert.
+- Cause racine: interpretation trop large du vert global au lieu de traiter les lignes rouges comme un echec de verification sur la zone demandee.
+- Decision durable: sur ce repo, si une ligne de coverage frontend est rouge dans la zone testee, alors le test est considere rouge et le travail continue.
+- Verification demandee: pour toute dette de coverage frontend, verifier explicitement l'absence de lignes rouges sur le fichier ou la zone demandee avant de conclure.

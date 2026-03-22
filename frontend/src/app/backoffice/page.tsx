@@ -9,6 +9,7 @@ import AuthAlert from "./components/AuthAlert";
 import DisabledView from "./components/DisabledView";
 import HeaderSettingsManager from "./components/HeaderSettingsManager";
 import HomeSettingsManager from "./components/HomeSettingsManager";
+import MethodSettingsManager from "./components/MethodSettingsManager";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
 import PromiseSettingsManager from "./components/PromiseSettingsManager";
@@ -51,6 +52,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Positionnement",
       subtitle: "Edition des titres et des encarts de la section positionnement.",
+    };
+  }
+
+  if (section === "method") {
+    return {
+      title: "Approche",
+      subtitle: "Edition du surtitre, des textes et des etapes de la section approche.",
     };
   }
 
@@ -191,6 +199,7 @@ export default function BackofficePage() {
           {section === "header" ? <HeaderSettingsManager /> : null}
           {section === "home" ? <HomeSettingsManager /> : null}
           {section === "promise" ? <PromiseSettingsManager /> : null}
+          {section === "method" ? <MethodSettingsManager /> : null}
           {section === "stats" ? (
             <StatsBlock apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
           ) : null}

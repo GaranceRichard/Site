@@ -8,6 +8,7 @@ from .serializers import SiteSettingsSerializer
 from .site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
+    DEFAULT_METHOD_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
 )
 
@@ -17,6 +18,7 @@ def _site_settings_payload(instance: SiteSettings) -> dict:
         "header": instance.header,
         "homeHero": instance.home_hero,
         "promise": instance.promise,
+        "method": instance.method,
     }
 
 
@@ -29,6 +31,7 @@ def audit_site_settings() -> dict:
         "matches_default_header": False,
         "matches_default_home_hero": False,
         "matches_default_promise": False,
+        "matches_default_method": False,
         "serializer_valid": False,
         "serializer_errors": {},
     }
@@ -49,6 +52,7 @@ def audit_site_settings() -> dict:
             "matches_default_home_hero": instance.home_hero
             == DEFAULT_HOME_HERO_SETTINGS,
             "matches_default_promise": instance.promise == DEFAULT_PROMISE_SETTINGS,
+            "matches_default_method": instance.method == DEFAULT_METHOD_SETTINGS,
             "serializer_valid": is_valid,
             "serializer_errors": serializer.errors if not is_valid else {},
         }

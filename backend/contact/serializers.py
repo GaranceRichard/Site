@@ -10,6 +10,7 @@ from .models import ContactMessage, Reference, SiteSettings
 from .site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
+    DEFAULT_METHOD_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
 )
 
@@ -278,18 +279,60 @@ class PromiseSettingsSerializer(serializers.Serializer):
         return cards
 
 
+class MethodStepSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=60, trim_whitespace=True)
+    step = serializers.CharField(max_length=8, trim_whitespace=True)
+    title = serializers.CharField(max_length=160, trim_whitespace=True)
+    text = serializers.CharField(trim_whitespace=True)
+
+
+class MethodSettingsSerializer(serializers.Serializer):
+    eyebrow = serializers.CharField(max_length=120, trim_whitespace=True)
+    title = serializers.CharField(max_length=240, trim_whitespace=True)
+    subtitle = serializers.CharField(trim_whitespace=True)
+    steps = MethodStepSerializer(many=True)
+
+    def validate_eyebrow(self, value: str) -> str:
+        return value.strip() or DEFAULT_METHOD_SETTINGS["eyebrow"]
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_METHOD_SETTINGS["title"]
+
+    def validate_subtitle(self, value: str) -> str:
+        return value.strip() or DEFAULT_METHOD_SETTINGS["subtitle"]
+
+    def validate_steps(self, value):
+        steps = [
+            {
+                "id": item["id"].strip(),
+                "step": item["step"].strip(),
+                "title": item["title"].strip(),
+                "text": item["text"].strip(),
+            }
+            for item in value
+            if item["id"].strip()
+            and item["step"].strip()
+            and (item["title"].strip() or item["text"].strip())
+        ][:6]
+        if not steps:
+            return DEFAULT_METHOD_SETTINGS["steps"]
+        return steps
+
+
 class SiteSettingsSerializer(serializers.ModelSerializer):
     header = HeaderSettingsSerializer()
     homeHero = HomeHeroSettingsSerializer(source="home_hero")
     promise = PromiseSettingsSerializer()
+    method = MethodSettingsSerializer()
 
     class Meta:
         model = SiteSettings
-        fields = ["header", "homeHero", "promise", "updated_at"]
+        fields = ["header", "homeHero", "promise", "method", "updated_at"]
 
     def update(self, instance, validated_data):
         instance.header = validated_data["header"]
         instance.home_hero = validated_data["home_hero"]
         instance.promise = validated_data["promise"]
+        instance.method = validated_data["method"]
         instance.save()
         return instance

@@ -49,10 +49,25 @@ export type PromiseSettings = {
   cards: PromiseCard[];
 };
 
+export type MethodStep = {
+  id: string;
+  step: string;
+  title: string;
+  text: string;
+};
+
+export type MethodSettings = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  steps: MethodStep[];
+};
+
 export type SiteSettings = {
   header: HeaderSettings;
   homeHero: HomeHeroSettings;
   promise: PromiseSettings;
+  method: MethodSettings;
 };
 
 export const DEFAULT_HEADER_SETTINGS: HeaderSettings = {
@@ -121,10 +136,43 @@ export const DEFAULT_PROMISE_SETTINGS: PromiseSettings = {
   ],
 };
 
+export const DEFAULT_METHOD_SETTINGS: MethodSettings = {
+  eyebrow: "Approche",
+  title: "Un chemin clair, etape par etape",
+  subtitle: "Diagnostiquer, decider, mettre en oeuvre, stabiliser - avec rigueur et sobriete.",
+  steps: [
+    {
+      id: "method-step-1",
+      step: "01",
+      title: "Observer",
+      text: "Cartographier le flux, clarifier les irritants, comprendre les contraintes.",
+    },
+    {
+      id: "method-step-2",
+      step: "02",
+      title: "Choisir",
+      text: "Definir 2-3 leviers maximum : priorisation, WIP, qualite, gouvernance.",
+    },
+    {
+      id: "method-step-3",
+      step: "03",
+      title: "Executer",
+      text: "Mettre en place des routines utiles, ajuster, renforcer l autonomie.",
+    },
+    {
+      id: "method-step-4",
+      step: "04",
+      title: "Ancrer",
+      text: "Stabiliser : standards legers, suivi, transfert et montee en competence.",
+    },
+  ],
+};
+
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   header: DEFAULT_HEADER_SETTINGS,
   homeHero: DEFAULT_HOME_HERO_SETTINGS,
   promise: DEFAULT_PROMISE_SETTINGS,
+  method: DEFAULT_METHOD_SETTINGS,
 };
 
 const listeners = new Set<() => void>();
@@ -317,6 +365,55 @@ function normalizePromiseSettings(value: unknown): PromiseSettings {
   };
 }
 
+function normalizeMethodSteps(value: unknown): MethodStep[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_METHOD_SETTINGS.steps;
+  }
+
+  const steps = value
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => {
+      const candidate = item as Partial<MethodStep>;
+      const id =
+        typeof candidate.id === "string" && candidate.id.trim()
+          ? candidate.id.trim()
+          : `method-step-${index + 1}`;
+      const step =
+        typeof candidate.step === "string" && candidate.step.trim()
+          ? candidate.step.trim()
+          : String(index + 1).padStart(2, "0");
+      const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+      const text = typeof candidate.text === "string" ? candidate.text.trim() : "";
+      return { id, step, title, text };
+    })
+    .filter((item) => item.title || item.text)
+    .slice(0, 6);
+
+  if (steps.length === 0) {
+    return DEFAULT_METHOD_SETTINGS.steps;
+  }
+
+  return steps;
+}
+
+function normalizeMethodSettings(value: unknown): MethodSettings {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_METHOD_SETTINGS;
+  }
+
+  const candidate = value as Partial<MethodSettings>;
+  const eyebrow = typeof candidate.eyebrow === "string" ? candidate.eyebrow.trim() : "";
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+  const subtitle = typeof candidate.subtitle === "string" ? candidate.subtitle.trim() : "";
+
+  return {
+    eyebrow: eyebrow || DEFAULT_METHOD_SETTINGS.eyebrow,
+    title: title || DEFAULT_METHOD_SETTINGS.title,
+    subtitle: subtitle || DEFAULT_METHOD_SETTINGS.subtitle,
+    steps: normalizeMethodSteps(candidate.steps),
+  };
+}
+
 function normalizeSiteSettings(value: unknown): SiteSettings {
   if (!value || typeof value !== "object") {
     return DEFAULT_SITE_SETTINGS;
@@ -327,6 +424,7 @@ function normalizeSiteSettings(value: unknown): SiteSettings {
     header: normalizeHeaderSettings(candidate.header),
     homeHero: normalizeHomeHeroSettings(candidate.homeHero),
     promise: normalizePromiseSettings(candidate.promise),
+    method: normalizeMethodSettings(candidate.method),
   };
 }
 
@@ -335,6 +433,7 @@ function setCachedSiteSettings(next: SiteSettings) {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
     promise: normalizePromiseSettings(next.promise),
+    method: normalizeMethodSettings(next.method),
   };
   hasLoaded = true;
   notifyListeners();
@@ -401,6 +500,7 @@ export async function saveSiteSettings(next: SiteSettings, token: string): Promi
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
     promise: normalizePromiseSettings(next.promise),
+    method: normalizeMethodSettings(next.method),
   };
 
   const response = await fetch(`${apiBase}/api/settings/admin/`, {
@@ -487,6 +587,24 @@ export function setPromiseSettings(next: PromiseSettings) {
   setCachedSiteSettings({
     ...cachedValue,
     promise: next,
+  });
+}
+
+export async function saveMethodSettings(next: MethodSettings, token: string): Promise<SiteSettings> {
+  const current = await ensureSiteSettingsLoaded();
+  return saveSiteSettings(
+    {
+      ...current,
+      method: next,
+    },
+    token,
+  );
+}
+
+export function setMethodSettings(next: MethodSettings) {
+  setCachedSiteSettings({
+    ...cachedValue,
+    method: next,
   });
 }
 

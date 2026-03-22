@@ -1,4 +1,3 @@
-// frontend/src/app/content/method.ts
 export const METHOD_STEPS = [
   {
     step: "01",
@@ -8,17 +7,17 @@ export const METHOD_STEPS = [
   {
     step: "02",
     title: "Choisir",
-    text: "Définir 2–3 leviers maximum : priorisation, WIP, qualité, gouvernance.",
+    text: "Definir 2-3 leviers maximum : priorisation, WIP, qualite, gouvernance.",
   },
   {
     step: "03",
-    title: "Exécuter",
-    text: "Mettre en place des routines utiles, ajuster, renforcer l’autonomie.",
+    title: "Executer",
+    text: "Mettre en place des routines utiles, ajuster, renforcer l autonomie.",
   },
   {
     step: "04",
     title: "Ancrer",
-    text: "Stabiliser : standards légers, suivi, transfert et montée en compétence.",
+    text: "Stabiliser : standards legers, suivi, transfert et montee en competence.",
   },
 ] as const;
 

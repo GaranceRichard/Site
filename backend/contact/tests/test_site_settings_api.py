@@ -14,9 +14,11 @@ from contact.site_settings_cache import (
 from contact.site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
+    DEFAULT_METHOD_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
     default_header_settings,
     default_home_hero_settings,
+    default_method_settings,
     default_promise_settings,
 )
 
@@ -55,6 +57,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
+        self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
         self.assertEqual(SiteSettings.objects.count(), 1)
 
     def test_public_endpoint_without_trailing_slash_returns_defaults(self):
@@ -64,6 +67,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
+        self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
 
     def test_admin_put_updates_settings(self):
         payload = {
@@ -96,6 +100,19 @@ class SiteSettingsApiTests(APITestCase):
                     }
                 ],
             },
+            "method": {
+                "eyebrow": "Approche",
+                "title": "Chemin de delivery",
+                "subtitle": "Diagnostiquer, decider, stabiliser.",
+                "steps": [
+                    {
+                        "id": "method-step-1",
+                        "step": "01",
+                        "title": "Observer",
+                        "text": "Voir le systeme en entier",
+                    }
+                ],
+            },
         }
 
         res = self.client.put(
@@ -110,12 +127,14 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(settings.header["name"], "Jane Doe")
         self.assertEqual(settings.home_hero["eyebrow"], "Nouveau surtitre")
         self.assertEqual(settings.promise["title"], "Titre positionnement")
+        self.assertEqual(settings.method["title"], "Chemin de delivery")
 
         public_res = self.client.get(self.public_url)
         self.assertEqual(public_res.status_code, status.HTTP_200_OK)
         self.assertEqual(public_res.data["header"]["name"], "Jane Doe")
         self.assertEqual(public_res.data["homeHero"]["eyebrow"], "Nouveau surtitre")
         self.assertEqual(public_res.data["promise"]["title"], "Titre positionnement")
+        self.assertEqual(public_res.data["method"]["title"], "Chemin de delivery")
 
     def test_admin_put_without_trailing_slash_updates_settings(self):
         payload = {
@@ -126,6 +145,7 @@ class SiteSettingsApiTests(APITestCase):
             },
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
             "promise": DEFAULT_PROMISE_SETTINGS,
+            "method": DEFAULT_METHOD_SETTINGS,
         }
 
         res = self.client.put(
@@ -146,6 +166,7 @@ class SiteSettingsApiTests(APITestCase):
                 "header": DEFAULT_HEADER_SETTINGS,
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
+                "method": DEFAULT_METHOD_SETTINGS,
             },
             format="json",
         )
@@ -169,6 +190,7 @@ class SiteSettingsApiTests(APITestCase):
                 },
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
+                "method": DEFAULT_METHOD_SETTINGS,
             },
             format="json",
             HTTP_AUTHORIZATION=f"Bearer {self.token}",
@@ -225,6 +247,16 @@ class SiteSettingsDefaultsTests(TestCase):
         self.assertEqual(
             DEFAULT_PROMISE_SETTINGS["cards"][0]["title"],
             "Diagnostic rapide",
+        )
+
+    def test_default_method_settings_returns_deep_copy(self):
+        method = default_method_settings()
+
+        method["steps"][0]["title"] = "Changed title"
+
+        self.assertEqual(
+            DEFAULT_METHOD_SETTINGS["steps"][0]["title"],
+            "Observer",
         )
 
 

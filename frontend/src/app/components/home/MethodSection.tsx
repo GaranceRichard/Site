@@ -14,8 +14,8 @@ export default function MethodSection({ steps }: { steps: readonly MethodStep[] 
           <div className="md:col-span-5">
             <SectionTitle
               eyebrow="Approche"
-              title="Un chemin clair, étape par étape"
-              description="Diagnostiquer, décider, mettre en œuvre, stabiliser — avec rigueur et sobriété."
+              title="Un chemin clair, etape par etape"
+              description="Diagnostiquer, decider, mettre en oeuvre, stabiliser - avec rigueur et sobriete."
             />
           </div>
 
