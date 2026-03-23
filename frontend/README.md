@@ -53,6 +53,7 @@ npm run build
 
 ## Notes recentes
 
+- La section `Publications` de la home remplace maintenant les panneaux deployants par des cartes cliquables qui ouvrent une modale, fermee par clic exterieur ou via `Escape`.
 - `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, tolere le faux echec `coverage/.tmp` sous Windows et retente une fois si Vitest/Vite/esbuild echoue au demarrage.
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.

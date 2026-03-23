@@ -74,8 +74,20 @@ Mon site/
 |       |-- backoffice.spec.ts
 |       |-- references.spec.ts
 |       `-- admin-home-header.spec.ts
+|-- docs/
+|-- monitoring/
+|-- nginx/
+|-- scripts/
+|-- .gitattributes
 |-- .gitignore
+|-- .pre-commit-config.yaml
+|-- BLOCKERS.md
+|-- CONTRIBUTING.md
+|-- docker-compose.monitoring.yml
+|-- docker-compose.prod.yml
 |-- docker-compose.yml
+|-- GATE.md
 |-- Makefile
+|-- payload.json
 |-- readme.md
 `-- tree.txt

@@ -8,6 +8,7 @@ Site vitrine avec page de contact.
 
 ## Fonctionnalités
 - Page d’accueil (vitrine)
+- Section `Publications` : cartes cliquables ouvrant une modale de detail avec fermeture au clic hors modale
 - Page /contact avec formulaire
 - API POST /api/contact/messages (Django REST Framework)
 - Stockage des messages en base (SQLite en dev)
@@ -560,6 +561,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Verifier baisse des erreurs Sentry + retour des metriques a la normale (latence/5xx).
 
 ## Notes de maintenance recentes
+- La section `Publications` n'utilise plus de panneaux deployants : chaque titre ouvre maintenant une modale de detail fermee par clic exterieur ou via `Escape`.
 - Le backend expose maintenant des `SiteSettings` publics/admin pour piloter le header et le hero de la page d'accueil.
 - La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
