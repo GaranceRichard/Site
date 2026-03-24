@@ -156,3 +156,10 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: interpretation trop large du vert global au lieu de traiter les lignes rouges comme un echec de verification sur la zone demandee.
 - Decision durable: sur ce repo, si une ligne de coverage frontend est rouge dans la zone testee, alors le test est considere rouge et le travail continue.
 - Verification demandee: pour toute dette de coverage frontend, verifier explicitement l'absence de lignes rouges sur le fichier ou la zone demandee avant de conclure.
+
+## 2026-03-23 - Les tests unitaires des managers backoffice doivent neutraliser le fallback `NEXT_PUBLIC_API_BASE_URL`
+- Contexte: plusieurs suites Vitest de managers backoffice ont casse en CI apres ajout du fallback `/api-proxy` -> `NEXT_PUBLIC_API_BASE_URL` dans `siteSettingsStore`.
+- Symptomes: erreurs de test du type `Cannot read properties of undefined (reading 'ok')` sur les cas d'echec de sauvegarde, alors que les assertions attendaient `Erreur API` ou un message metier.
+- Cause racine: en CI, `NEXT_PUBLIC_API_BASE_URL` est defini; les suites qui moquaient un seul appel reseau voyaient partir un second `fetch` de fallback, ce qui epuisait le mock et detruisait les assertions.
+- Decision durable: toute suite unitaire de manager backoffice qui moque `fetch` pour un seul endpoint de reglages doit neutraliser explicitement `process.env.NEXT_PUBLIC_API_BASE_URL` dans son setup/teardown, sauf si le test couvre volontairement le fallback.
+- Verification demandee: apres tout changement sur `siteSettingsStore` ou sur un manager de reglages, relancer `npm run test:coverage` avec l'environnement CI et verifier que les cas d'erreur affichent bien le message attendu au lieu d'une erreur technique `reading 'ok'`.

@@ -563,6 +563,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 ## Notes de maintenance recentes
 - La section `Publications` n'utilise plus de panneaux deployants : chaque titre ouvre maintenant une modale de detail fermee par clic exterieur ou via `Escape`.
 - Le store frontend `SiteSettings` tente maintenant `/api-proxy` puis bascule sur `NEXT_PUBLIC_API_BASE_URL` pour charger et enregistrer les reglages si le proxy navigateur n'est pas disponible.
+- Les tests unitaires des managers de reglages backoffice neutralisent desormais `NEXT_PUBLIC_API_BASE_URL` quand ils moquent un seul appel `fetch`, afin d'eviter les faux echecs CI lies au fallback reseau.
 - Le backend expose maintenant des `SiteSettings` publics/admin pour piloter le header et le hero de la page d'accueil.
 - La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
