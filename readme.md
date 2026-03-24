@@ -154,6 +154,8 @@ Utiliser les tasks VS Code :
 
 Tasks de verification utiles :
 - `Tests` : lance les couvertures backend, integration, frontend, E2E, `Vitals compliance`, `npm lint` et `npm build`.
+  Les runs backend de cette task utilisent chacun un `COVERAGE_FILE` dedie pour eviter les collisions de `.coverage` quand les checks tournent en parallele.
+  La task est volontairement sequencee pour eviter les faux rouges Windows lies aux spawns Node/esbuild pendant les checks frontend/vitals.
 - Regle de completion : aucune tache n'est consideree complete tant que la task VS Code `Tests` n'a pas ete relancee en entier et tout au vert dans la session courante.
 - `Vitals compliance` : valide la couverture vitale frontend (`95/95/95/95` avec `perFile`) puis la couverture d'integration backend avec un seuil global backend de `95%` et un controle backend vital par fichier.
 
@@ -383,6 +385,7 @@ npm run test:e2e:coverage:report
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
 - `npm run test:coverage` est la commande stable pour CLI/VS Code. Le HTML est volontairement sorti dans `npm run test:coverage:html`. Le wrapper nettoie `frontend/coverage/` avant chaque run pour eviter les etats de coverage stale entre executions.
+- Les commandes Vitest frontend stables (`npm run test`, `npm run test:coverage`, `npm run test:coverage:html`) prechargent `frontend/scripts/vite-child-process-patch.mjs` pour neutraliser un faux `EPERM` Windows observe pendant l'initialisation Vite/Vitest.
 - Les tests E2E nécessitent un compte admin `is_staff` et un backend en cours d'exécution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
 - Couverture E2E KPI : parcours browser critiques du front visible. Le backoffice detaille reste principalement couvert par Vitest.
@@ -567,6 +570,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Le backend expose maintenant des `SiteSettings` publics/admin pour piloter le header et le hero de la page d'accueil.
 - La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
+- Les scripts frontend de test/coverage reposent maintenant sur `vitest.config.mjs`, `vitest.config.vitals.mjs` et un prechargement `vite-child-process-patch.mjs` pour stabiliser les runs Windows.
 - Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.
 - Les tests backend utilisent maintenant un `MEDIA_ROOT` dedie (`backend/.test-media/`) pour ne plus jamais toucher aux medias locaux du projet pendant `manage.py test`.
 - Le backend E2E Playwright est maintenant demarre via un lanceur Node multiplateforme, pour que le smoke CI fonctionne aussi sous Linux sans dependre de PowerShell.

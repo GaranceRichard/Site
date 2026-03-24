@@ -163,3 +163,31 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: en CI, `NEXT_PUBLIC_API_BASE_URL` est defini; les suites qui moquaient un seul appel reseau voyaient partir un second `fetch` de fallback, ce qui epuisait le mock et detruisait les assertions.
 - Decision durable: toute suite unitaire de manager backoffice qui moque `fetch` pour un seul endpoint de reglages doit neutraliser explicitement `process.env.NEXT_PUBLIC_API_BASE_URL` dans son setup/teardown, sauf si le test couvre volontairement le fallback.
 - Verification demandee: apres tout changement sur `siteSettingsStore` ou sur un manager de reglages, relancer `npm run test:coverage` avec l'environnement CI et verifier que les cas d'erreur affichent bien le message attendu au lieu d'une erreur technique `reading 'ok'`.
+
+## 2026-03-23 - Les couvertures backend paralleles ne doivent jamais partager le meme fichier `.coverage`
+- Contexte: la task VS Code `Tests` lance en parallele `Test coverage Backend`, `Test integration` et `Vitals compliance`.
+- Symptomes: `Vitals compliance` pouvait echouer avec `No data to report.` alors que les tests backend passes juste avant dans la meme commande.
+- Cause racine: plusieurs commandes `coverage run` backend ecrivaient simultanement dans le meme fichier `.coverage`, ce qui provoquait des collisions et des rapports vides.
+- Decision durable: chaque commande backend de coverage lancee en parallele doit definir un `COVERAGE_FILE` dedie avant `coverage run`/`report`/`json`.
+- Verification demandee: relancer la task complete `Tests`; aucun check backend parallele ne doit echouer avec `No data to report.` ou un rapport vide.
+
+## 2026-03-23 - Les commandes Vitest stables du repo ne doivent pas dependre d'un config TypeScript charge via esbuild
+- Contexte: apres plusieurs relances du gate frontend/vitals sous Windows, Vitest ne parvenait plus a charger `vitest.config.ts` ou `vitest.config.vitals.ts`.
+- Symptomes: echec immediat `failed to load config ... Startup Error ... Error: spawn EPERM` avant tout test.
+- Cause racine: le chargement d'un config Vitest en `.ts` depend du spawn d'esbuild; dans cet environnement Windows, ce spawn peut tomber en `EPERM` et rendre le gate aleatoirement rouge.
+- Decision durable: les commandes frontend stables du repo (`npm run test`, `npm run test:coverage`, `npm run test:coverage:vitals`, wrappers/pre-commit associes) doivent pointer vers des configs Vitest ESM `.mjs` pour eviter ce bootstrap esbuild.
+- Verification demandee: relancer `npm run test`, `npm run test:coverage` et `npm run test:coverage:vitals`; aucun run ne doit echouer sur `failed to load config` ou `spawn EPERM`.
+
+## 2026-03-23 - La task `Tests` ne doit pas lancer les checks frontend lourds en parallele sur Windows
+- Contexte: meme apres passage des configs Vitest en `.mjs`, `Vitals compliance` pouvait encore echouer aleatoirement quand il demarrait en meme temps que `test:coverage`, `test:e2e:coverage:report` ou `npm build`.
+- Symptomes: `spawnSync C:\Program Files\nodejs\node.exe EPERM` sur `npm run test:coverage:vitals` uniquement dans le gate complet parallelise, alors que le check passait seul.
+- Cause racine: contention environnementale Windows lors des spawns Node/esbuild de plusieurs checks frontend lourds lances simultanement.
+- Decision durable: la task VS Code `Tests` doit etre sequencee; les checks frontend/vitals/build ne doivent pas etre consideres fiables si lances tous en parallele dans ce repo.
+- Verification demandee: relancer la task complete `Tests` apres modification; tous les checks doivent passer dans l'ordre configure, sans `spawnSync ... EPERM`.
+
+## 2026-03-23 - Les commandes Vitest frontend Windows doivent precharger un patch Vite cible
+- Contexte: meme avec des configs Vitest `.mjs`, certains runs Windows continuaient a tomber en `EPERM` tres tot pendant l'initialisation Vite.
+- Symptomes: `spawnSync C:\Program Files\nodejs\node.exe EPERM` ou `failed to load config` avant les tests, y compris hors gate parallele.
+- Cause racine: Vite declenchait encore un sous-processus Windows non essentiel pendant sa resolution initiale, ce qui rendait Vitest aleatoirement rouge dans cet environnement.
+- Decision durable: les commandes frontend stables du repo qui lancent Vitest doivent precharger `frontend/scripts/vite-child-process-patch.mjs`; ne pas revenir a un lancement Vitest nu tant que ce faux `EPERM` Windows reste present.
+- Verification demandee: relancer `npm run test`, `npm run test:coverage` et `npm run test:coverage:vitals`; aucun run ne doit echouer sur `spawnSync ... EPERM` ou `failed to load config`.

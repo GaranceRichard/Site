@@ -24,10 +24,13 @@ Mon site/
 |   |-- next.config.ts
 |   |-- eslint.config.mjs
 |   |-- README.md
+|   |-- vitest.config.mjs
+|   |-- vitest.config.vitals.mjs
 |   |-- public/
 |   |-- scripts/
 |   |   |-- run-lhci.cjs
 |   |   |-- start-e2e-backend.mjs
+|   |   |-- vite-child-process-patch.mjs
 |   |   `-- e2e-coverage-report.mjs
 |   |-- src/
 |   |   |-- app/

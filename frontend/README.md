@@ -20,10 +20,10 @@ npm run build
 ## Coverage frontend
 
 - `npm run test:coverage` : coverage CLI stable pour le terminal et les tasks VS Code.
-- Le script passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs) pour tolerer le faux echec Windows lie a `coverage/.tmp` et repartir d'un dossier `coverage/` propre a chaque run.
+- Le script passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs) pour tolerer le faux echec Windows lie a `coverage/.tmp`, repartir d'un dossier `coverage/` propre a chaque run et precharger [vite-child-process-patch.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/vite-child-process-patch.mjs) avant Vitest.
 - Reporters actifs par defaut : `text` + `lcov`.
-- `npm run test:coverage` impose `80/80/80/80` avec `perFile: true` sur les fichiers couverts par la config standard.
-- `npm run test:coverage:vitals` : meme commande frontend, mais avec des seuils `95/95/95/95` sur le sous-ensemble aligne avec `docs/critical-paths.md` : `app/backoffice`, `contact/ContactForm`, `BackofficeModal`, `components/backoffice` et `lib/backoffice`.
+- `npm run test:coverage` impose `80/80/80/80` avec `perFile: true` sur les fichiers couverts par `vitest.config.mjs`.
+- `npm run test:coverage:vitals` : meme commande frontend, mais avec des seuils `95/95/95/95` sur le sous-ensemble aligne avec `docs/critical-paths.md` : `app/backoffice`, `contact/ContactForm`, `BackofficeModal`, `components/backoffice` et `lib/backoffice`, via `vitest.config.vitals.mjs`.
 - `npm run test:coverage:html` : generation explicite du rapport HTML si besoin.
 
 ## E2E coverage
@@ -48,13 +48,14 @@ npm run build
 
 - `dev:all` : lance `Backend`, `Frontend`, `Monitor` et `Perf Loop` dans 4 terminaux distincts.
 - `Tests` : lance `Test coverage Backend`, `Test integration`, `Test coverage frontend`, `Test coverage e2e`, `Vitals compliance`, `npm lint` et `npm build`.
+- L'ordre de `Tests` est volontairement sequence pour eviter les faux echecs Windows lies aux spawns Node/esbuild quand plusieurs checks frontend lourds partent ensemble.
 - Regle de completion du repo : aucune tache n'est complete tant que la task complete `Tests` n'a pas ete relancee et integralement verte dans la session courante.
-- `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.ts`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
+- `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.mjs`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
 
 ## Notes recentes
 
 - La section `Publications` de la home remplace maintenant les panneaux deployants par des cartes cliquables qui ouvrent une modale, fermee par clic exterieur ou via `Escape`.
-- `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, tolere le faux echec `coverage/.tmp` sous Windows et retente une fois si Vitest/Vite/esbuild echoue au demarrage.
+- `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, charge explicitement les configs `vitest.config*.mjs`, precharge [vite-child-process-patch.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/vite-child-process-patch.mjs), tolere le faux echec `coverage/.tmp` sous Windows et retente plusieurs fois si Vitest/Vite echoue au demarrage.
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.

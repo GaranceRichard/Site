@@ -39,11 +39,7 @@ echo "==> Frontend lint + unit tests + coverage + build"
 cd "$FRONTEND_DIR"
 npm run lint
 npm run test
-npx vitest run --coverage \
-  --coverage.thresholds.lines=80 \
-  --coverage.thresholds.branches=80 \
-  --coverage.thresholds.functions=80 \
-  --coverage.thresholds.statements=80
+npm run test:coverage
 npm run build
 
 echo "==> E2E setup"

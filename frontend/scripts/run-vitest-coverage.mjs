@@ -3,7 +3,14 @@ import { rmSync } from "node:fs";
 import path from "node:path";
 
 const forwardedArgs = process.argv.slice(2);
-const vitestArgs = ["./node_modules/vitest/vitest.mjs", "run", "--coverage", ...forwardedArgs];
+const vitestArgs = [
+  "--import",
+  "./scripts/vite-child-process-patch.mjs",
+  "./node_modules/vitest/vitest.mjs",
+  "run",
+  "--coverage",
+  ...forwardedArgs,
+];
 const ansiPattern = /\u001B\[[0-9;]*[A-Za-z]/g;
 const configArgIndex = forwardedArgs.indexOf("--config");
 const configPath =
@@ -14,6 +21,7 @@ const coverageDir = path.join(
   process.cwd(),
   configPath.includes("vitals") ? "coverage-vitals" : "coverage",
 );
+const maxStartupAttempts = 4;
 
 function stripAnsi(output) {
   return output.replaceAll(ansiPattern, "");
@@ -104,7 +112,28 @@ function runVitest() {
   });
 }
 
+function waitBeforeRetry() {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
+}
+
+function shouldRetrySpawnError(error) {
+  if (!error) {
+    return false;
+  }
+
+  const message = String(error.message || "");
+  return /spawnSync .* EPERM/i.test(message) || /spawn EPERM/i.test(message);
+}
+
 let result = runVitest();
+
+let attempt = 1;
+while (result.error && shouldRetrySpawnError(result.error) && attempt < maxStartupAttempts) {
+  console.warn(`Vitest coverage spawn failed on attempt ${attempt}, retrying...`);
+  waitBeforeRetry();
+  attempt += 1;
+  result = runVitest();
+}
 
 if (result.error) {
   console.error(result.error.message);
@@ -116,11 +145,13 @@ let stderr = result.stderr || "";
 let output = `${stdout}\n${stderr}`;
 let normalizedOutput = stripAnsi(output);
 
-if ((result.status ?? 1) !== 0 && hasTransientStartupError(normalizedOutput)) {
-  console.warn("Vitest coverage startup failed once, retrying...");
+while ((result.status ?? 1) !== 0 && hasTransientStartupError(normalizedOutput) && attempt < maxStartupAttempts) {
+  console.warn(`Vitest coverage startup failed on attempt ${attempt}, retrying...`);
+  waitBeforeRetry();
+  attempt += 1;
   result = runVitest();
 
-  if (result.error) {
+  if (result.error && !shouldRetrySpawnError(result.error)) {
     console.error(result.error.message);
     process.exit(1);
   }
