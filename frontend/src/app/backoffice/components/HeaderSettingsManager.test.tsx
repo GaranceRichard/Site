@@ -8,6 +8,7 @@ describe("HeaderSettingsManager", () => {
   beforeEach(() => {
     resetSiteSettingsStoreForTests();
     vi.restoreAllMocks();
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
     vi.stubGlobal(
       "fetch",
       vi.fn()
@@ -51,6 +52,7 @@ describe("HeaderSettingsManager", () => {
   afterEach(() => {
     cleanup();
     window.sessionStorage.clear();
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it("saves header settings when form is valid", async () => {

@@ -7,6 +7,7 @@ describe("HomeSettingsManager", () => {
   beforeEach(() => {
     resetSiteSettingsStoreForTests();
     vi.restoreAllMocks();
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
     vi.stubGlobal(
       "fetch",
       vi.fn()
@@ -35,6 +36,7 @@ describe("HomeSettingsManager", () => {
   afterEach(() => {
     cleanup();
     window.sessionStorage.clear();
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it("saves home settings when form is valid", async () => {
