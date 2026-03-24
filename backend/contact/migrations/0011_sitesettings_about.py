@@ -13,7 +13,8 @@ class Migration(migrations.Migration):
             model_name="sitesettings",
             name="about",
             field=models.JSONField(
-                blank=True, default=contact.site_settings_defaults.default_about_settings
+                blank=True,
+                default=contact.site_settings_defaults.default_about_settings,
             ),
         ),
     ]

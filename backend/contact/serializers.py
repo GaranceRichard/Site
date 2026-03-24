@@ -306,7 +306,9 @@ class AboutHighlightSerializer(serializers.Serializer):
 
 
 class AboutSettingsSerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=240, trim_whitespace=True, allow_blank=True)
+    title = serializers.CharField(
+        max_length=240, trim_whitespace=True, allow_blank=True
+    )
     subtitle = serializers.CharField(trim_whitespace=True, allow_blank=True)
     highlight = AboutHighlightSerializer()
 
