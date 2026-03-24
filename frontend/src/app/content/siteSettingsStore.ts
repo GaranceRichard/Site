@@ -49,6 +49,22 @@ export type PromiseSettings = {
   cards: PromiseCard[];
 };
 
+export type AboutHighlightItem = {
+  id: string;
+  text: string;
+};
+
+export type AboutHighlight = {
+  intro: string;
+  items: AboutHighlightItem[];
+};
+
+export type AboutSettings = {
+  title: string;
+  subtitle: string;
+  highlight: AboutHighlight;
+};
+
 export type MethodStep = {
   id: string;
   step: string;
@@ -91,6 +107,7 @@ export type PublicationsSettings = {
 export type SiteSettings = {
   header: HeaderSettings;
   homeHero: HomeHeroSettings;
+  about: AboutSettings;
   promise: PromiseSettings;
   method: MethodSettings;
   publications: PublicationsSettings;
@@ -160,6 +177,22 @@ export const DEFAULT_PROMISE_SETTINGS: PromiseSettings = {
       content: "Rendre l organisation autonome : pratiques, supports, routine d amelioration.",
     },
   ],
+};
+
+export const DEFAULT_ABOUT_SETTINGS: AboutSettings = {
+  title: "Une posture de service, un cadre exigeant",
+  subtitle:
+    "Un accompagnement qui respecte les contraintes du terrain, tout en ouvrant des marges de manoeuvre.",
+  highlight: {
+    intro:
+      "Intervenir avec sobriete, clarifier les priorites et aider les equipes a reprendre de l air sans theatre organisationnel.",
+    items: [
+      { id: "about-item-1", text: "Pragmatisme ancre dans le terrain" },
+      { id: "about-item-2", text: "Cadence soutenable" },
+      { id: "about-item-3", text: "Decision plus lisible" },
+      { id: "about-item-4", text: "Transmission durable" },
+    ],
+  },
 };
 
 export const DEFAULT_METHOD_SETTINGS: MethodSettings = {
@@ -247,6 +280,7 @@ export const DEFAULT_PUBLICATIONS_SETTINGS: PublicationsSettings = {
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   header: DEFAULT_HEADER_SETTINGS,
   homeHero: DEFAULT_HOME_HERO_SETTINGS,
+  about: DEFAULT_ABOUT_SETTINGS,
   promise: DEFAULT_PROMISE_SETTINGS,
   method: DEFAULT_METHOD_SETTINGS,
   publications: DEFAULT_PUBLICATIONS_SETTINGS,
@@ -458,6 +492,56 @@ function normalizePromiseSettings(value: unknown): PromiseSettings {
   };
 }
 
+function normalizeAboutHighlightItems(value: unknown): AboutHighlightItem[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_ABOUT_SETTINGS.highlight.items;
+  }
+
+  return value
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => {
+      const candidate = item as Partial<AboutHighlightItem>;
+      const id =
+        typeof candidate.id === "string" && candidate.id.trim()
+          ? candidate.id.trim()
+          : `about-item-${index + 1}`;
+      const text = typeof candidate.text === "string" ? candidate.text.trim() : "";
+      return { id, text };
+    })
+    .filter((item) => item.text)
+    .slice(0, 4);
+}
+
+function normalizeAboutHighlight(value: unknown): AboutHighlight {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_ABOUT_SETTINGS.highlight;
+  }
+
+  const candidate = value as Partial<AboutHighlight>;
+  const intro = typeof candidate.intro === "string" ? candidate.intro.trim() : "";
+
+  return {
+    intro: intro || DEFAULT_ABOUT_SETTINGS.highlight.intro,
+    items: normalizeAboutHighlightItems(candidate.items),
+  };
+}
+
+function normalizeAboutSettings(value: unknown): AboutSettings {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_ABOUT_SETTINGS;
+  }
+
+  const candidate = value as Partial<AboutSettings>;
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+  const subtitle = typeof candidate.subtitle === "string" ? candidate.subtitle.trim() : "";
+
+  return {
+    title: title || DEFAULT_ABOUT_SETTINGS.title,
+    subtitle: subtitle || DEFAULT_ABOUT_SETTINGS.subtitle,
+    highlight: normalizeAboutHighlight(candidate.highlight),
+  };
+}
+
 function normalizeMethodSteps(value: unknown): MethodStep[] {
   if (!Array.isArray(value)) {
     return DEFAULT_METHOD_SETTINGS.steps;
@@ -588,6 +672,7 @@ function normalizeSiteSettings(value: unknown): SiteSettings {
   return {
     header: normalizeHeaderSettings(candidate.header),
     homeHero: normalizeHomeHeroSettings(candidate.homeHero),
+    about: normalizeAboutSettings(candidate.about),
     promise: normalizePromiseSettings(candidate.promise),
     method: normalizeMethodSettings(candidate.method),
     publications: normalizePublicationsSettings(candidate.publications),
@@ -598,6 +683,7 @@ function setCachedSiteSettings(next: SiteSettings) {
   cachedValue = {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
+    about: normalizeAboutSettings(next.about),
     promise: normalizePromiseSettings(next.promise),
     method: normalizeMethodSettings(next.method),
     publications: normalizePublicationsSettings(next.publications),
@@ -687,6 +773,7 @@ export async function saveSiteSettings(next: SiteSettings, token: string): Promi
   const payload = {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
+    about: normalizeAboutSettings(next.about),
     promise: normalizePromiseSettings(next.promise),
     method: normalizeMethodSettings(next.method),
     publications: normalizePublicationsSettings(next.publications),
@@ -787,6 +874,24 @@ export function setPromiseSettings(next: PromiseSettings) {
   setCachedSiteSettings({
     ...cachedValue,
     promise: next,
+  });
+}
+
+export async function saveAboutSettings(next: AboutSettings, token: string): Promise<SiteSettings> {
+  const current = await ensureRemoteSiteSettingsForSave();
+  return saveSiteSettings(
+    {
+      ...current,
+      about: next,
+    },
+    token,
+  );
+}
+
+export function setAboutSettings(next: AboutSettings) {
+  setCachedSiteSettings({
+    ...cachedValue,
+    about: next,
   });
 }
 

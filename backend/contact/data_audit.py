@@ -6,6 +6,7 @@ from .media_cleanup import audit_reference_media
 from .models import ContactMessage, Reference, SiteSettings
 from .serializers import SiteSettingsSerializer
 from .site_settings_defaults import (
+    DEFAULT_ABOUT_SETTINGS,
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
@@ -18,6 +19,7 @@ def _site_settings_payload(instance: SiteSettings) -> dict:
     return {
         "header": instance.header,
         "homeHero": instance.home_hero,
+        "about": instance.about,
         "promise": instance.promise,
         "method": instance.method,
         "publications": instance.publications,
@@ -32,6 +34,7 @@ def audit_site_settings() -> dict:
         "singleton_ids": [row.pk for row in rows],
         "matches_default_header": False,
         "matches_default_home_hero": False,
+        "matches_default_about": False,
         "matches_default_promise": False,
         "matches_default_method": False,
         "matches_default_publications": False,
@@ -54,6 +57,7 @@ def audit_site_settings() -> dict:
             "matches_default_header": instance.header == DEFAULT_HEADER_SETTINGS,
             "matches_default_home_hero": instance.home_hero
             == DEFAULT_HOME_HERO_SETTINGS,
+            "matches_default_about": instance.about == DEFAULT_ABOUT_SETTINGS,
             "matches_default_promise": instance.promise == DEFAULT_PROMISE_SETTINGS,
             "matches_default_method": instance.method == DEFAULT_METHOD_SETTINGS,
             "matches_default_publications": instance.publications

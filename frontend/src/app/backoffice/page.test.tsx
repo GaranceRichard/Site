@@ -102,6 +102,10 @@ vi.mock("./components/HomeSettingsManager", () => ({
   default: () => <div data-testid="home-settings-manager" />,
 }));
 
+vi.mock("./components/AboutSettingsManager", () => ({
+  default: () => <div data-testid="about-settings-manager" />,
+}));
+
 vi.mock("./components/MethodSettingsManager", () => ({
   default: () => <div data-testid="method-settings-manager" />,
 }));
@@ -323,6 +327,15 @@ describe("BackofficePage", () => {
     render(<BackofficePage />);
     expect(screen.getByRole("heading", { name: "Accueil" })).toBeInTheDocument();
     expect(screen.getByTestId("home-settings-manager")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
+    expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
+  });
+
+  it("renders about section when stored", () => {
+    setBackofficeSection("about");
+    render(<BackofficePage />);
+    expect(screen.getByRole("heading", { name: "A propos" })).toBeInTheDocument();
+    expect(screen.getByTestId("about-settings-manager")).toBeInTheDocument();
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
   });

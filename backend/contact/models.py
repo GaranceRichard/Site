@@ -1,6 +1,7 @@
 from django.db import models
 
 from .site_settings_defaults import (
+    default_about_settings,
     default_header_settings,
     default_home_hero_settings,
     default_method_settings,
@@ -45,6 +46,7 @@ class Reference(models.Model):
 class SiteSettings(models.Model):
     header = models.JSONField(default=default_header_settings, blank=True)
     home_hero = models.JSONField(default=default_home_hero_settings, blank=True)
+    about = models.JSONField(default=default_about_settings, blank=True)
     promise = models.JSONField(default=default_promise_settings, blank=True)
     method = models.JSONField(default=default_method_settings, blank=True)
     publications = models.JSONField(default=default_publications_settings, blank=True)
@@ -57,6 +59,7 @@ class SiteSettings(models.Model):
             defaults={
                 "header": default_header_settings(),
                 "home_hero": default_home_hero_settings(),
+                "about": default_about_settings(),
                 "promise": default_promise_settings(),
                 "method": default_method_settings(),
                 "publications": default_publications_settings(),

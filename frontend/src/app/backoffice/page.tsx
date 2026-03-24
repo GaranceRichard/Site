@@ -6,6 +6,7 @@ import BackofficeModal from "../components/BackofficeModal";
 import { isBackofficeEnabled, resolveApiBaseUrl } from "../lib/backoffice";
 import { clearAuthTokens } from "./logic";
 import AuthAlert from "./components/AuthAlert";
+import AboutSettingsManager from "./components/AboutSettingsManager";
 import DisabledView from "./components/DisabledView";
 import HeaderSettingsManager from "./components/HeaderSettingsManager";
 import HomeSettingsManager from "./components/HomeSettingsManager";
@@ -32,6 +33,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Accueil",
       subtitle: "Edition du hero, des liens, des mots-cles et des encarts.",
+    };
+  }
+
+  if (section === "about") {
+    return {
+      title: "A propos",
+      subtitle: "Edition du titre, du sous-titre, de l'encart et des encadres compacts.",
     };
   }
 
@@ -206,6 +214,7 @@ export default function BackofficePage() {
 
           {section === "header" ? <HeaderSettingsManager /> : null}
           {section === "home" ? <HomeSettingsManager /> : null}
+          {section === "about" ? <AboutSettingsManager /> : null}
           {section === "promise" ? <PromiseSettingsManager /> : null}
           {section === "method" ? <MethodSettingsManager /> : null}
           {section === "publications" ? <PublicationsSettingsManager /> : null}

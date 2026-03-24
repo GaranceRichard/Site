@@ -6,6 +6,7 @@ vi.mock("../lib/backoffice", () => ({
 
 import { resolveApiBaseUrl } from "../lib/backoffice";
 import {
+  DEFAULT_ABOUT_SETTINGS,
   DEFAULT_HEADER_SETTINGS,
   DEFAULT_HOME_HERO_SETTINGS,
   DEFAULT_METHOD_SETTINGS,
@@ -16,12 +17,14 @@ import {
   getSiteSettingsServer,
   resetSiteSettingsStoreForTests,
   saveHeaderSettings,
+  saveAboutSettings,
   saveHomeHeroSettings,
   saveMethodSettings,
   savePublicationsSettings,
   savePromiseSettings,
   saveSiteSettings,
   setHeaderSettings,
+  setAboutSettings,
   setHomeHeroSettings,
   setMethodSettings,
   setPublicationsSettings,
@@ -704,6 +707,14 @@ describe("siteSettingsStore", () => {
             keywords: [" ", "Delivery"],
             cards: [{ id: "", title: "  New card ", content: "  New content " }],
           },
+          about: {
+            title: "  A propos refine ",
+            subtitle: "  Une section claire ",
+            highlight: {
+              intro: "  Une presentation concise ",
+              items: [{ id: "", text: "  Pragmatique " }],
+            },
+          },
           promise: {
             title: " Promise title ",
             subtitle: " Promise subtitle ",
@@ -743,6 +754,14 @@ describe("siteSettingsStore", () => {
           links: [{ id: "references", label: "", enabled: true }],
           keywords: [" ", "Delivery"],
           cards: [{ id: "", title: "  New card ", content: "  New content " }],
+        },
+        about: {
+          title: "  A propos refine ",
+          subtitle: "  Une section claire ",
+          highlight: {
+            intro: "  Une presentation concise ",
+            items: [{ id: "", text: "  Pragmatique " }],
+          },
         },
         promise: {
           title: " Promise title ",
@@ -794,6 +813,14 @@ describe("siteSettingsStore", () => {
             keywords: ["Delivery"],
             cards: [{ id: "card-1", title: "New card", content: "New content" }],
           },
+          about: {
+            title: "A propos refine",
+            subtitle: "Une section claire",
+            highlight: {
+              intro: "Une presentation concise",
+              items: [{ id: "about-item-1", text: "Pragmatique" }],
+            },
+          },
           promise: {
             title: "Promise title",
             subtitle: "Promise subtitle",
@@ -827,6 +854,7 @@ describe("siteSettingsStore", () => {
       label: "Exemples d'impact",
       enabled: true,
     });
+    expect(result.about.title).toBe("A propos refine");
     expect(result.promise.title).toBe("Promise title");
     expect(result.method.title).toBe("Methode");
     expect(result.publications.title).toBe("Publications");
@@ -844,6 +872,7 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          about: DEFAULT_ABOUT_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
           publications: DEFAULT_PUBLICATIONS_SETTINGS,
@@ -878,6 +907,7 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          about: DEFAULT_ABOUT_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
           publications: DEFAULT_PUBLICATIONS_SETTINGS,
@@ -912,6 +942,7 @@ describe("siteSettingsStore", () => {
         {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          about: DEFAULT_ABOUT_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
           publications: DEFAULT_PUBLICATIONS_SETTINGS,
@@ -988,7 +1019,7 @@ describe("siteSettingsStore", () => {
     expect(result.publications.title).toBe("Publications modifiees");
   });
 
-  it("updates header, home hero, promise and method through helper setters and save wrappers", async () => {
+  it("updates header, home hero, about, promise and method through helper setters and save wrappers", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce({
@@ -1000,6 +1031,7 @@ describe("siteSettingsStore", () => {
             bookingUrl: "https://example.com/header",
           },
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          about: DEFAULT_ABOUT_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
           publications: DEFAULT_PUBLICATIONS_SETTINGS,
@@ -1014,22 +1046,9 @@ describe("siteSettingsStore", () => {
             bookingUrl: "https://example.com/header",
           },
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
-          promise: DEFAULT_PROMISE_SETTINGS,
-          method: DEFAULT_METHOD_SETTINGS,
-          publications: DEFAULT_PUBLICATIONS_SETTINGS,
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          header: {
-            name: "Header wrapper",
-            title: "Coach",
-            bookingUrl: "https://example.com/header",
-          },
-          homeHero: {
-            ...DEFAULT_HOME_HERO_SETTINGS,
-            eyebrow: "Hero wrapper",
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
           },
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
@@ -1047,6 +1066,31 @@ describe("siteSettingsStore", () => {
           homeHero: {
             ...DEFAULT_HOME_HERO_SETTINGS,
             eyebrow: "Hero wrapper",
+          },
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
+          },
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: {
+            name: "Header wrapper",
+            title: "Coach",
+            bookingUrl: "https://example.com/header",
+          },
+          homeHero: {
+            ...DEFAULT_HOME_HERO_SETTINGS,
+            eyebrow: "Hero wrapper",
+          },
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
           },
           promise: {
             ...DEFAULT_PROMISE_SETTINGS,
@@ -1070,6 +1114,10 @@ describe("siteSettingsStore", () => {
           homeHero: {
             ...DEFAULT_HOME_HERO_SETTINGS,
             eyebrow: "Hero wrapper",
+          },
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
           },
           promise: {
             ...DEFAULT_PROMISE_SETTINGS,
@@ -1096,6 +1144,40 @@ describe("siteSettingsStore", () => {
           homeHero: {
             ...DEFAULT_HOME_HERO_SETTINGS,
             eyebrow: "Hero wrapper",
+          },
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
+          },
+          promise: {
+            ...DEFAULT_PROMISE_SETTINGS,
+            title: "Promise wrapper",
+          },
+          method: {
+            ...DEFAULT_METHOD_SETTINGS,
+            title: "Method wrapper",
+          },
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            title: "Publications wrapper",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: {
+            name: "Header wrapper",
+            title: "Coach",
+            bookingUrl: "https://example.com/header",
+          },
+          homeHero: {
+            ...DEFAULT_HOME_HERO_SETTINGS,
+            eyebrow: "Hero wrapper",
+          },
+          about: {
+            ...DEFAULT_ABOUT_SETTINGS,
+            title: "About wrapper",
           },
           promise: {
             ...DEFAULT_PROMISE_SETTINGS,
@@ -1125,6 +1207,12 @@ describe("siteSettingsStore", () => {
       eyebrow: "Local hero",
     });
     expect(getSiteSettings().homeHero.eyebrow).toBe("Local hero");
+
+    setAboutSettings({
+      ...DEFAULT_ABOUT_SETTINGS,
+      title: "Local about",
+    });
+    expect(getSiteSettings().about.title).toBe("Local about");
 
     setPromiseSettings({
       ...DEFAULT_PROMISE_SETTINGS,
@@ -1163,6 +1251,15 @@ describe("siteSettingsStore", () => {
     );
     expect(savedHero.homeHero.eyebrow).toBe("Hero wrapper");
 
+    const savedAbout = await saveAboutSettings(
+      {
+        ...DEFAULT_ABOUT_SETTINGS,
+        title: "About wrapper",
+      },
+      "token",
+    );
+    expect(savedAbout.about.title).toBe("About wrapper");
+
     const savedPromise = await savePromiseSettings(
       {
         ...DEFAULT_PROMISE_SETTINGS,
@@ -1189,7 +1286,7 @@ describe("siteSettingsStore", () => {
       "token",
     );
     expect(savedPublications.publications.title).toBe("Publications wrapper");
-    expect(fetchSpy).toHaveBeenCalledTimes(6);
+    expect(fetchSpy).toHaveBeenCalledTimes(7);
   });
 
   it("normalizes local setter values and stops notifying after unsubscribe", async () => {
@@ -1242,6 +1339,23 @@ describe("siteSettingsStore", () => {
       ],
       keywords: ["Flow"],
       cards: [{ id: "card-1", title: "", content: "Body" }],
+    });
+
+    setAboutSettings({
+      title: " ",
+      subtitle: "  Une posture de service  ",
+      highlight: {
+        intro: " ",
+        items: [{ id: "", text: "  Cadence soutenable  " }],
+      },
+    });
+    expect(getSiteSettings().about).toEqual({
+      title: DEFAULT_ABOUT_SETTINGS.title,
+      subtitle: "Une posture de service",
+      highlight: {
+        intro: DEFAULT_ABOUT_SETTINGS.highlight.intro,
+        items: [{ id: "about-item-1", text: "Cadence soutenable" }],
+      },
     });
 
     setPromiseSettings({
@@ -1311,6 +1425,7 @@ describe("siteSettingsStore", () => {
     await expect(ensureSiteSettingsLoaded()).resolves.toEqual({
       header: DEFAULT_HEADER_SETTINGS,
       homeHero: DEFAULT_HOME_HERO_SETTINGS,
+      about: DEFAULT_ABOUT_SETTINGS,
       promise: DEFAULT_PROMISE_SETTINGS,
       method: DEFAULT_METHOD_SETTINGS,
       publications: DEFAULT_PUBLICATIONS_SETTINGS,

@@ -52,6 +52,31 @@ def default_home_hero_settings():
     return deepcopy(DEFAULT_HOME_HERO_SETTINGS)
 
 
+DEFAULT_ABOUT_SETTINGS = {
+    "title": "Une posture de service, un cadre exigeant",
+    "subtitle": (
+        "Un accompagnement qui respecte les contraintes du terrain, tout en "
+        "ouvrant des marges de manoeuvre."
+    ),
+    "highlight": {
+        "intro": (
+            "Intervenir avec sobriete, clarifier les priorites et aider les "
+            "equipes a reprendre de l air sans theatre organisationnel."
+        ),
+        "items": [
+            {"id": "about-item-1", "text": "Pragmatisme ancre dans le terrain"},
+            {"id": "about-item-2", "text": "Cadence soutenable"},
+            {"id": "about-item-3", "text": "Decision plus lisible"},
+            {"id": "about-item-4", "text": "Transmission durable"},
+        ],
+    },
+}
+
+
+def default_about_settings():
+    return deepcopy(DEFAULT_ABOUT_SETTINGS)
+
+
 DEFAULT_PROMISE_SETTINGS = {
     "title": "Un accompagnement serieux, sobre, oriente resultats",
     "subtitle": (

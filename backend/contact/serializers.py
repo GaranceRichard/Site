@@ -8,6 +8,7 @@ from django.db import models
 from .media_cleanup import media_relative_path
 from .models import ContactMessage, Reference, SiteSettings
 from .site_settings_defaults import (
+    DEFAULT_ABOUT_SETTINGS,
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
@@ -280,6 +281,42 @@ class PromiseSettingsSerializer(serializers.Serializer):
         return cards
 
 
+class AboutHighlightItemSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=60, trim_whitespace=True, allow_blank=True)
+    text = serializers.CharField(max_length=160, trim_whitespace=True, allow_blank=True)
+
+
+class AboutHighlightSerializer(serializers.Serializer):
+    intro = serializers.CharField(trim_whitespace=True, allow_blank=True)
+    items = AboutHighlightItemSerializer(many=True)
+
+    def validate_intro(self, value: str) -> str:
+        return value.strip() or DEFAULT_ABOUT_SETTINGS["highlight"]["intro"]
+
+    def validate_items(self, value):
+        items = [
+            {
+                "id": item["id"].strip(),
+                "text": item["text"].strip(),
+            }
+            for item in value
+            if item["id"].strip() and item["text"].strip()
+        ][:4]
+        return items
+
+
+class AboutSettingsSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=240, trim_whitespace=True, allow_blank=True)
+    subtitle = serializers.CharField(trim_whitespace=True, allow_blank=True)
+    highlight = AboutHighlightSerializer()
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_ABOUT_SETTINGS["title"]
+
+    def validate_subtitle(self, value: str) -> str:
+        return value.strip() or DEFAULT_ABOUT_SETTINGS["subtitle"]
+
+
 class MethodStepSerializer(serializers.Serializer):
     id = serializers.CharField(max_length=60, trim_whitespace=True)
     step = serializers.CharField(max_length=8, trim_whitespace=True)
@@ -382,6 +419,7 @@ class PublicationsSettingsSerializer(serializers.Serializer):
 class SiteSettingsSerializer(serializers.ModelSerializer):
     header = HeaderSettingsSerializer()
     homeHero = HomeHeroSettingsSerializer(source="home_hero")
+    about = AboutSettingsSerializer()
     promise = PromiseSettingsSerializer()
     method = MethodSettingsSerializer()
     publications = PublicationsSettingsSerializer()
@@ -391,6 +429,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         fields = [
             "header",
             "homeHero",
+            "about",
             "promise",
             "method",
             "publications",
@@ -400,6 +439,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.header = validated_data["header"]
         instance.home_hero = validated_data["home_hero"]
+        instance.about = validated_data["about"]
         instance.promise = validated_data["promise"]
         instance.method = validated_data["method"]
         instance.publications = validated_data["publications"]

@@ -191,3 +191,10 @@ Journal des blocages rencontres sur ce repo.
 - Cause racine: Vite declenchait encore un sous-processus Windows non essentiel pendant sa resolution initiale, ce qui rendait Vitest aleatoirement rouge dans cet environnement.
 - Decision durable: les commandes frontend stables du repo qui lancent Vitest doivent precharger `frontend/scripts/vite-child-process-patch.mjs`; ne pas revenir a un lancement Vitest nu tant que ce faux `EPERM` Windows reste present.
 - Verification demandee: relancer `npm run test`, `npm run test:coverage` et `npm run test:coverage:vitals`; aucun run ne doit echouer sur `spawnSync ... EPERM` ou `failed to load config`.
+
+## 2026-03-23 - Toute extension de `SiteSettings` doit etre cablee jusqu'aux audits et normaliseurs
+- Contexte: l'ajout du bloc `about` a bien commence par une migration et des champs backoffice, mais une partie du repo continuait a raisonner sur l'ancien schema.
+- Symptomes: migration creee mais validation settings rouge, audit projet incomplet, et branches frontend/backend non protegees tant que le schema etendu n'etait pas relie de bout en bout.
+- Cause racine: ajout du nouveau champ traite comme une simple extension de formulaire au lieu d'un contrat transverse (`defaults` backend, serializers, audits, store/normalisation frontend, tests et vitals).
+- Decision durable: toute extension de `SiteSettings` doit etre implementee et verifiee sur tout le trajet: migration, defaults backend, serializers, audits projet, normalisation frontend, UI backoffice, rendu public et suites de tests/gates associees.
+- Verification demandee: apres ajout d'un champ settings, relancer au minimum `manage.py migrate`, `showmigrations`, `makemigrations --check --dry-run`, les tests settings cibles et la task complete `Tests`; aucun audit ni normaliseur ne doit rester sur l'ancien schema.

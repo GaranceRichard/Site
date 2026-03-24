@@ -25,6 +25,7 @@ npm run build
 - `npm run test:coverage` impose `80/80/80/80` avec `perFile: true` sur les fichiers couverts par `vitest.config.mjs`.
 - `npm run test:coverage:vitals` : meme commande frontend, mais avec des seuils `95/95/95/95` sur le sous-ensemble aligne avec `docs/critical-paths.md` : `app/backoffice`, `contact/ContactForm`, `BackofficeModal`, `components/backoffice` et `lib/backoffice`, via `vitest.config.vitals.mjs`.
 - `npm run test:coverage:html` : generation explicite du rapport HTML si besoin.
+- Le perimetre couvert inclut desormais le manager backoffice `AboutSettingsManager` dans `app/backoffice`, avec ses tests dedies et la normalisation `aboutSettings`.
 
 ## E2E coverage
 
@@ -58,6 +59,7 @@ npm run build
 - `npm run test:coverage` passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs), qui nettoie `coverage/`, charge explicitement les configs `vitest.config*.mjs`, precharge [vite-child-process-patch.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/vite-child-process-patch.mjs), tolere le faux echec `coverage/.tmp` sous Windows et retente plusieurs fois si Vitest/Vite echoue au demarrage.
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
+- Le backoffice couvre maintenant la section `A propos` via `AboutSettingsManager.tsx` et `aboutSettings.test.ts`, pour aligner le schema frontend avec l'extension `about` de `SiteSettings`.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 - Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
 

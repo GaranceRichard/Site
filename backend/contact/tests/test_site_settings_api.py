@@ -12,11 +12,13 @@ from contact.site_settings_cache import (
     get_public_site_settings_cache_key,
 )
 from contact.site_settings_defaults import (
+    DEFAULT_ABOUT_SETTINGS,
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
     DEFAULT_PUBLICATIONS_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
+    default_about_settings,
     default_header_settings,
     default_home_hero_settings,
     default_method_settings,
@@ -58,6 +60,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
+        self.assertEqual(res.data["about"], DEFAULT_ABOUT_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
         self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
         self.assertEqual(res.data["publications"], DEFAULT_PUBLICATIONS_SETTINGS)
@@ -69,6 +72,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["header"], DEFAULT_HEADER_SETTINGS)
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
+        self.assertEqual(res.data["about"], DEFAULT_ABOUT_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
         self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
         self.assertEqual(res.data["publications"], DEFAULT_PUBLICATIONS_SETTINGS)
@@ -103,6 +107,17 @@ class SiteSettingsApiTests(APITestCase):
                         "content": "Contenu A",
                     }
                 ],
+            },
+            "about": {
+                "title": "A propos",
+                "subtitle": "Une section plus personnelle.",
+                "highlight": {
+                    "intro": "Quelques lignes pour presenter la posture.",
+                    "items": [
+                        {"id": "about-item-1", "text": "Pragmatisme"},
+                        {"id": "about-item-2", "text": "Cadence"},
+                    ],
+                },
             },
             "method": {
                 "eyebrow": "Approche",
@@ -152,6 +167,7 @@ class SiteSettingsApiTests(APITestCase):
         settings = SiteSettings.get_solo()
         self.assertEqual(settings.header["name"], "Jane Doe")
         self.assertEqual(settings.home_hero["eyebrow"], "Nouveau surtitre")
+        self.assertEqual(settings.about["title"], "A propos")
         self.assertEqual(settings.promise["title"], "Titre positionnement")
         self.assertEqual(settings.method["title"], "Chemin de delivery")
         self.assertEqual(settings.publications["title"], "Publications")
@@ -163,6 +179,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(public_res.status_code, status.HTTP_200_OK)
         self.assertEqual(public_res.data["header"]["name"], "Jane Doe")
         self.assertEqual(public_res.data["homeHero"]["eyebrow"], "Nouveau surtitre")
+        self.assertEqual(public_res.data["about"]["title"], "A propos")
         self.assertEqual(public_res.data["promise"]["title"], "Titre positionnement")
         self.assertEqual(public_res.data["method"]["title"], "Chemin de delivery")
         self.assertEqual(public_res.data["publications"]["title"], "Publications")
@@ -175,6 +192,7 @@ class SiteSettingsApiTests(APITestCase):
                 "bookingUrl": "https://example.com/booking",
             },
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "about": DEFAULT_ABOUT_SETTINGS,
             "promise": DEFAULT_PROMISE_SETTINGS,
             "method": DEFAULT_METHOD_SETTINGS,
             "publications": DEFAULT_PUBLICATIONS_SETTINGS,
@@ -197,6 +215,7 @@ class SiteSettingsApiTests(APITestCase):
             {
                 "header": DEFAULT_HEADER_SETTINGS,
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+                "about": DEFAULT_ABOUT_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
                 "method": DEFAULT_METHOD_SETTINGS,
                 "publications": DEFAULT_PUBLICATIONS_SETTINGS,
@@ -222,6 +241,7 @@ class SiteSettingsApiTests(APITestCase):
                     "bookingUrl": DEFAULT_HEADER_SETTINGS["bookingUrl"],
                 },
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+                "about": DEFAULT_ABOUT_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
                 "method": DEFAULT_METHOD_SETTINGS,
                 "publications": DEFAULT_PUBLICATIONS_SETTINGS,
@@ -239,6 +259,20 @@ class SiteSettingsApiTests(APITestCase):
         payload = {
             "header": DEFAULT_HEADER_SETTINGS,
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "about": {
+                "title": "  ",
+                "subtitle": " Une approche claire ",
+                "highlight": {
+                    "intro": "  ",
+                    "items": [
+                        {"id": "about-item-1", "text": "  Clarte  "},
+                        {"id": "", "text": "  Sans id  "},
+                        {"id": "about-item-3", "text": "  "},
+                        {"id": "about-item-4", "text": "  Durabilite  "},
+                        {"id": "about-item-5", "text": "  Trop  "},
+                    ],
+                },
+            },
             "promise": DEFAULT_PROMISE_SETTINGS,
             "method": DEFAULT_METHOD_SETTINGS,
             "publications": {
@@ -276,6 +310,14 @@ class SiteSettingsApiTests(APITestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK, res.data)
         settings = SiteSettings.get_solo()
+        self.assertEqual(settings.about["title"], DEFAULT_ABOUT_SETTINGS["title"])
+        self.assertEqual(settings.about["subtitle"], "Une approche claire")
+        self.assertEqual(
+            settings.about["highlight"]["intro"],
+            DEFAULT_ABOUT_SETTINGS["highlight"]["intro"],
+        )
+        self.assertEqual(len(settings.about["highlight"]["items"]), 3)
+        self.assertEqual(settings.about["highlight"]["items"][0]["text"], "Clarte")
         self.assertEqual(len(settings.publications["items"]), 4)
         self.assertEqual(len(settings.publications["items"][0]["links"]), 3)
 
@@ -285,6 +327,7 @@ class SiteSettingsApiTests(APITestCase):
         payload = {
             "header": DEFAULT_HEADER_SETTINGS,
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "about": DEFAULT_ABOUT_SETTINGS,
             "promise": DEFAULT_PROMISE_SETTINGS,
             "method": DEFAULT_METHOD_SETTINGS,
             "publications": {
@@ -331,6 +374,21 @@ class SiteSettingsDefaultsTests(TestCase):
         header["name"] = "Changed name"
 
         self.assertEqual(DEFAULT_HEADER_SETTINGS["name"], "Garance Richard")
+
+    def test_default_about_settings_returns_deep_copy(self):
+        about = default_about_settings()
+
+        about["highlight"]["intro"] = "Changed intro"
+        about["highlight"]["items"][0]["text"] = "Changed item"
+
+        self.assertEqual(
+            DEFAULT_ABOUT_SETTINGS["highlight"]["intro"],
+            "Intervenir avec sobriete, clarifier les priorites et aider les equipes a reprendre de l air sans theatre organisationnel.",
+        )
+        self.assertEqual(
+            DEFAULT_ABOUT_SETTINGS["highlight"]["items"][0]["text"],
+            "Pragmatisme ancre dans le terrain",
+        )
 
     def test_default_home_hero_settings_returns_deep_copy(self):
         hero = default_home_hero_settings()

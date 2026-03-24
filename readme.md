@@ -24,8 +24,10 @@ garancerichard-site/
 - frontend/src/app/backoffice/ (page, sectionStore, composants UI)
 - frontend/src/app/backoffice/components/HomeSettingsManager.tsx
 - frontend/src/app/backoffice/components/HeaderSettingsManager.tsx
+- frontend/src/app/backoffice/components/AboutSettingsManager.tsx
 - frontend/src/app/content/homeHeroSettings.ts
 - frontend/src/app/content/headerSettings.ts
+- frontend/src/app/content/aboutSettings.ts
 - frontend/src/app/components/home/ (Hero, sections, references, footer)
 - frontend/src/app/api-proxy/media/[...path]/route.ts (proxy same-origin des medias backend)
 - frontend/src/app/lib/media.ts (normalisation/proxy des URLs media backend cote frontend)
@@ -273,7 +275,7 @@ Exemple réponse :
 
 ## API — Backoffice
 - Settings de site :
-  - GET /api/settings/ (public: header + hero)
+  - GET /api/settings/ (public: header + hero + about)
   - PUT /api/settings/admin/ (admin uniquement)
 - GET /api/contact/messages/admin (liste, admin uniquement)
   - Parametres : page (defaut 1), limit (defaut 50, max 200), q (nom/email/sujet), sort (created_at|name|email|subject), dir (asc|desc)
@@ -568,6 +570,8 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - Le store frontend `SiteSettings` tente maintenant `/api-proxy` puis bascule sur `NEXT_PUBLIC_API_BASE_URL` pour charger et enregistrer les reglages si le proxy navigateur n'est pas disponible.
 - Les tests unitaires des managers de reglages backoffice neutralisent desormais `NEXT_PUBLIC_API_BASE_URL` quand ils moquent un seul appel `fetch`, afin d'eviter les faux echecs CI lies au fallback reseau.
 - Le backend expose maintenant des `SiteSettings` publics/admin pour piloter le header et le hero de la page d'accueil.
+- Le schema `SiteSettings` inclut maintenant un bloc `about` admin/public, avec migration Django appliquee et normalisation frontend dediee.
+- Le backoffice permet maintenant d'editer la section `A propos` (titre, sous-titre, encart, jusqu'a 4 encadres) et le menu de gauche place cette section apres `References`.
 - La task VS Code `Test integration` inclut les tests backend `SiteSettings` et `test_models`, afin d'aligner la couverture d'integration avec le seuil global a `95%`.
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
 - Les scripts frontend de test/coverage reposent maintenant sur `vitest.config.mjs`, `vitest.config.vitals.mjs` et un prechargement `vite-child-process-patch.mjs` pour stabiliser les runs Windows.

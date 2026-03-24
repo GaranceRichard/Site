@@ -43,6 +43,7 @@ Mon site/
 |   |   |   |   |-- sectionStore.ts
 |   |   |   |   |-- types.ts
 |   |   |   |   `-- components/
+|   |   |   |       |-- AboutSettingsManager.tsx
 |   |   |   |       |-- HeaderSettingsManager.tsx
 |   |   |   |       |-- HomeSettingsManager.tsx
 |   |   |   |       |-- PublicationsSettingsManager.tsx
@@ -59,6 +60,7 @@ Mon site/
 |   |   |   |       |-- ServicesSection.tsx
 |   |   |   |       `-- ReferencesSection.tsx
 |   |   |   |-- content/
+|   |   |   |   |-- aboutSettings.ts
 |   |   |   |   |-- headerSettings.ts
 |   |   |   |   |-- homeHeroSettings.ts
 |   |   |   |   |-- promiseSettings.ts
