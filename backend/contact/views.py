@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import HttpResponse
 
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 
 from .ga4 import GA4FetchError, fetch_ga4_summary, is_ga4_configured
 from .image_upload import MAX_UPLOAD_BYTES, get_upload_strategy
@@ -230,6 +231,14 @@ class ReferenceImageUploadAdminView(APIView):
 class ContentExchangeTemplateAdminView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.STR,
+                description="Fichier TOML de canevas pour le chargeur / extracteur.",
+            )
+        }
+    )
     def get(self, request):
         response = HttpResponse(
             build_exchange_template(),
@@ -242,6 +251,14 @@ class ContentExchangeTemplateAdminView(APIView):
 class ContentExchangeExportAdminView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.STR,
+                description="Fichier TOML d'export du contenu courant.",
+            )
+        }
+    )
     def get(self, request):
         response = HttpResponse(
             export_exchange_text(),
