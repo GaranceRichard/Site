@@ -19,6 +19,7 @@ const SECTIONS: Array<{ id: BackofficeSection; label: string }> = [
   { id: "home", label: "Accueil" },
   { id: "promise", label: "Positionnement" },
   { id: "method", label: "Approche" },
+  { id: "publications", label: "Publications" },
   { id: "references", label: "References" },
   { id: "stats", label: "Statistiques" },
 ];

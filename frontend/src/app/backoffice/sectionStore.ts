@@ -9,6 +9,7 @@ function normalizeSection(value: string | null): BackofficeSection {
     value === "home" ||
     value === "promise" ||
     value === "method" ||
+    value === "publications" ||
     value === "references" ||
     value === "header" ||
     value === "stats"

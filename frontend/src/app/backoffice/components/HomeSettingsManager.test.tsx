@@ -135,7 +135,7 @@ describe("HomeSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Impossible d'enregistrer l'accueil.")).toBeInTheDocument();
+      expect(screen.getByText("Erreur API")).toBeInTheDocument();
     });
   });
 

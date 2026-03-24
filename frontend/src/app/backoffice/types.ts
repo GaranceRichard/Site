@@ -16,6 +16,7 @@ export type BackofficeSection =
   | "home"
   | "promise"
   | "method"
+  | "publications"
   | "references"
   | "header"
   | "stats";

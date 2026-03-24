@@ -39,6 +39,11 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("method");
   });
 
+  it("returns publications when stored value is publications", () => {
+    window.localStorage.setItem(SECTION_KEY, "publications");
+    expect(getBackofficeSection()).toBe("publications");
+  });
+
   it("returns messages when stored value is messages", () => {
     window.localStorage.setItem(SECTION_KEY, "messages");
     expect(getBackofficeSection()).toBe("messages");

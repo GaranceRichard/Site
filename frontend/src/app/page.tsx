@@ -2,7 +2,7 @@
 import TopNav from "./components/TopNav";
 
 import FooterSection from "./components/home/FooterSection";
-import { BOOKING_URL, METHOD_STEPS, SERVICES } from "./content";
+import { BOOKING_URL, METHOD_STEPS } from "./content";
 
 import {
   HOME_SECTIONS,
@@ -22,7 +22,6 @@ export default function HomePage() {
       {HOME_SECTIONS.map((s) => (
         <div key={s.id}>
           {s.render({
-            services: SERVICES,
             steps: METHOD_STEPS,
           })}
         </div>

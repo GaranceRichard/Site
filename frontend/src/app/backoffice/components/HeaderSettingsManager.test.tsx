@@ -224,7 +224,7 @@ describe("HeaderSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Impossible d'enregistrer le header.")).toBeInTheDocument();
+      expect(screen.getByText("Erreur API")).toBeInTheDocument();
     });
   });
 
@@ -281,7 +281,7 @@ describe("HeaderSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reinitialiser" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Impossible de reinitialiser le header.")).toBeInTheDocument();
+      expect(screen.getByText("Erreur API")).toBeInTheDocument();
     });
   });
 

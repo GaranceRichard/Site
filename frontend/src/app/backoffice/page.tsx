@@ -12,6 +12,7 @@ import HomeSettingsManager from "./components/HomeSettingsManager";
 import MethodSettingsManager from "./components/MethodSettingsManager";
 import MessageModal from "./components/MessageModal";
 import MessagesTable from "./components/MessagesTable";
+import PublicationsSettingsManager from "./components/PublicationsSettingsManager";
 import PromiseSettingsManager from "./components/PromiseSettingsManager";
 import ReferencesManager from "./components/ReferencesManager";
 import Sidebar from "./components/Sidebar";
@@ -59,6 +60,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Approche",
       subtitle: "Edition du surtitre, des textes et des etapes de la section approche.",
+    };
+  }
+
+  if (section === "publications") {
+    return {
+      title: "Publications",
+      subtitle: "Edition du titre, du sous-titre, de l'encart et des publications.",
     };
   }
 
@@ -200,6 +208,7 @@ export default function BackofficePage() {
           {section === "home" ? <HomeSettingsManager /> : null}
           {section === "promise" ? <PromiseSettingsManager /> : null}
           {section === "method" ? <MethodSettingsManager /> : null}
+          {section === "publications" ? <PublicationsSettingsManager /> : null}
           {section === "stats" ? (
             <StatsBlock apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
           ) : null}

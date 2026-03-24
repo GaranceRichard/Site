@@ -145,7 +145,7 @@ describe("PromiseSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Impossible d'enregistrer le positionnement.")).toBeInTheDocument();
+      expect(screen.getByText("Erreur API")).toBeInTheDocument();
     });
   });
 

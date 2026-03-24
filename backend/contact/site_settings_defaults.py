@@ -149,3 +149,74 @@ DEFAULT_METHOD_SETTINGS = {
 
 def default_method_settings():
     return deepcopy(DEFAULT_METHOD_SETTINGS)
+
+
+DEFAULT_PUBLICATIONS_SETTINGS = {
+    "title": "Trois formats, une meme exigence",
+    "subtitle": (
+        "Des interventions calibrees : utiles, lisibles, et soutenables "
+        "dans la duree."
+    ),
+    "highlight": {
+        "title": "Format type",
+        "content": (
+            "Diagnostic & cadrage\n"
+            "Accompagnement (4 a 12 semaines)\n"
+            "Restitution & plan d'ancrage"
+        ),
+    },
+    "items": [
+        {
+            "id": "publication-1",
+            "title": "Coaching Lean-Agile - transformation pragmatique",
+            "content": (
+                "Cadrage : objectifs, perimetre, gouvernance legere\n"
+                "Coaching d'equipes : rituels, flux, qualite, amelioration continue\n"
+                "Accompagnement des leaders : posture, decision, pilotage"
+            ),
+            "links": [
+                {
+                    "id": "publication-1-link-1",
+                    "title": "Exemple de cadrage de transformation",
+                    "url": "https://example.com/publications/cadrage-transformation",
+                }
+            ],
+        },
+        {
+            "id": "publication-2",
+            "title": "Facilitation - ateliers decisifs et alignement",
+            "content": (
+                "Ateliers d'alignement (vision, priorites, arbitrages)\n"
+                "Resolution structuree de problemes (A3, 5 Why, etc.)\n"
+                "Conception de parcours d'ateliers (du diagnostic a l'action)"
+            ),
+            "links": [
+                {
+                    "id": "publication-2-link-1",
+                    "title": "Note sur les ateliers d'alignement",
+                    "url": "https://example.com/publications/ateliers-alignement",
+                }
+            ],
+        },
+        {
+            "id": "publication-3",
+            "title": "Formation - bases solides, ancrage durable",
+            "content": (
+                "Lean / Agile : fondamentaux, pratiques, anti-patterns\n"
+                "Pilotage par la valeur : priorisation, metriques, flow\n"
+                "Transfert : supports, exercices, plan d'ancrage"
+            ),
+            "links": [
+                {
+                    "id": "publication-3-link-1",
+                    "title": "Programme de formation Lean-Agile",
+                    "url": "https://example.com/publications/formation-lean-agile",
+                }
+            ],
+        },
+    ],
+}
+
+
+def default_publications_settings():
+    return deepcopy(DEFAULT_PUBLICATIONS_SETTINGS)

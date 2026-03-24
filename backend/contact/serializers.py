@@ -11,6 +11,7 @@ from .site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
+    DEFAULT_PUBLICATIONS_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
 )
 
@@ -319,20 +320,79 @@ class MethodSettingsSerializer(serializers.Serializer):
         return steps
 
 
+class PublicationHighlightSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=160, trim_whitespace=True)
+    content = serializers.CharField(trim_whitespace=True)
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["title"]
+
+    def validate_content(self, value: str) -> str:
+        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["content"]
+
+
+class PublicationItemSerializer(serializers.Serializer):
+    class PublicationReferenceLinkSerializer(serializers.Serializer):
+        id = serializers.CharField(max_length=80, trim_whitespace=True)
+        title = serializers.CharField(max_length=240, trim_whitespace=True)
+        url = serializers.URLField(max_length=500)
+
+    id = serializers.CharField(max_length=60, trim_whitespace=True)
+    title = serializers.CharField(max_length=240, trim_whitespace=True)
+    content = serializers.CharField(trim_whitespace=True)
+    links = PublicationReferenceLinkSerializer(many=True, required=False)
+
+
+class PublicationsSettingsSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=240, trim_whitespace=True)
+    subtitle = serializers.CharField(trim_whitespace=True)
+    highlight = PublicationHighlightSerializer()
+    items = PublicationItemSerializer(many=True)
+
+    def validate_title(self, value: str) -> str:
+        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["title"]
+
+    def validate_subtitle(self, value: str) -> str:
+        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["subtitle"]
+
+    def validate_items(self, value):
+        items = [
+            {
+                "id": item["id"].strip(),
+                "title": item["title"].strip(),
+                "content": item["content"].strip(),
+                "links": [
+                    {
+                        "id": link["id"].strip(),
+                        "title": link["title"].strip(),
+                        "url": link["url"].strip(),
+                    }
+                    for link in item.get("links", [])
+                    if link["id"].strip() and link["title"].strip() and link["url"].strip()
+                ][:3],
+            }
+            for item in value
+            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
+        ][:4]
+        return items
+
+
 class SiteSettingsSerializer(serializers.ModelSerializer):
     header = HeaderSettingsSerializer()
     homeHero = HomeHeroSettingsSerializer(source="home_hero")
     promise = PromiseSettingsSerializer()
     method = MethodSettingsSerializer()
+    publications = PublicationsSettingsSerializer()
 
     class Meta:
         model = SiteSettings
-        fields = ["header", "homeHero", "promise", "method", "updated_at"]
+        fields = ["header", "homeHero", "promise", "method", "publications", "updated_at"]
 
     def update(self, instance, validated_data):
         instance.header = validated_data["header"]
         instance.home_hero = validated_data["home_hero"]
         instance.promise = validated_data["promise"]
         instance.method = validated_data["method"]
+        instance.publications = validated_data["publications"]
         instance.save()
         return instance

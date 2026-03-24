@@ -9,6 +9,7 @@ from .site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
+    DEFAULT_PUBLICATIONS_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
 )
 
@@ -19,6 +20,7 @@ def _site_settings_payload(instance: SiteSettings) -> dict:
         "homeHero": instance.home_hero,
         "promise": instance.promise,
         "method": instance.method,
+        "publications": instance.publications,
     }
 
 
@@ -32,6 +34,7 @@ def audit_site_settings() -> dict:
         "matches_default_home_hero": False,
         "matches_default_promise": False,
         "matches_default_method": False,
+        "matches_default_publications": False,
         "serializer_valid": False,
         "serializer_errors": {},
     }
@@ -53,6 +56,8 @@ def audit_site_settings() -> dict:
             == DEFAULT_HOME_HERO_SETTINGS,
             "matches_default_promise": instance.promise == DEFAULT_PROMISE_SETTINGS,
             "matches_default_method": instance.method == DEFAULT_METHOD_SETTINGS,
+            "matches_default_publications": instance.publications
+            == DEFAULT_PUBLICATIONS_SETTINGS,
             "serializer_valid": is_valid,
             "serializer_errors": serializer.errors if not is_valid else {},
         }

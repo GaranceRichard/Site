@@ -12,6 +12,7 @@ from django.test.utils import override_settings
 from rest_framework.test import APITestCase
 
 from contact.models import ContactMessage, Reference, SiteSettings
+from contact.site_settings_defaults import DEFAULT_PUBLICATIONS_SETTINGS
 
 TEST_TMP_ROOT = Path(__file__).resolve().parents[2] / ".tmp-test-media"
 TEST_TMP_ROOT.mkdir(exist_ok=True)
@@ -353,13 +354,20 @@ class DataAuditTests(APITestCase):
     def test_audit_site_settings_reports_invalid_singleton_state(self):
         from contact.data_audit import audit_site_settings
 
-        fake_one = SiteSettings(header={}, home_hero={}, promise={}, method={})
+        fake_one = SiteSettings(
+            header={},
+            home_hero={},
+            promise={},
+            method={},
+            publications={},
+        )
         fake_one.pk = 1
         fake_two = SiteSettings(
             header={"name": "X"},
             home_hero={},
             promise={},
             method={},
+            publications={},
         )
         fake_two.pk = 2
 
@@ -424,6 +432,7 @@ class DataAuditTests(APITestCase):
                     }
                 ],
             },
+            publications=DEFAULT_PUBLICATIONS_SETTINGS,
         )
         fake.pk = 2
 

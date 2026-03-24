@@ -141,7 +141,7 @@ describe("MethodSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Impossible d'enregistrer l'approche.")).toBeInTheDocument();
+      expect(screen.getByText("Erreur API")).toBeInTheDocument();
     });
   });
 

@@ -63,11 +63,37 @@ export type MethodSettings = {
   steps: MethodStep[];
 };
 
+export type PublicationHighlight = {
+  title: string;
+  content: string;
+};
+
+export type PublicationReferenceLink = {
+  id: string;
+  title: string;
+  url: string;
+};
+
+export type PublicationItem = {
+  id: string;
+  title: string;
+  content: string;
+  links?: PublicationReferenceLink[];
+};
+
+export type PublicationsSettings = {
+  title: string;
+  subtitle: string;
+  highlight: PublicationHighlight;
+  items: PublicationItem[];
+};
+
 export type SiteSettings = {
   header: HeaderSettings;
   homeHero: HomeHeroSettings;
   promise: PromiseSettings;
   method: MethodSettings;
+  publications: PublicationsSettings;
 };
 
 export const DEFAULT_HEADER_SETTINGS: HeaderSettings = {
@@ -168,17 +194,84 @@ export const DEFAULT_METHOD_SETTINGS: MethodSettings = {
   ],
 };
 
+export const DEFAULT_PUBLICATIONS_SETTINGS: PublicationsSettings = {
+  title: "Trois formats, une meme exigence",
+  subtitle: "Des interventions calibrees : utiles, lisibles, et soutenables dans la duree.",
+  highlight: {
+    title: "Format type",
+    content: "Diagnostic & cadrage\nAccompagnement (4 a 12 semaines)\nRestitution & plan d'ancrage",
+  },
+  items: [
+    {
+      id: "publication-1",
+      title: "Coaching Lean-Agile - transformation pragmatique",
+      content:
+        "Cadrage : objectifs, perimetre, gouvernance legere\nCoaching d'equipes : rituels, flux, qualite, amelioration continue\nAccompagnement des leaders : posture, decision, pilotage",
+      links: [
+        {
+          id: "publication-1-link-1",
+          title: "Exemple de cadrage de transformation",
+          url: "https://example.com/publications/cadrage-transformation",
+        },
+      ],
+    },
+    {
+      id: "publication-2",
+      title: "Facilitation - ateliers decisifs et alignement",
+      content:
+        "Ateliers d'alignement (vision, priorites, arbitrages)\nResolution structuree de problemes (A3, 5 Why, etc.)\nConception de parcours d'ateliers (du diagnostic a l'action)",
+      links: [
+        {
+          id: "publication-2-link-1",
+          title: "Note sur les ateliers d'alignement",
+          url: "https://example.com/publications/ateliers-alignement",
+        },
+      ],
+    },
+    {
+      id: "publication-3",
+      title: "Formation - bases solides, ancrage durable",
+      content:
+        "Lean / Agile : fondamentaux, pratiques, anti-patterns\nPilotage par la valeur : priorisation, metriques, flow\nTransfert : supports, exercices, plan d'ancrage",
+      links: [
+        {
+          id: "publication-3-link-1",
+          title: "Programme de formation Lean-Agile",
+          url: "https://example.com/publications/formation-lean-agile",
+        },
+      ],
+    },
+  ],
+};
+
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   header: DEFAULT_HEADER_SETTINGS,
   homeHero: DEFAULT_HOME_HERO_SETTINGS,
   promise: DEFAULT_PROMISE_SETTINGS,
   method: DEFAULT_METHOD_SETTINGS,
+  publications: DEFAULT_PUBLICATIONS_SETTINGS,
 };
 
 const listeners = new Set<() => void>();
 let cachedValue: SiteSettings = DEFAULT_SITE_SETTINGS;
 let hasLoaded = false;
+let hasLoadedFromApi = false;
 let pendingLoad: Promise<SiteSettings> | null = null;
+
+function normalizeApiBaseUrl(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.replace(/\/+$/, "");
+}
+
+function getApiBaseCandidates(): string[] {
+  const resolved = normalizeApiBaseUrl(resolveApiBaseUrl());
+  const envBase = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+
+  return Array.from(new Set([resolved, envBase].filter((value): value is string => Boolean(value))));
+}
 
 function notifyListeners() {
   for (const listener of listeners) {
@@ -414,6 +507,78 @@ function normalizeMethodSettings(value: unknown): MethodSettings {
   };
 }
 
+function normalizePublicationHighlight(value: unknown): PublicationHighlight {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_PUBLICATIONS_SETTINGS.highlight;
+  }
+
+  const candidate = value as Partial<PublicationHighlight>;
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+  const content = typeof candidate.content === "string" ? candidate.content.trim() : "";
+
+  return {
+    title: title || DEFAULT_PUBLICATIONS_SETTINGS.highlight.title,
+    content: content || DEFAULT_PUBLICATIONS_SETTINGS.highlight.content,
+  };
+}
+
+function normalizePublicationItems(value: unknown): PublicationItem[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_PUBLICATIONS_SETTINGS.items;
+  }
+
+  const items = value
+    .filter((item) => item && typeof item === "object")
+    .map((item, index) => {
+      const candidate = item as Partial<PublicationItem>;
+      const id =
+        typeof candidate.id === "string" && candidate.id.trim()
+          ? candidate.id.trim()
+          : `publication-${index + 1}`;
+      const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+      const content = typeof candidate.content === "string" ? candidate.content.trim() : "";
+      const links = Array.isArray(candidate.links)
+        ? candidate.links
+            .filter((link) => link && typeof link === "object")
+            .map((link, linkIndex) => {
+              const linkCandidate = link as Partial<PublicationReferenceLink>;
+              const linkId =
+                typeof linkCandidate.id === "string" && linkCandidate.id.trim()
+                  ? linkCandidate.id.trim()
+                  : `${id}-link-${linkIndex + 1}`;
+              const linkTitle =
+                typeof linkCandidate.title === "string" ? linkCandidate.title.trim() : "";
+              const url = typeof linkCandidate.url === "string" ? linkCandidate.url.trim() : "";
+              return { id: linkId, title: linkTitle, url };
+            })
+            .filter((link) => link.title && link.url)
+            .slice(0, 3)
+        : [];
+      return { id, title, content, links };
+    })
+    .filter((item) => item.title || item.content)
+    .slice(0, 4);
+
+  return items;
+}
+
+function normalizePublicationsSettings(value: unknown): PublicationsSettings {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_PUBLICATIONS_SETTINGS;
+  }
+
+  const candidate = value as Partial<PublicationsSettings>;
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+  const subtitle = typeof candidate.subtitle === "string" ? candidate.subtitle.trim() : "";
+
+  return {
+    title: title || DEFAULT_PUBLICATIONS_SETTINGS.title,
+    subtitle: subtitle || DEFAULT_PUBLICATIONS_SETTINGS.subtitle,
+    highlight: normalizePublicationHighlight(candidate.highlight),
+    items: normalizePublicationItems(candidate.items),
+  };
+}
+
 function normalizeSiteSettings(value: unknown): SiteSettings {
   if (!value || typeof value !== "object") {
     return DEFAULT_SITE_SETTINGS;
@@ -425,6 +590,7 @@ function normalizeSiteSettings(value: unknown): SiteSettings {
     homeHero: normalizeHomeHeroSettings(candidate.homeHero),
     promise: normalizePromiseSettings(candidate.promise),
     method: normalizeMethodSettings(candidate.method),
+    publications: normalizePublicationsSettings(candidate.publications),
   };
 }
 
@@ -434,8 +600,9 @@ function setCachedSiteSettings(next: SiteSettings) {
     homeHero: normalizeHomeHeroSettings(next.homeHero),
     promise: normalizePromiseSettings(next.promise),
     method: normalizeMethodSettings(next.method),
+    publications: normalizePublicationsSettings(next.publications),
   };
-  hasLoaded = true;
+  hasLoaded = hasLoadedFromApi;
   notifyListeners();
 }
 
@@ -460,27 +627,34 @@ export async function ensureSiteSettingsLoaded(): Promise<SiteSettings> {
     return pendingLoad;
   }
 
-  const apiBase = resolveApiBaseUrl();
-  if (!apiBase) {
-    hasLoaded = true;
+  const apiBases = getApiBaseCandidates();
+  if (apiBases.length === 0) {
     return cachedValue;
   }
 
   pendingLoad = (async () => {
+    let lastError: Error | null = null;
     try {
-      const response = await fetch(`${apiBase}/api/settings/`);
-      if (!response.ok) {
-        throw new Error(`Erreur API (${response.status})`);
-      }
+      for (const apiBase of apiBases) {
+        try {
+          const response = await fetch(`${apiBase}/api/settings/`);
+          if (!response.ok) {
+            throw new Error(`Erreur API (${response.status})`);
+          }
 
-      const data = (await response.json()) as unknown;
-      const normalized = normalizeSiteSettings(data);
-      cachedValue = normalized;
-      hasLoaded = true;
-      notifyListeners();
-      return normalized;
+          const data = (await response.json()) as unknown;
+          const normalized = normalizeSiteSettings(data);
+          cachedValue = normalized;
+          hasLoaded = true;
+          hasLoadedFromApi = true;
+          notifyListeners();
+          return normalized;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error("Erreur de chargement API");
+        }
+      }
+      throw lastError ?? new Error("Erreur de chargement API");
     } catch {
-      hasLoaded = true;
       return cachedValue;
     } finally {
       pendingLoad = null;
@@ -490,43 +664,69 @@ export async function ensureSiteSettingsLoaded(): Promise<SiteSettings> {
   return pendingLoad;
 }
 
-export async function saveSiteSettings(next: SiteSettings, token: string): Promise<SiteSettings> {
-  const apiBase = resolveApiBaseUrl();
-  if (!apiBase) {
+async function ensureRemoteSiteSettingsForSave(): Promise<SiteSettings> {
+  if (getApiBaseCandidates().length === 0) {
     throw new Error("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
   }
+  const current = await ensureSiteSettingsLoaded();
+  if (!hasLoadedFromApi) {
+    throw new Error(
+      "Impossible de charger les reglages actuels. Rechargez la page puis reessayez.",
+    );
+  }
+  return current;
+}
+
+export async function saveSiteSettings(next: SiteSettings, token: string): Promise<SiteSettings> {
+  const apiBases = getApiBaseCandidates();
+  if (apiBases.length === 0) {
+    throw new Error("Configuration manquante : NEXT_PUBLIC_API_BASE_URL.");
+  }
+  await ensureRemoteSiteSettingsForSave();
 
   const payload = {
     header: normalizeHeaderSettings(next.header),
     homeHero: normalizeHomeHeroSettings(next.homeHero),
     promise: normalizePromiseSettings(next.promise),
     method: normalizeMethodSettings(next.method),
+    publications: normalizePublicationsSettings(next.publications),
   };
 
-  const response = await fetch(`${apiBase}/api/settings/admin/`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Erreur API (${response.status})`);
+  for (const apiBase of apiBases) {
+    try {
+      const response = await fetch(`${apiBase}/api/settings/admin/`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Erreur API (${response.status})`);
+      }
+
+      const data = (await response.json()) as unknown;
+      const normalized = normalizeSiteSettings(data);
+      cachedValue = normalized;
+      hasLoaded = true;
+      hasLoadedFromApi = true;
+      notifyListeners();
+      return normalized;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Erreur API");
+    }
   }
 
-  const data = (await response.json()) as unknown;
-  const normalized = normalizeSiteSettings(data);
-  cachedValue = normalized;
-  hasLoaded = true;
-  notifyListeners();
-  return normalized;
+  throw lastError ?? new Error("Erreur API");
 }
 
 export async function saveHeaderSettings(next: HeaderSettings, token: string): Promise<SiteSettings> {
-  const current = await ensureSiteSettingsLoaded();
+  const current = await ensureRemoteSiteSettingsForSave();
   return saveSiteSettings(
     {
       ...current,
@@ -540,7 +740,7 @@ export async function saveHomeHeroSettings(
   next: HomeHeroSettings,
   token: string,
 ): Promise<SiteSettings> {
-  const current = await ensureSiteSettingsLoaded();
+  const current = await ensureRemoteSiteSettingsForSave();
   return saveSiteSettings(
     {
       ...current,
@@ -573,7 +773,7 @@ export function setHomeHeroSettings(next: HomeHeroSettings) {
 }
 
 export async function savePromiseSettings(next: PromiseSettings, token: string): Promise<SiteSettings> {
-  const current = await ensureSiteSettingsLoaded();
+  const current = await ensureRemoteSiteSettingsForSave();
   return saveSiteSettings(
     {
       ...current,
@@ -591,7 +791,7 @@ export function setPromiseSettings(next: PromiseSettings) {
 }
 
 export async function saveMethodSettings(next: MethodSettings, token: string): Promise<SiteSettings> {
-  const current = await ensureSiteSettingsLoaded();
+  const current = await ensureRemoteSiteSettingsForSave();
   return saveSiteSettings(
     {
       ...current,
@@ -608,9 +808,31 @@ export function setMethodSettings(next: MethodSettings) {
   });
 }
 
+export async function savePublicationsSettings(
+  next: PublicationsSettings,
+  token: string,
+): Promise<SiteSettings> {
+  const current = await ensureRemoteSiteSettingsForSave();
+  return saveSiteSettings(
+    {
+      ...current,
+      publications: next,
+    },
+    token,
+  );
+}
+
+export function setPublicationsSettings(next: PublicationsSettings) {
+  setCachedSiteSettings({
+    ...cachedValue,
+    publications: next,
+  });
+}
+
 export function resetSiteSettingsStoreForTests() {
   cachedValue = DEFAULT_SITE_SETTINGS;
   hasLoaded = false;
+  hasLoadedFromApi = false;
   pendingLoad = null;
   listeners.clear();
 }

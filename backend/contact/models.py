@@ -4,6 +4,7 @@ from .site_settings_defaults import (
     default_header_settings,
     default_home_hero_settings,
     default_method_settings,
+    default_publications_settings,
     default_promise_settings,
 )
 
@@ -46,6 +47,7 @@ class SiteSettings(models.Model):
     home_hero = models.JSONField(default=default_home_hero_settings, blank=True)
     promise = models.JSONField(default=default_promise_settings, blank=True)
     method = models.JSONField(default=default_method_settings, blank=True)
+    publications = models.JSONField(default=default_publications_settings, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
@@ -57,6 +59,7 @@ class SiteSettings(models.Model):
                 "home_hero": default_home_hero_settings(),
                 "promise": default_promise_settings(),
                 "method": default_method_settings(),
+                "publications": default_publications_settings(),
             },
         )
         return obj

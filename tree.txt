@@ -42,6 +42,7 @@ Mon site/
 |   |   |   |   `-- components/
 |   |   |   |       |-- HeaderSettingsManager.tsx
 |   |   |   |       |-- HomeSettingsManager.tsx
+|   |   |   |       |-- PublicationsSettingsManager.tsx
 |   |   |   |       |-- ReferencesManager.tsx
 |   |   |   |       `-- references/
 |   |   |   |           `-- useReferencesManager.ts
@@ -58,6 +59,8 @@ Mon site/
 |   |   |   |   |-- headerSettings.ts
 |   |   |   |   |-- homeHeroSettings.ts
 |   |   |   |   |-- promiseSettings.ts
+|   |   |   |   |-- publicationsSettings.ts
+|   |   |   |   |-- siteSettingsStore.ts
 |   |   |   |   `-- homeSections.tsx
 |   |   |   |-- contact/
 |   |   |   |   `-- ContactForm.tsx
@@ -72,6 +75,7 @@ Mon site/
 |       |-- contact.spec.ts
 |       |-- contact-resilience.spec.ts
 |       |-- backoffice.spec.ts
+|       |-- publications.spec.ts
 |       |-- references.spec.ts
 |       `-- admin-home-header.spec.ts
 |-- docs/

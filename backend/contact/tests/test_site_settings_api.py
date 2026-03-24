@@ -15,10 +15,12 @@ from contact.site_settings_defaults import (
     DEFAULT_HEADER_SETTINGS,
     DEFAULT_HOME_HERO_SETTINGS,
     DEFAULT_METHOD_SETTINGS,
+    DEFAULT_PUBLICATIONS_SETTINGS,
     DEFAULT_PROMISE_SETTINGS,
     default_header_settings,
     default_home_hero_settings,
     default_method_settings,
+    default_publications_settings,
     default_promise_settings,
 )
 
@@ -58,6 +60,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
         self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
+        self.assertEqual(res.data["publications"], DEFAULT_PUBLICATIONS_SETTINGS)
         self.assertEqual(SiteSettings.objects.count(), 1)
 
     def test_public_endpoint_without_trailing_slash_returns_defaults(self):
@@ -68,6 +71,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(res.data["homeHero"], DEFAULT_HOME_HERO_SETTINGS)
         self.assertEqual(res.data["promise"], DEFAULT_PROMISE_SETTINGS)
         self.assertEqual(res.data["method"], DEFAULT_METHOD_SETTINGS)
+        self.assertEqual(res.data["publications"], DEFAULT_PUBLICATIONS_SETTINGS)
 
     def test_admin_put_updates_settings(self):
         payload = {
@@ -113,6 +117,28 @@ class SiteSettingsApiTests(APITestCase):
                     }
                 ],
             },
+            "publications": {
+                "title": "Publications",
+                "subtitle": "Formats et contenus a la carte.",
+                "highlight": {
+                    "title": "En bref",
+                    "content": "Point 1\nPoint 2",
+                },
+                "items": [
+                    {
+                        "id": "publication-1",
+                        "title": "Publication A",
+                        "content": "Element A\nElement B",
+                        "links": [
+                            {
+                                "id": "publication-1-link-1",
+                                "title": "Reference A",
+                                "url": "https://example.com/reference-a",
+                            }
+                        ],
+                    }
+                ],
+            },
         }
 
         res = self.client.put(
@@ -128,6 +154,10 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(settings.home_hero["eyebrow"], "Nouveau surtitre")
         self.assertEqual(settings.promise["title"], "Titre positionnement")
         self.assertEqual(settings.method["title"], "Chemin de delivery")
+        self.assertEqual(settings.publications["title"], "Publications")
+        self.assertEqual(
+            settings.publications["items"][0]["links"][0]["title"], "Reference A"
+        )
 
         public_res = self.client.get(self.public_url)
         self.assertEqual(public_res.status_code, status.HTTP_200_OK)
@@ -135,6 +165,7 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(public_res.data["homeHero"]["eyebrow"], "Nouveau surtitre")
         self.assertEqual(public_res.data["promise"]["title"], "Titre positionnement")
         self.assertEqual(public_res.data["method"]["title"], "Chemin de delivery")
+        self.assertEqual(public_res.data["publications"]["title"], "Publications")
 
     def test_admin_put_without_trailing_slash_updates_settings(self):
         payload = {
@@ -146,6 +177,7 @@ class SiteSettingsApiTests(APITestCase):
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
             "promise": DEFAULT_PROMISE_SETTINGS,
             "method": DEFAULT_METHOD_SETTINGS,
+            "publications": DEFAULT_PUBLICATIONS_SETTINGS,
         }
 
         res = self.client.put(
@@ -167,6 +199,7 @@ class SiteSettingsApiTests(APITestCase):
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
                 "method": DEFAULT_METHOD_SETTINGS,
+                "publications": DEFAULT_PUBLICATIONS_SETTINGS,
             },
             format="json",
         )
@@ -191,6 +224,7 @@ class SiteSettingsApiTests(APITestCase):
                 "homeHero": DEFAULT_HOME_HERO_SETTINGS,
                 "promise": DEFAULT_PROMISE_SETTINGS,
                 "method": DEFAULT_METHOD_SETTINGS,
+                "publications": DEFAULT_PUBLICATIONS_SETTINGS,
             },
             format="json",
             HTTP_AUTHORIZATION=f"Bearer {self.token}",
@@ -200,6 +234,82 @@ class SiteSettingsApiTests(APITestCase):
         second_res = self.client.get(self.public_url)
         self.assertEqual(second_res.status_code, status.HTTP_200_OK)
         self.assertEqual(second_res.data["header"]["name"], "Nom mis a jour")
+
+    def test_admin_put_limits_publications_and_links(self):
+        payload = {
+            "header": DEFAULT_HEADER_SETTINGS,
+            "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "promise": DEFAULT_PROMISE_SETTINGS,
+            "method": DEFAULT_METHOD_SETTINGS,
+            "publications": {
+                "title": "Publications",
+                "subtitle": "Sous-titre",
+                "highlight": {
+                    "title": "Encart",
+                    "content": "Contenu",
+                },
+                "items": [
+                    {
+                        "id": f"publication-{index}",
+                        "title": f"Publication {index}",
+                        "content": f"Contenu {index}",
+                        "links": [
+                            {
+                                "id": f"publication-{index}-link-{link_index}",
+                                "title": f"Lien {link_index}",
+                                "url": f"https://example.com/{index}/{link_index}",
+                            }
+                            for link_index in range(1, 6)
+                        ],
+                    }
+                    for index in range(1, 7)
+                ],
+            },
+        }
+
+        res = self.client.put(
+            self.admin_url,
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK, res.data)
+        settings = SiteSettings.get_solo()
+        self.assertEqual(len(settings.publications["items"]), 4)
+        self.assertEqual(len(settings.publications["items"][0]["links"]), 3)
+
+    def test_admin_put_keeps_empty_publications_list_instead_of_restoring_defaults(self):
+        payload = {
+            "header": DEFAULT_HEADER_SETTINGS,
+            "homeHero": DEFAULT_HOME_HERO_SETTINGS,
+            "promise": DEFAULT_PROMISE_SETTINGS,
+            "method": DEFAULT_METHOD_SETTINGS,
+            "publications": {
+                "title": "Publications",
+                "subtitle": "Sous-titre",
+                "highlight": {
+                    "title": "Encart",
+                    "content": "Contenu",
+                },
+                "items": [],
+            },
+        }
+
+        res = self.client.put(
+            self.admin_url,
+            payload,
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token}",
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK, res.data)
+        settings = SiteSettings.get_solo()
+        self.assertEqual(settings.publications["items"], [])
+
+        public_res = self.client.get(self.public_url)
+        self.assertEqual(public_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(public_res.data["publications"]["items"], [])
 
 
 class SiteSettingsModelTests(TestCase):
@@ -258,6 +368,27 @@ class SiteSettingsDefaultsTests(TestCase):
             DEFAULT_METHOD_SETTINGS["steps"][0]["title"],
             "Observer",
         )
+
+    def test_default_publications_settings_returns_deep_copy(self):
+        publications = default_publications_settings()
+
+        publications["highlight"]["title"] = "Changed highlight"
+        publications["items"][0]["title"] = "Changed publication"
+        publications["items"][0]["links"][0]["title"] = "Changed link"
+
+        self.assertEqual(
+            DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["title"],
+            "Format type",
+        )
+        self.assertEqual(
+            DEFAULT_PUBLICATIONS_SETTINGS["items"][0]["title"],
+            "Coaching Lean-Agile - transformation pragmatique",
+        )
+        self.assertEqual(
+            DEFAULT_PUBLICATIONS_SETTINGS["items"][0]["links"][0]["title"],
+            "Exemple de cadrage de transformation",
+        )
+
 
 
 class SiteSettingsCacheTests(TestCase):

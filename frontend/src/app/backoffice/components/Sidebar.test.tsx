@@ -32,6 +32,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Accueil" }));
     fireEvent.click(screen.getByRole("button", { name: "Positionnement" }));
     fireEvent.click(screen.getByRole("button", { name: "Approche" }));
+    fireEvent.click(screen.getByRole("button", { name: "Publications" }));
     fireEvent.click(screen.getByRole("button", { name: "References" }));
     fireEvent.click(screen.getByRole("button", { name: "Statistiques" }));
     fireEvent.click(screen.getByRole("button", { name: "Header" }));
@@ -44,6 +45,7 @@ describe("Sidebar", () => {
     expect(onSelectSection).toHaveBeenCalledWith("home");
     expect(onSelectSection).toHaveBeenCalledWith("promise");
     expect(onSelectSection).toHaveBeenCalledWith("method");
+    expect(onSelectSection).toHaveBeenCalledWith("publications");
     expect(onSelectSection).toHaveBeenCalledWith("references");
     expect(onSelectSection).toHaveBeenCalledWith("stats");
     expect(onSelectSection).toHaveBeenCalledWith("header");

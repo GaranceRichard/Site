@@ -9,6 +9,7 @@ import {
   DEFAULT_HEADER_SETTINGS,
   DEFAULT_HOME_HERO_SETTINGS,
   DEFAULT_METHOD_SETTINGS,
+  DEFAULT_PUBLICATIONS_SETTINGS,
   DEFAULT_PROMISE_SETTINGS,
   ensureSiteSettingsLoaded,
   getSiteSettings,
@@ -17,11 +18,13 @@ import {
   saveHeaderSettings,
   saveHomeHeroSettings,
   saveMethodSettings,
+  savePublicationsSettings,
   savePromiseSettings,
   saveSiteSettings,
   setHeaderSettings,
   setHomeHeroSettings,
   setMethodSettings,
+  setPublicationsSettings,
   setPromiseSettings,
   subscribeSiteSettings,
   type SiteSettings,
@@ -33,6 +36,7 @@ describe("siteSettingsStore", () => {
   beforeEach(() => {
     resetSiteSettingsStoreForTests();
     vi.restoreAllMocks();
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
     mockedResolveApiBaseUrl.mockReturnValue("/api-proxy");
   });
 
@@ -93,6 +97,41 @@ describe("siteSettingsStore", () => {
       content: "Contenu",
     });
     expect(result.method).toEqual(DEFAULT_METHOD_SETTINGS);
+    expect(result.publications).toEqual(DEFAULT_PUBLICATIONS_SETTINGS);
+  });
+
+  it("falls back to NEXT_PUBLIC_API_BASE_URL when the browser proxy is unavailable", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("proxy unavailable"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            items: [
+              {
+                id: "publication-1",
+                title: "Arbitrer avec la donnee",
+                content: "Texte",
+                links: [],
+              },
+            ],
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api-proxy/api/settings/");
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://example.test/api/settings/");
+    expect(result.publications.items[0]?.title).toBe("Arbitrer avec la donnee");
   });
 
   it("falls back to defaults when the payload is partial or invalid", async () => {
@@ -170,6 +209,7 @@ describe("siteSettingsStore", () => {
     expect(result.header).toEqual(DEFAULT_HEADER_SETTINGS);
     expect(result.homeHero).toEqual(DEFAULT_HOME_HERO_SETTINGS);
     expect(result.method).toEqual(DEFAULT_METHOD_SETTINGS);
+    expect(result.publications).toEqual(DEFAULT_PUBLICATIONS_SETTINGS);
   });
 
   it("falls back when keywords and cards are not arrays", async () => {
@@ -228,6 +268,7 @@ describe("siteSettingsStore", () => {
             ...DEFAULT_METHOD_SETTINGS,
             steps: "not-an-array",
           },
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       }),
     );
@@ -235,6 +276,29 @@ describe("siteSettingsStore", () => {
     const result = await ensureSiteSettingsLoaded();
 
     expect(result.method.steps).toEqual(DEFAULT_METHOD_SETTINGS.steps);
+  });
+
+  it("falls back when publications items are not an array", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            items: "not-an-array",
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.publications.items).toEqual(DEFAULT_PUBLICATIONS_SETTINGS.items);
   });
 
   it("normalizes method title, subtitle and steps when the payload is partial", async () => {
@@ -257,6 +321,7 @@ describe("siteSettingsStore", () => {
               { id: "", step: "", title: " Titre seul ", text: "" },
             ],
           },
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       }),
     );
@@ -270,6 +335,92 @@ describe("siteSettingsStore", () => {
       { id: "custom-step", step: "A1", title: "Observer", text: "Comprendre" },
       { id: "method-step-2", step: "02", title: "", text: "Texte seul" },
       { id: "method-step-3", step: "03", title: "Titre seul", text: "" },
+    ]);
+  });
+
+  it("normalizes publications title, subtitle, highlight and items when the payload is partial", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            title: " ",
+            subtitle: null,
+            highlight: {
+              title: " ",
+              content: " Highlight body ",
+            },
+            items: [
+              null,
+              { id: " custom-item ", title: " Publication ", content: " Details " },
+              { id: "", title: "", content: " Content only " },
+            ],
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.publications.title).toBe(DEFAULT_PUBLICATIONS_SETTINGS.title);
+    expect(result.publications.subtitle).toBe(DEFAULT_PUBLICATIONS_SETTINGS.subtitle);
+    expect(result.publications.highlight).toEqual({
+      title: DEFAULT_PUBLICATIONS_SETTINGS.highlight.title,
+      content: "Highlight body",
+    });
+    expect(result.publications.items).toEqual([
+      { id: "custom-item", title: "Publication", content: "Details", links: [] },
+      { id: "publication-2", title: "", content: "Content only", links: [] },
+    ]);
+  });
+
+  it("falls back when publications highlight is invalid and generates missing link ids", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            highlight: "not-an-object",
+            items: [
+              {
+                id: "custom-publication",
+                title: "Publication avec lien",
+                content: "Contenu",
+                links: [{ title: "Reference utile", url: "https://example.com/reference" }],
+              },
+            ],
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.publications.highlight).toEqual(DEFAULT_PUBLICATIONS_SETTINGS.highlight);
+    expect(result.publications.items).toEqual([
+      {
+        id: "custom-publication",
+        title: "Publication avec lien",
+        content: "Contenu",
+        links: [
+          {
+            id: "custom-publication-link-1",
+            title: "Reference utile",
+            url: "https://example.com/reference",
+          },
+        ],
+      },
     ]);
   });
 
@@ -295,6 +446,7 @@ describe("siteSettingsStore", () => {
               { id: "", title: " Card 7 ", content: " Body 7 " },
             ],
           },
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       }),
     );
@@ -372,6 +524,7 @@ describe("siteSettingsStore", () => {
               { id: "", step: "", title: " ", text: " " },
             ],
           },
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       }),
     );
@@ -379,6 +532,29 @@ describe("siteSettingsStore", () => {
     const result = await ensureSiteSettingsLoaded();
 
     expect(result.method.steps).toEqual(DEFAULT_METHOD_SETTINGS.steps);
+  });
+
+  it("keeps an empty publications list when cleaned items become empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            items: [{ id: "", title: " ", content: " " }],
+          },
+        }),
+      }),
+    );
+
+    const result = await ensureSiteSettingsLoaded();
+
+    expect(result.publications.items).toEqual([]);
   });
 
   it("keeps defaults when the API request fails", async () => {
@@ -389,6 +565,7 @@ describe("siteSettingsStore", () => {
     expect(getSiteSettings().header).toEqual(DEFAULT_HEADER_SETTINGS);
     expect(getSiteSettings().homeHero).toEqual(DEFAULT_HOME_HERO_SETTINGS);
     expect(getSiteSettings().method).toEqual(DEFAULT_METHOD_SETTINGS);
+    expect(getSiteSettings().publications).toEqual(DEFAULT_PUBLICATIONS_SETTINGS);
   });
 
   it("keeps defaults when the API responds with a non-ok status", async () => {
@@ -404,6 +581,31 @@ describe("siteSettingsStore", () => {
 
     expect(getSiteSettings().header).toEqual(DEFAULT_HEADER_SETTINGS);
     expect(getSiteSettings().homeHero).toEqual(DEFAULT_HOME_HERO_SETTINGS);
+    expect(getSiteSettings().publications).toEqual(DEFAULT_PUBLICATIONS_SETTINGS);
+  });
+
+  it("blocks publications saves when the initial settings load fails", async () => {
+    const fetchSpy = vi.fn().mockRejectedValue(new Error("boom"));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(
+      savePublicationsSettings(
+        {
+          ...DEFAULT_PUBLICATIONS_SETTINGS,
+          items: [
+            {
+              id: "publication-1",
+              title: "Publication critique",
+              content: "Contenu critique",
+              links: [],
+            },
+          ],
+        },
+        "token",
+      ),
+    ).rejects.toThrow("Impossible de charger les reglages actuels. Rechargez la page puis reessayez.");
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   it("returns the cached value after the first successful load", async () => {
@@ -414,6 +616,7 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
     });
     vi.stubGlobal("fetch", fetchSpy);
@@ -448,6 +651,7 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
     });
 
@@ -460,6 +664,7 @@ describe("siteSettingsStore", () => {
   });
 
   it("short-circuits loading when the API base URL is unavailable", async () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
     mockedResolveApiBaseUrl.mockReturnValue(undefined);
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
@@ -480,6 +685,7 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -508,6 +714,15 @@ describe("siteSettingsStore", () => {
             title: " Methode ",
             subtitle: " Stabiliser le flux ",
             steps: [{ id: "", step: "", title: " Etape ", text: " Texte " }],
+          },
+          publications: {
+            title: " Publications ",
+            subtitle: " Formats utiles ",
+            highlight: {
+              title: " Format ",
+              content: " Ligne 1\n Ligne 2 ",
+            },
+            items: [{ id: "", title: " Publication ", content: " Contenu " }],
           },
         }),
       });
@@ -539,6 +754,15 @@ describe("siteSettingsStore", () => {
           title: " Methode ",
           subtitle: " Stabiliser le flux ",
           steps: [{ id: "", step: "", title: " Etape ", text: " Texte " }],
+        },
+        publications: {
+          title: " Publications ",
+          subtitle: " Formats utiles ",
+          highlight: {
+            title: " Format ",
+            content: " Ligne 1\n Ligne 2 ",
+          },
+          items: [{ id: "", title: " Publication ", content: " Contenu " }],
         },
       },
       "token-123",
@@ -581,6 +805,15 @@ describe("siteSettingsStore", () => {
             subtitle: "Stabiliser le flux",
             steps: [{ id: "method-step-1", step: "01", title: "Etape", text: "Texte" }],
           },
+          publications: {
+            title: "Publications",
+            subtitle: "Formats utiles",
+            highlight: {
+              title: "Format",
+              content: "Ligne 1\n Ligne 2",
+            },
+            items: [{ id: "publication-1", title: "Publication", content: "Contenu", links: [] }],
+          },
         }),
       }),
     );
@@ -596,12 +829,14 @@ describe("siteSettingsStore", () => {
     });
     expect(result.promise.title).toBe("Promise title");
     expect(result.method.title).toBe("Methode");
+    expect(result.publications.title).toBe("Publications");
     expect(listener).toHaveBeenCalledTimes(2);
 
     unsubscribe();
   });
 
   it("throws helpful save errors for missing config and failed responses", async () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
     mockedResolveApiBaseUrl.mockReturnValue(undefined);
 
     await expect(
@@ -611,6 +846,7 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         },
         "token",
       ),
@@ -619,11 +855,22 @@ describe("siteSettingsStore", () => {
     mockedResolveApiBaseUrl.mockReturnValue("/api-proxy");
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: async () => "Backend exploded",
-      }),
+      vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            header: DEFAULT_HEADER_SETTINGS,
+            homeHero: DEFAULT_HOME_HERO_SETTINGS,
+            promise: DEFAULT_PROMISE_SETTINGS,
+            method: DEFAULT_METHOD_SETTINGS,
+            publications: DEFAULT_PUBLICATIONS_SETTINGS,
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          text: async () => "Backend exploded",
+        }),
     );
 
     await expect(
@@ -633,18 +880,31 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         },
         "token",
       ),
     ).rejects.toThrow("Backend exploded");
 
+    resetSiteSettingsStoreForTests();
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: false,
-        status: 503,
-        text: async () => "",
-      }),
+      vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            header: DEFAULT_HEADER_SETTINGS,
+            homeHero: DEFAULT_HOME_HERO_SETTINGS,
+            promise: DEFAULT_PROMISE_SETTINGS,
+            method: DEFAULT_METHOD_SETTINGS,
+            publications: DEFAULT_PUBLICATIONS_SETTINGS,
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 503,
+          text: async () => "",
+        }),
     );
 
     await expect(
@@ -653,10 +913,79 @@ describe("siteSettingsStore", () => {
           header: DEFAULT_HEADER_SETTINGS,
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         },
         "token",
       ),
     ).rejects.toThrow("Erreur API (503)");
+  });
+
+  it("throws a missing config error through publications save when no api base is available", async () => {
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    mockedResolveApiBaseUrl.mockReturnValue(undefined);
+
+    await expect(savePublicationsSettings(DEFAULT_PUBLICATIONS_SETTINGS, "token")).rejects.toThrow(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL.",
+    );
+  });
+
+  it("falls back to NEXT_PUBLIC_API_BASE_URL when saving after a proxy failure", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("proxy unavailable"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
+        }),
+      })
+      .mockRejectedValueOnce(new Error("proxy unavailable"))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: DEFAULT_HEADER_SETTINGS,
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            title: "Publications modifiees",
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await savePublicationsSettings(
+      {
+        ...DEFAULT_PUBLICATIONS_SETTINGS,
+        title: "Publications modifiees",
+      },
+      "token",
+    );
+
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api-proxy/api/settings/");
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://example.test/api/settings/");
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api-proxy/api/settings/admin/",
+      expect.objectContaining({
+        method: "PUT",
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "http://example.test/api/settings/admin/",
+      expect.objectContaining({
+        method: "PUT",
+      }),
+    );
+    expect(result.publications.title).toBe("Publications modifiees");
   });
 
   it("updates header, home hero, promise and method through helper setters and save wrappers", async () => {
@@ -673,6 +1002,21 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: {
+            name: "Header wrapper",
+            title: "Coach",
+            bookingUrl: "https://example.com/header",
+          },
+          homeHero: DEFAULT_HOME_HERO_SETTINGS,
+          promise: DEFAULT_PROMISE_SETTINGS,
+          method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -689,6 +1033,7 @@ describe("siteSettingsStore", () => {
           },
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -711,6 +1056,7 @@ describe("siteSettingsStore", () => {
             ...DEFAULT_METHOD_SETTINGS,
             title: "Method wrapper",
           },
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       })
       .mockResolvedValueOnce({
@@ -732,6 +1078,36 @@ describe("siteSettingsStore", () => {
           method: {
             ...DEFAULT_METHOD_SETTINGS,
             title: "Method wrapper",
+          },
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            title: "Publications wrapper",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          header: {
+            name: "Header wrapper",
+            title: "Coach",
+            bookingUrl: "https://example.com/header",
+          },
+          homeHero: {
+            ...DEFAULT_HOME_HERO_SETTINGS,
+            eyebrow: "Hero wrapper",
+          },
+          promise: {
+            ...DEFAULT_PROMISE_SETTINGS,
+            title: "Promise wrapper",
+          },
+          method: {
+            ...DEFAULT_METHOD_SETTINGS,
+            title: "Method wrapper",
+          },
+          publications: {
+            ...DEFAULT_PUBLICATIONS_SETTINGS,
+            title: "Publications wrapper",
           },
         }),
       });
@@ -761,6 +1137,12 @@ describe("siteSettingsStore", () => {
       title: "Local method",
     });
     expect(getSiteSettings().method.title).toBe("Local method");
+
+    setPublicationsSettings({
+      ...DEFAULT_PUBLICATIONS_SETTINGS,
+      title: "Local publications",
+    });
+    expect(getSiteSettings().publications.title).toBe("Local publications");
 
     const savedHeader = await saveHeaderSettings(
       {
@@ -798,7 +1180,16 @@ describe("siteSettingsStore", () => {
       "token",
     );
     expect(savedMethod.method.title).toBe("Method wrapper");
-    expect(fetchSpy).toHaveBeenCalledTimes(4);
+
+    const savedPublications = await savePublicationsSettings(
+      {
+        ...DEFAULT_PUBLICATIONS_SETTINGS,
+        title: "Publications wrapper",
+      },
+      "token",
+    );
+    expect(savedPublications.publications.title).toBe("Publications wrapper");
+    expect(fetchSpy).toHaveBeenCalledTimes(6);
   });
 
   it("normalizes local setter values and stops notifying after unsubscribe", async () => {
@@ -812,6 +1203,7 @@ describe("siteSettingsStore", () => {
           homeHero: DEFAULT_HOME_HERO_SETTINGS,
           promise: DEFAULT_PROMISE_SETTINGS,
           method: DEFAULT_METHOD_SETTINGS,
+          publications: DEFAULT_PUBLICATIONS_SETTINGS,
         }),
       }),
     );
@@ -876,6 +1268,25 @@ describe("siteSettingsStore", () => {
       steps: [{ id: "method-step-1", step: "01", title: "Observer", text: "Comprendre" }],
     });
 
+    setPublicationsSettings({
+      title: " ",
+      subtitle: "  Publications utiles  ",
+      highlight: {
+        title: " ",
+        content: " Ligne 1 ",
+      },
+      items: [{ id: "", title: " ", content: " Detail " }],
+    });
+    expect(getSiteSettings().publications).toEqual({
+      title: DEFAULT_PUBLICATIONS_SETTINGS.title,
+      subtitle: "Publications utiles",
+      highlight: {
+        title: DEFAULT_PUBLICATIONS_SETTINGS.highlight.title,
+        content: "Ligne 1",
+      },
+      items: [{ id: "publication-1", title: "", content: "Detail", links: [] }],
+    });
+
     unsubscribe();
     const callsBefore = listener.mock.calls.length;
 
@@ -902,6 +1313,7 @@ describe("siteSettingsStore", () => {
       homeHero: DEFAULT_HOME_HERO_SETTINGS,
       promise: DEFAULT_PROMISE_SETTINGS,
       method: DEFAULT_METHOD_SETTINGS,
+      publications: DEFAULT_PUBLICATIONS_SETTINGS,
     } satisfies SiteSettings);
   });
 });
