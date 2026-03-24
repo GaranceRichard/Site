@@ -279,7 +279,9 @@ class SiteSettingsApiTests(APITestCase):
         self.assertEqual(len(settings.publications["items"]), 4)
         self.assertEqual(len(settings.publications["items"][0]["links"]), 3)
 
-    def test_admin_put_keeps_empty_publications_list_instead_of_restoring_defaults(self):
+    def test_admin_put_keeps_empty_publications_list_instead_of_restoring_defaults(
+        self,
+    ):
         payload = {
             "header": DEFAULT_HEADER_SETTINGS,
             "homeHero": DEFAULT_HOME_HERO_SETTINGS,
@@ -388,7 +390,6 @@ class SiteSettingsDefaultsTests(TestCase):
             DEFAULT_PUBLICATIONS_SETTINGS["items"][0]["links"][0]["title"],
             "Exemple de cadrage de transformation",
         )
-
 
 
 class SiteSettingsCacheTests(TestCase):

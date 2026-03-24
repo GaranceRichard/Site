@@ -368,7 +368,9 @@ class PublicationsSettingsSerializer(serializers.Serializer):
                         "url": link["url"].strip(),
                     }
                     for link in item.get("links", [])
-                    if link["id"].strip() and link["title"].strip() and link["url"].strip()
+                    if link["id"].strip()
+                    and link["title"].strip()
+                    and link["url"].strip()
                 ][:3],
             }
             for item in value
@@ -386,7 +388,14 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SiteSettings
-        fields = ["header", "homeHero", "promise", "method", "publications", "updated_at"]
+        fields = [
+            "header",
+            "homeHero",
+            "promise",
+            "method",
+            "publications",
+            "updated_at",
+        ]
 
     def update(self, instance, validated_data):
         instance.header = validated_data["header"]
