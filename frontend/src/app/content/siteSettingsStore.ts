@@ -859,6 +859,12 @@ export function setHomeHeroSettings(next: HomeHeroSettings) {
   });
 }
 
+export function replaceSiteSettings(next: SiteSettings) {
+  hasLoadedFromApi = true;
+  hasLoaded = true;
+  setCachedSiteSettings(next);
+}
+
 export async function savePromiseSettings(next: PromiseSettings, token: string): Promise<SiteSettings> {
   const current = await ensureRemoteSiteSettingsForSave();
   return saveSiteSettings(

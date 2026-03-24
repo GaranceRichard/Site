@@ -19,6 +19,11 @@ describe("sectionStore", () => {
     expect(getBackofficeSection()).toBe("references");
   });
 
+  it("returns exchange when stored value is exchange", () => {
+    window.localStorage.setItem(SECTION_KEY, "exchange");
+    expect(getBackofficeSection()).toBe("exchange");
+  });
+
   it("returns header when stored value is header", () => {
     window.localStorage.setItem(SECTION_KEY, "header");
     expect(getBackofficeSection()).toBe("header");

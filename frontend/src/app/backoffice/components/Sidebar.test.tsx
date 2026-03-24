@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, cleanup } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Sidebar from "./Sidebar";
@@ -25,10 +25,11 @@ describe("Sidebar", () => {
         onGoHome={onGoHome}
         onRefresh={onRefresh}
         onLogout={onLogout}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Messages contact" }));
+    fireEvent.click(screen.getByRole("button", { name: "Chargeur / extracteur" }));
     fireEvent.click(screen.getByRole("button", { name: "Accueil" }));
     fireEvent.click(screen.getByRole("button", { name: "A propos" }));
     fireEvent.click(screen.getByRole("button", { name: "Positionnement" }));
@@ -43,6 +44,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
 
     expect(onSelectSection).toHaveBeenCalledWith("messages");
+    expect(onSelectSection).toHaveBeenCalledWith("exchange");
     expect(onSelectSection).toHaveBeenCalledWith("home");
     expect(onSelectSection).toHaveBeenCalledWith("about");
     expect(onSelectSection).toHaveBeenCalledWith("promise");
@@ -64,7 +66,7 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     const button = screen.getByRole("button", { name: "Messages contact" });
@@ -79,10 +81,47 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "Header" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Header" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
+  });
+
+  it("affiche le style actif pour Chargeur / extracteur", () => {
+    render(
+      <Sidebar
+        section="exchange"
+        onSelectSection={vi.fn()}
+        onGoHome={vi.fn()}
+        onRefresh={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Chargeur / extracteur" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
+  });
+
+  it("place Chargeur / extracteur au-dessus de Rafraîchir", () => {
+    render(
+      <Sidebar
+        section="messages"
+        onSelectSection={vi.fn()}
+        onGoHome={vi.fn()}
+        onRefresh={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    const exchangeButton = screen.getByRole("button", { name: "Chargeur / extracteur" });
+    const refreshButton = screen.getByRole("button", { name: "Rafraîchir" });
+
+    expect(exchangeButton.compareDocumentPosition(refreshButton)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 
   it("affiche le style actif pour Accueil", () => {
@@ -93,10 +132,12 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "Accueil" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Accueil" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
   });
 
   it("affiche le style actif pour Positionnement", () => {
@@ -107,10 +148,12 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "Positionnement" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Positionnement" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
   });
 
   it("affiche le style actif pour A propos", () => {
@@ -121,7 +164,7 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByRole("button", { name: "A propos" }).className).toContain(
@@ -137,10 +180,12 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "Approche" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Approche" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
   });
 
   it("affiche le style actif pour References", () => {
@@ -151,10 +196,12 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "References" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "References" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
   });
 
   it("affiche le style actif pour Statistiques", () => {
@@ -165,9 +212,11 @@ describe("Sidebar", () => {
         onGoHome={vi.fn()}
         onRefresh={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
-    expect(screen.getByRole("button", { name: "Statistiques" }).className).toContain("bg-neutral-900 text-white");
+    expect(screen.getByRole("button", { name: "Statistiques" }).className).toContain(
+      "bg-neutral-900 text-white",
+    );
   });
 });

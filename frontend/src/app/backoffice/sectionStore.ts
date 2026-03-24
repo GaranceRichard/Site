@@ -6,6 +6,7 @@ const sectionListeners = new Set<() => void>();
 function normalizeSection(value: string | null): BackofficeSection {
   if (
     value === "messages" ||
+    value === "exchange" ||
     value === "home" ||
     value === "about" ||
     value === "promise" ||

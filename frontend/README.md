@@ -53,6 +53,13 @@ npm run build
 - Regle de completion du repo : aucune tache n'est complete tant que la task complete `Tests` n'a pas ete relancee et integralement verte dans la session courante.
 - `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.mjs`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
 
+## Backoffice chargeur / extracteur
+
+- Le backoffice expose une entree `Chargeur / extracteur`, placee juste au-dessus de `Rafraichir` dans la sidebar.
+- Le composant [ContentExchangeManager.tsx](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/src/app/backoffice/components/ContentExchangeManager.tsx) permet de telecharger le canevas TOML, d'exporter l'etat courant et d'importer un fichier texte valide.
+- Apres import reussi, le frontend remplace le cache `SiteSettings`, invalide le cache des references et reflète immediatement les nouvelles donnees.
+- Le guide de format et de workflow est centralise dans [content-exchange.md](/c:/Users/garan/Desktop/Projets/Mon%20site/docs/content-exchange.md).
+
 ## Notes recentes
 
 - La section `Publications` de la home remplace maintenant les panneaux deployants par des cartes cliquables qui ouvrent une modale, fermee par clic exterieur ou via `Escape`.
@@ -60,6 +67,7 @@ npm run build
 - Le reporter texte de coverage force une largeur d'affichage plus grande pour limiter les chemins tronques du type `....quechose.ts`.
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
 - Le backoffice couvre maintenant la section `A propos` via `AboutSettingsManager.tsx` et `aboutSettings.test.ts`, pour aligner le schema frontend avec l'extension `about` de `SiteSettings`.
+- Le backoffice inclut maintenant un flux `Chargeur / extracteur` dedie, avec telechargement du canevas TOML, export de contenu et import valide avec feedback utilisateur.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 - Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
 

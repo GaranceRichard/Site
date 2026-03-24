@@ -10,6 +10,7 @@ Site vitrine avec page de contact.
 - Page d’accueil (vitrine)
 - Section `Publications` : cartes cliquables ouvrant une modale de detail avec fermeture au clic hors modale
 - Page /contact avec formulaire
+- Backoffice : chargeur / extracteur TOML pour exporter le contenu et reimporter un fichier valide
 - API POST /api/contact/messages (Django REST Framework)
 - Stockage des messages en base (SQLite en dev)
 - Consultation via l’admin Django
@@ -20,8 +21,12 @@ garancerichard-site/
 - docker-compose.yml (PostgreSQL + Redis pour dev)
 - Makefile (raccourcis commandes dev)
 - backend/ (Django + API REST)
+- backend/contact/text_exchange.py (format TOML, export, import, images factices)
+- backend/contact/tests/test_text_exchange_api.py (tests du flux chargeur / extracteur)
 - frontend/ (Next.js)
 - frontend/src/app/backoffice/ (page, sectionStore, composants UI)
+- frontend/src/app/backoffice/components/ContentExchangeManager.tsx
+- frontend/src/app/backoffice/components/ContentExchangeManager.test.tsx
 - frontend/src/app/backoffice/components/HomeSettingsManager.tsx
 - frontend/src/app/backoffice/components/HeaderSettingsManager.tsx
 - frontend/src/app/backoffice/components/AboutSettingsManager.tsx
@@ -291,6 +296,17 @@ Exemple réponse :
   - DELETE /api/contact/references/admin/<id> (suppression)
   - Le frontend remappe les URLs locales `/media/...` vers un proxy same-origin Next (`/api-proxy/media/...`) pour fiabiliser le chargement des médias et des icônes de références en dev, CI et E2E.
 
+- Chargeur / extracteur :
+  - GET /api/contact/exchange/admin/template (canevas TOML)
+  - GET /api/contact/exchange/admin/export (export de l'etat courant)
+  - POST /api/contact/exchange/admin/import (import UTF-8 valide, references recreees avec images factices)
+
+## Documentation chargeur / extracteur
+- Guide dedie : `docs/content-exchange.md`
+- Le format supporte est TOML en UTF-8, editable a la main.
+- L'import met a jour `SiteSettings`, remplace les references et regenere les images placeholder cote backend.
+- Dans le backoffice, l'entree `Chargeur / extracteur` est placee juste au-dessus de `Rafraichir`.
+
 ## Tests (socle minimal)
 ### Backend (Django)
 Depuis `backend/` :
@@ -451,6 +467,7 @@ Ne pas committer :
 - Discipline d'execution : `docs/engineering-lifecycle-gate.md`
 - Definition of Done stricte : `docs/Definition-of-Done.md`
 - Points vitaux (couverture cible 95 %) : `docs/critical-paths.md`
+- Guide du chargeur / extracteur : `docs/content-exchange.md`
 - Controle backend vital par fichier : `backend/scripts/check_vitals_coverage.py`
 - CI GitHub Actions (checks bloquants) : `.github/workflows/ci.yml`
 - Guide de contribution : `CONTRIBUTING.md`

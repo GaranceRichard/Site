@@ -7,6 +7,7 @@ import { isBackofficeEnabled, resolveApiBaseUrl } from "../lib/backoffice";
 import { clearAuthTokens } from "./logic";
 import AuthAlert from "./components/AuthAlert";
 import AboutSettingsManager from "./components/AboutSettingsManager";
+import ContentExchangeManager from "./components/ContentExchangeManager";
 import DisabledView from "./components/DisabledView";
 import HeaderSettingsManager from "./components/HeaderSettingsManager";
 import HomeSettingsManager from "./components/HomeSettingsManager";
@@ -82,6 +83,13 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
     return {
       title: "Statistiques",
       subtitle: "Synthese trafic GA4 et sante systeme du site.",
+    };
+  }
+
+  if (section === "exchange") {
+    return {
+      title: "Chargeur / extracteur",
+      subtitle: "Preparation, extraction et rechargement integral des contenus via un fichier texte.",
     };
   }
 
@@ -210,6 +218,12 @@ export default function BackofficePage() {
 
           {section === "references" ? (
             <ReferencesManager apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
+          ) : null}
+          {section === "exchange" ? (
+            <ContentExchangeManager
+              apiBase={apiBase}
+              onRequestLogin={() => setOpenLogin(true)}
+            />
           ) : null}
 
           {section === "header" ? <HeaderSettingsManager /> : null}

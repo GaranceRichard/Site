@@ -106,6 +106,16 @@ vi.mock("./components/AboutSettingsManager", () => ({
   default: () => <div data-testid="about-settings-manager" />,
 }));
 
+vi.mock("./components/ContentExchangeManager", () => ({
+  default: ({ onRequestLogin }: { onRequestLogin: () => void }) => (
+    <div data-testid="content-exchange-manager">
+      <button onClick={onRequestLogin} type="button">
+        exchange login
+      </button>
+    </div>
+  ),
+}));
+
 vi.mock("./components/MethodSettingsManager", () => ({
   default: () => <div data-testid="method-settings-manager" />,
 }));
@@ -310,6 +320,18 @@ describe("BackofficePage", () => {
     expect(screen.queryByPlaceholderText("Rechercher par nom, email ou sujet")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "references login" }));
+    expect(setOpenLoginMock).toHaveBeenCalledWith(true);
+  });
+
+  it("renders exchange section when stored and can reopen auth", () => {
+    setBackofficeSection("exchange");
+    render(<BackofficePage />);
+
+    expect(screen.getByRole("heading", { name: "Chargeur / extracteur" })).toBeInTheDocument();
+    expect(screen.getByTestId("content-exchange-manager")).toBeInTheDocument();
+    expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "exchange login" }));
     expect(setOpenLoginMock).toHaveBeenCalledWith(true);
   });
 

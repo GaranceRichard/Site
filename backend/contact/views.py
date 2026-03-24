@@ -4,6 +4,7 @@ from rest_framework import generics, permissions, serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.http import HttpResponse
 
 from drf_spectacular.utils import extend_schema, inline_serializer
 
@@ -43,6 +44,14 @@ from .serializers import (
     SiteSettingsSerializer,
 )
 from .throttles import ContactAnonRateThrottle
+from .text_exchange import (
+    EXPORT_FILENAME,
+    TEMPLATE_FILENAME,
+    TextExchangeError,
+    build_exchange_template,
+    export_exchange_text,
+    import_exchange_text,
+)
 
 
 class ContactMessageCreateView(generics.CreateAPIView):
@@ -216,6 +225,94 @@ class ReferenceImageUploadAdminView(APIView):
             request=request,
         )
         return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class ContentExchangeTemplateAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        response = HttpResponse(
+            build_exchange_template(),
+            content_type="application/toml; charset=utf-8",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{TEMPLATE_FILENAME}"'
+        return response
+
+
+class ContentExchangeExportAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        response = HttpResponse(
+            export_exchange_text(),
+            content_type="application/toml; charset=utf-8",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{EXPORT_FILENAME}"'
+        return response
+
+
+class ContentExchangeImportAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    @extend_schema(
+        request=inline_serializer(
+            name="ContentExchangeImportRequest",
+            fields={"file": serializers.FileField()},
+        ),
+        responses={
+            200: inline_serializer(
+                name="ContentExchangeImportResponse",
+                fields={
+                    "detail": serializers.CharField(),
+                    "references_count": serializers.IntegerField(),
+                    "settings": SiteSettingsSerializer(),
+                },
+            ),
+            400: inline_serializer(
+                name="ContentExchangeImportError",
+                fields={"detail": serializers.CharField()},
+            ),
+        },
+    )
+    def post(self, request):
+        uploaded_file = request.FILES.get("file")
+        if not uploaded_file:
+            return Response(
+                {"detail": "Aucun fichier texte fourni."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            raw_text = uploaded_file.read().decode("utf-8-sig")
+        except UnicodeDecodeError:
+            return Response(
+                {"detail": "Le fichier doit etre encodé en UTF-8."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            payload = import_exchange_text(raw_text)
+        except TextExchangeError as exc:
+            return Response(
+                {"detail": exc.detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except serializers.ValidationError as exc:
+            return Response(
+                {"detail": exc.detail},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        bump_public_site_settings_cache_version()
+        bump_public_references_cache_version()
+        return Response(
+            {
+                "detail": "Import termine.",
+                **payload,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class SiteSettingsPublicView(APIView):

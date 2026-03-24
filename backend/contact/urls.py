@@ -1,5 +1,8 @@
 from django.urls import path
 from .views import (
+    ContentExchangeExportAdminView,
+    ContentExchangeImportAdminView,
+    ContentExchangeTemplateAdminView,
     ContactMessageCreateView,
     ContactMessageListAdminView,
     ContactMessageDeleteAdminView,
@@ -22,6 +25,21 @@ urlpatterns = [
         name="contact-message-delete-admin",
     ),
     path("references", ReferenceListPublicView.as_view(), name="reference-list"),
+    path(
+        "exchange/admin/template",
+        ContentExchangeTemplateAdminView.as_view(),
+        name="content-exchange-template-admin",
+    ),
+    path(
+        "exchange/admin/export",
+        ContentExchangeExportAdminView.as_view(),
+        name="content-exchange-export-admin",
+    ),
+    path(
+        "exchange/admin/import",
+        ContentExchangeImportAdminView.as_view(),
+        name="content-exchange-import-admin",
+    ),
     path(
         "references/admin/upload",
         ReferenceImageUploadAdminView.as_view(),

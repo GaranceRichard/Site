@@ -102,6 +102,13 @@ export default function Sidebar({
         </button>
         <button
           type="button"
+          onClick={() => onSelectSection("exchange")}
+          className={getSectionButtonClass(section === "exchange")}
+        >
+          Chargeur / extracteur
+        </button>
+        <button
+          type="button"
           onClick={onRefresh}
           aria-label="Rafraîchir"
           className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
