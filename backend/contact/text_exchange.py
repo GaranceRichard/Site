@@ -34,7 +34,9 @@ def _toml_string(value: str) -> str:
 
 
 def _dump_list(values: list[str]) -> str:
-    return "[" + ", ".join(json.dumps(value, ensure_ascii=False) for value in values) + "]"
+    return (
+        "[" + ", ".join(json.dumps(value, ensure_ascii=False) for value in values) + "]"
+    )
 
 
 def _require_table(data: dict, key: str) -> dict:
@@ -310,9 +312,18 @@ def _parse_settings_payload(data: dict) -> dict:
     publications = _require_table(data, "publications")
 
     links_payload = []
-    for index, link in enumerate(_table_list(home_hero, "links", "home_hero.links"), start=1):
+    for index, link in enumerate(
+        _table_list(home_hero, "links", "home_hero.links"), start=1
+    ):
         target = _require_string(link, "target", f"home_hero.links[{index}]").strip()
-        if target not in {"promise", "about", "services", "method", "references", "message"}:
+        if target not in {
+            "promise",
+            "about",
+            "services",
+            "method",
+            "references",
+            "message",
+        }:
             raise TextExchangeError(
                 {f"home_hero.links[{index}]": "`target` invalide pour le lien."}
             )
@@ -325,17 +336,23 @@ def _parse_settings_payload(data: dict) -> dict:
         )
 
     cards_payload = []
-    for index, card in enumerate(_table_list(home_hero, "cards", "home_hero.cards"), start=1):
+    for index, card in enumerate(
+        _table_list(home_hero, "cards", "home_hero.cards"), start=1
+    ):
         cards_payload.append(
             {
                 "id": f"card-{index}",
                 "title": _require_string(card, "title", f"home_hero.cards[{index}]"),
-                "content": _require_string(card, "content", f"home_hero.cards[{index}]"),
+                "content": _require_string(
+                    card, "content", f"home_hero.cards[{index}]"
+                ),
             }
         )
 
     promise_cards = []
-    for index, card in enumerate(_table_list(promise, "cards", "promise.cards"), start=1):
+    for index, card in enumerate(
+        _table_list(promise, "cards", "promise.cards"), start=1
+    ):
         promise_cards.append(
             {
                 "id": f"promise-card-{index}",
@@ -364,7 +381,9 @@ def _parse_settings_payload(data: dict) -> dict:
         for link_index, link in enumerate(item.get("links", []), start=1):
             if not isinstance(link, dict):
                 raise TextExchangeError(
-                    {f"publications.items[{item_index}]": "`links` doit contenir des sections."}
+                    {
+                        f"publications.items[{item_index}]": "`links` doit contenir des sections."
+                    }
                 )
             links.append(
                 {
@@ -384,8 +403,12 @@ def _parse_settings_payload(data: dict) -> dict:
         publication_items.append(
             {
                 "id": f"publication-{item_index}",
-                "title": _require_string(item, "title", f"publications.items[{item_index}]"),
-                "content": _require_string(item, "content", f"publications.items[{item_index}]"),
+                "title": _require_string(
+                    item, "title", f"publications.items[{item_index}]"
+                ),
+                "content": _require_string(
+                    item, "content", f"publications.items[{item_index}]"
+                ),
                 "links": links,
             }
         )
@@ -432,7 +455,9 @@ def _parse_settings_payload(data: dict) -> dict:
             "title": _require_string(publications, "title", "publications"),
             "subtitle": _require_string(publications, "subtitle", "publications"),
             "highlight": {
-                "title": _require_string(publications, "highlight_title", "publications"),
+                "title": _require_string(
+                    publications, "highlight_title", "publications"
+                ),
                 "content": _require_string(
                     publications, "highlight_content", "publications"
                 ),
@@ -448,16 +473,32 @@ def _parse_references_payload(data: dict) -> list[dict]:
     for index, item in enumerate(references, start=1):
         reference = _require_string(item, "reference", f"references[{index}]").strip()
         if not reference:
-            raise TextExchangeError({f"references[{index}]": "`reference` est obligatoire."})
+            raise TextExchangeError(
+                {f"references[{index}]": "`reference` est obligatoire."}
+            )
         payload.append(
             {
                 "reference": reference,
                 "reference_short": _optional_string(item, "reference_short").strip(),
-                "icon": _validate_url(_optional_string(item, "icon"), f"references[{index}].icon"),
+                "icon": _validate_url(
+                    _optional_string(item, "icon"), f"references[{index}].icon"
+                ),
                 "situation": _optional_string(item, "situation").strip(),
-                "tasks": [entry.strip() for entry in _string_list(item, "tasks", f"references[{index}]") if entry.strip()],
-                "actions": [entry.strip() for entry in _string_list(item, "actions", f"references[{index}]") if entry.strip()],
-                "results": [entry.strip() for entry in _string_list(item, "results", f"references[{index}]") if entry.strip()],
+                "tasks": [
+                    entry.strip()
+                    for entry in _string_list(item, "tasks", f"references[{index}]")
+                    if entry.strip()
+                ],
+                "actions": [
+                    entry.strip()
+                    for entry in _string_list(item, "actions", f"references[{index}]")
+                    if entry.strip()
+                ],
+                "results": [
+                    entry.strip()
+                    for entry in _string_list(item, "results", f"references[{index}]")
+                    if entry.strip()
+                ],
                 "order_index": index,
             }
         )
@@ -483,7 +524,9 @@ def _placeholder_bytes(title: str, size: tuple[int, int]) -> bytes:
     caption = (title or "Reference").strip()[:42]
     subtitle = "Image generee automatiquement"
 
-    draw.rounded_rectangle((30, 30, size[0] - 30, size[1] - 30), radius=28, fill=(17, 24, 39))
+    draw.rounded_rectangle(
+        (30, 30, size[0] - 30, size[1] - 30), radius=28, fill=(17, 24, 39)
+    )
     draw.text((70, 90), caption, fill=(255, 255, 255), font=font)
     draw.text((70, 130), subtitle, fill=(209, 213, 219), font=font)
 
@@ -520,7 +563,9 @@ def import_exchange_text(raw_text: str) -> dict:
     settings_payload, references_payload = parse_exchange_text(raw_text)
 
     settings_instance = SiteSettings.get_solo()
-    settings_serializer = SiteSettingsSerializer(settings_instance, data=settings_payload)
+    settings_serializer = SiteSettingsSerializer(
+        settings_instance, data=settings_payload
+    )
     settings_serializer.is_valid(raise_exception=True)
 
     existing_references = _reference_rows()

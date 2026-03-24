@@ -203,16 +203,22 @@ results = ["Resultat B"]
                     **self._auth_headers(),
                 )
 
-                self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+                self.assertEqual(
+                    response.status_code, status.HTTP_200_OK, response.data
+                )
                 self.assertEqual(response.data["references_count"], 2)
                 self.assertEqual(SiteSettings.get_solo().header["name"], "Nom importe")
                 references = list(Reference.objects.order_by("order_index"))
                 self.assertEqual(len(references), 2)
                 self.assertEqual(references[0].reference, "Reference A")
                 self.assertTrue(str(references[0].image).startswith("references/"))
-                self.assertTrue(str(references[0].image_thumb).startswith("references/thumbs/"))
+                self.assertTrue(
+                    str(references[0].image_thumb).startswith("references/thumbs/")
+                )
                 self.assertTrue((Path(tempdir) / str(references[0].image)).exists())
-                self.assertTrue((Path(tempdir) / str(references[0].image_thumb)).exists())
+                self.assertTrue(
+                    (Path(tempdir) / str(references[0].image_thumb)).exists()
+                )
 
     def test_import_rejects_invalid_toml_without_changes(self):
         Reference.objects.create(
@@ -252,7 +258,9 @@ results = ["Resultat B"]
         self.assertIn("header", ctx.exception.detail)
 
     def test_parse_exchange_text_rejects_invalid_scalar_and_list_types(self):
-        file_text = self._valid_exchange_text().replace('name = "Nom importe"', "name = 12")
+        file_text = self._valid_exchange_text().replace(
+            'name = "Nom importe"', "name = 12"
+        )
         with self.assertRaises(TextExchangeError) as ctx:
             parse_exchange_text(file_text)
         self.assertEqual(ctx.exception.detail["header"], "`name` doit etre une chaine.")
@@ -268,7 +276,9 @@ results = ["Resultat B"]
             "`keywords` doit etre une liste de chaines.",
         )
 
-        file_text = self._valid_exchange_text().replace("enabled = true", 'enabled = "oui"')
+        file_text = self._valid_exchange_text().replace(
+            "enabled = true", 'enabled = "oui"'
+        )
         with self.assertRaises(TextExchangeError) as ctx:
             parse_exchange_text(file_text)
         self.assertEqual(
@@ -276,8 +286,12 @@ results = ["Resultat B"]
             "`enabled` doit etre un booleen.",
         )
 
-    def test_parse_exchange_text_rejects_invalid_target_publication_links_and_reference_values(self):
-        file_text = self._valid_exchange_text().replace('target = "services"', 'target = "foo"')
+    def test_parse_exchange_text_rejects_invalid_target_publication_links_and_reference_values(
+        self,
+    ):
+        file_text = self._valid_exchange_text().replace(
+            'target = "services"', 'target = "foo"'
+        )
         with self.assertRaises(TextExchangeError) as ctx:
             parse_exchange_text(file_text)
         self.assertEqual(
@@ -338,7 +352,9 @@ results = ["Resultat B"]
             "`actions` doit etre une liste de chaines.",
         )
 
-        file_text = self._valid_exchange_text().replace("format_version = 1", "format_version = 2")
+        file_text = self._valid_exchange_text().replace(
+            "format_version = 1", "format_version = 2"
+        )
         with self.assertRaises(TextExchangeError) as ctx:
             parse_exchange_text(file_text)
         self.assertEqual(
@@ -416,7 +432,9 @@ results = ["Resultat B"]
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "Le fichier doit etre encodé en UTF-8.")
+        self.assertEqual(
+            response.data["detail"], "Le fichier doit etre encodé en UTF-8."
+        )
 
     def test_import_surfaces_serializer_validation_errors(self):
         with patch(
