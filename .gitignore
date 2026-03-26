@@ -5,6 +5,8 @@ Thumbs.db
 !.vscode/
 !.vscode/tasks.json
 *.log
+BLOCKERS.md
+GATE.md
 
 # Environnements / secrets
 .env
