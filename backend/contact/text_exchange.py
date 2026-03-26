@@ -180,7 +180,9 @@ results = ["Resultat 1", "Resultat 2"]
 """
 
 
-def _append_table(lines: list[str], table_name: str, fields: list[tuple[str, str]]) -> None:
+def _append_table(
+    lines: list[str], table_name: str, fields: list[tuple[str, str]]
+) -> None:
     lines.append(f"[{table_name}]")
     for key, value in fields:
         lines.append(f"{key} = {value}")
@@ -254,7 +256,9 @@ def _export_about(lines: list[str], settings: SiteSettings) -> None:
             ("highlight_intro", _toml_string(settings.about["highlight"]["intro"])),
             (
                 "highlight_items",
-                _dump_list([item["text"] for item in settings.about["highlight"]["items"]]),
+                _dump_list(
+                    [item["text"] for item in settings.about["highlight"]["items"]]
+                ),
             ),
         ],
     )
