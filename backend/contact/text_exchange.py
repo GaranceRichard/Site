@@ -26,6 +26,16 @@ class TextExchangeError(serializers.ValidationError):
     pass
 
 
+VALID_HERO_LINK_TARGETS = {
+    "promise",
+    "about",
+    "services",
+    "method",
+    "references",
+    "message",
+}
+
+
 def _toml_string(value: str) -> str:
     if "\n" in value:
         escaped = value.replace('"""', '\\"""')
@@ -170,160 +180,206 @@ results = ["Resultat 1", "Resultat 2"]
 """
 
 
-def export_exchange_text() -> str:
-    settings = SiteSettings.get_solo()
-    references = _reference_rows()
-    lines: list[str] = [
-        "format_version = 1",
-        "",
-        "[header]",
-        f"name = {_toml_string(settings.header['name'])}",
-        f"title = {_toml_string(settings.header['title'])}",
-        f"booking_url = {_toml_string(settings.header['bookingUrl'])}",
-        "",
-        "[home_hero]",
-        f"eyebrow = {_toml_string(settings.home_hero['eyebrow'])}",
-        f"title = {_toml_string(settings.home_hero['title'])}",
-        f"subtitle = {_toml_string(settings.home_hero['subtitle'])}",
-        f"keywords = {_dump_list(settings.home_hero['keywords'])}",
-        "",
-    ]
+def _append_table(lines: list[str], table_name: str, fields: list[tuple[str, str]]) -> None:
+    lines.append(f"[{table_name}]")
+    for key, value in fields:
+        lines.append(f"{key} = {value}")
+    lines.append("")
 
-    for link in settings.home_hero["links"]:
-        lines.extend(
-            [
-                "[[home_hero.links]]",
-                f"target = {_toml_string(link['id'])}",
-                f"label = {_toml_string(link['label'])}",
-                f"enabled = {str(bool(link['enabled'])).lower()}",
-                "",
-            ]
-        )
 
-    for card in settings.home_hero["cards"]:
-        lines.extend(
-            [
-                "[[home_hero.cards]]",
-                f"title = {_toml_string(card['title'])}",
-                f"content = {_toml_string(card['content'])}",
-                "",
-            ]
-        )
-
-    lines.extend(
-        [
-            "[about]",
-            f"title = {_toml_string(settings.about['title'])}",
-            f"subtitle = {_toml_string(settings.about['subtitle'])}",
-            f"highlight_intro = {_toml_string(settings.about['highlight']['intro'])}",
-            f"highlight_items = {_dump_list([item['text'] for item in settings.about['highlight']['items']])}",
-            "",
-            "[promise]",
-            f"title = {_toml_string(settings.promise['title'])}",
-            f"subtitle = {_toml_string(settings.promise['subtitle'])}",
-            "",
-        ]
-    )
-
-    for card in settings.promise["cards"]:
-        lines.extend(
-            [
-                "[[promise.cards]]",
-                f"title = {_toml_string(card['title'])}",
-                f"content = {_toml_string(card['content'])}",
-                "",
-            ]
-        )
-
-    lines.extend(
-        [
-            "[method]",
-            f"eyebrow = {_toml_string(settings.method['eyebrow'])}",
-            f"title = {_toml_string(settings.method['title'])}",
-            f"subtitle = {_toml_string(settings.method['subtitle'])}",
-            "",
-        ]
-    )
-
-    for step in settings.method["steps"]:
-        lines.extend(
-            [
-                "[[method.steps]]",
-                f"step = {_toml_string(step['step'])}",
-                f"title = {_toml_string(step['title'])}",
-                f"text = {_toml_string(step['text'])}",
-                "",
-            ]
-        )
-
-    lines.extend(
-        [
-            "[publications]",
-            f"title = {_toml_string(settings.publications['title'])}",
-            f"subtitle = {_toml_string(settings.publications['subtitle'])}",
-            f"highlight_title = {_toml_string(settings.publications['highlight']['title'])}",
-            f"highlight_content = {_toml_string(settings.publications['highlight']['content'])}",
-            "",
-        ]
-    )
-
-    for item in settings.publications["items"]:
-        lines.extend(
-            [
-                "[[publications.items]]",
-                f"title = {_toml_string(item['title'])}",
-                f"content = {_toml_string(item['content'])}",
-            ]
-        )
-        for link in item.get("links", []):
-            lines.extend(
-                [
-                    "[[publications.items.links]]",
-                    f"title = {_toml_string(link['title'])}",
-                    f"url = {_toml_string(link['url'])}",
-                ]
-            )
+def _append_array_table(
+    lines: list[str],
+    table_name: str,
+    items: list[dict],
+    field_builder,
+) -> None:
+    for item in items:
+        lines.append(f"[[{table_name}]]")
+        for key, value in field_builder(item):
+            lines.append(f"{key} = {value}")
         lines.append("")
 
-    for reference in references:
-        lines.extend(
-            [
-                "[[references]]",
-                f"reference = {_toml_string(reference.reference)}",
-                f"reference_short = {_toml_string(reference.reference_short)}",
-                f"icon = {_toml_string(reference.icon)}",
-                f"situation = {_toml_string(reference.situation)}",
-                f"tasks = {_dump_list(reference.tasks)}",
-                f"actions = {_dump_list(reference.actions)}",
-                f"results = {_dump_list(reference.results)}",
-                "",
-            ]
-        )
+
+def _export_header(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "header",
+        [
+            ("name", _toml_string(settings.header["name"])),
+            ("title", _toml_string(settings.header["title"])),
+            ("booking_url", _toml_string(settings.header["bookingUrl"])),
+        ],
+    )
+
+
+def _export_home_hero(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "home_hero",
+        [
+            ("eyebrow", _toml_string(settings.home_hero["eyebrow"])),
+            ("title", _toml_string(settings.home_hero["title"])),
+            ("subtitle", _toml_string(settings.home_hero["subtitle"])),
+            ("keywords", _dump_list(settings.home_hero["keywords"])),
+        ],
+    )
+    _append_array_table(
+        lines,
+        "home_hero.links",
+        settings.home_hero["links"],
+        lambda link: [
+            ("target", _toml_string(link["id"])),
+            ("label", _toml_string(link["label"])),
+            ("enabled", str(bool(link["enabled"])).lower()),
+        ],
+    )
+    _append_array_table(
+        lines,
+        "home_hero.cards",
+        settings.home_hero["cards"],
+        lambda card: [
+            ("title", _toml_string(card["title"])),
+            ("content", _toml_string(card["content"])),
+        ],
+    )
+
+
+def _export_about(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "about",
+        [
+            ("title", _toml_string(settings.about["title"])),
+            ("subtitle", _toml_string(settings.about["subtitle"])),
+            ("highlight_intro", _toml_string(settings.about["highlight"]["intro"])),
+            (
+                "highlight_items",
+                _dump_list([item["text"] for item in settings.about["highlight"]["items"]]),
+            ),
+        ],
+    )
+
+
+def _export_promise(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "promise",
+        [
+            ("title", _toml_string(settings.promise["title"])),
+            ("subtitle", _toml_string(settings.promise["subtitle"])),
+        ],
+    )
+    _append_array_table(
+        lines,
+        "promise.cards",
+        settings.promise["cards"],
+        lambda card: [
+            ("title", _toml_string(card["title"])),
+            ("content", _toml_string(card["content"])),
+        ],
+    )
+
+
+def _export_method(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "method",
+        [
+            ("eyebrow", _toml_string(settings.method["eyebrow"])),
+            ("title", _toml_string(settings.method["title"])),
+            ("subtitle", _toml_string(settings.method["subtitle"])),
+        ],
+    )
+    _append_array_table(
+        lines,
+        "method.steps",
+        settings.method["steps"],
+        lambda step: [
+            ("step", _toml_string(step["step"])),
+            ("title", _toml_string(step["title"])),
+            ("text", _toml_string(step["text"])),
+        ],
+    )
+
+
+def _export_publications(lines: list[str], settings: SiteSettings) -> None:
+    _append_table(
+        lines,
+        "publications",
+        [
+            ("title", _toml_string(settings.publications["title"])),
+            ("subtitle", _toml_string(settings.publications["subtitle"])),
+            (
+                "highlight_title",
+                _toml_string(settings.publications["highlight"]["title"]),
+            ),
+            (
+                "highlight_content",
+                _toml_string(settings.publications["highlight"]["content"]),
+            ),
+        ],
+    )
+    for item in settings.publications["items"]:
+        lines.append("[[publications.items]]")
+        lines.append(f"title = {_toml_string(item['title'])}")
+        lines.append(f"content = {_toml_string(item['content'])}")
+        for link in item.get("links", []):
+            lines.append("[[publications.items.links]]")
+            lines.append(f"title = {_toml_string(link['title'])}")
+            lines.append(f"url = {_toml_string(link['url'])}")
+        lines.append("")
+
+
+def _export_references(lines: list[str], references: list[Reference]) -> None:
+    _append_array_table(
+        lines,
+        "references",
+        references,
+        lambda reference: [
+            ("reference", _toml_string(reference.reference)),
+            ("reference_short", _toml_string(reference.reference_short)),
+            ("icon", _toml_string(reference.icon)),
+            ("situation", _toml_string(reference.situation)),
+            ("tasks", _dump_list(reference.tasks)),
+            ("actions", _dump_list(reference.actions)),
+            ("results", _dump_list(reference.results)),
+        ],
+    )
+
+
+def export_exchange_text() -> str:
+    """Serialize current settings and references into the exchange TOML format."""
+    settings = SiteSettings.get_solo()
+    references = _reference_rows()
+    lines: list[str] = ["format_version = 1", ""]
+    _export_header(lines, settings)
+    _export_home_hero(lines, settings)
+    _export_about(lines, settings)
+    _export_promise(lines, settings)
+    _export_method(lines, settings)
+    _export_publications(lines, settings)
+    _export_references(lines, references)
 
     return "\n".join(lines).strip() + "\n"
 
 
-def _parse_settings_payload(data: dict) -> dict:
-    header = _require_table(data, "header")
-    home_hero = _require_table(data, "home_hero")
-    about = _require_table(data, "about")
-    promise = _require_table(data, "promise")
-    method = _require_table(data, "method")
-    publications = _require_table(data, "publications")
+def _parse_header_payload(header: dict) -> dict:
+    return {
+        "header": {
+            "name": _require_string(header, "name", "header"),
+            "title": _require_string(header, "title", "header"),
+            "bookingUrl": _require_string(header, "booking_url", "header"),
+        }
+    }
 
+
+def _parse_home_hero_payload(home_hero: dict) -> dict:
     links_payload = []
     for index, link in enumerate(
         _table_list(home_hero, "links", "home_hero.links"), start=1
     ):
         target = _require_string(link, "target", f"home_hero.links[{index}]").strip()
-        if target not in {
-            "promise",
-            "about",
-            "services",
-            "method",
-            "references",
-            "message",
-        }:
+        if target not in VALID_HERO_LINK_TARGETS:
             raise TextExchangeError(
                 {f"home_hero.links[{index}]": "`target` invalide pour le lien."}
             )
@@ -349,6 +405,37 @@ def _parse_settings_payload(data: dict) -> dict:
             }
         )
 
+    return {
+        "homeHero": {
+            "eyebrow": _require_string(home_hero, "eyebrow", "home_hero"),
+            "title": _require_string(home_hero, "title", "home_hero"),
+            "subtitle": _require_string(home_hero, "subtitle", "home_hero"),
+            "keywords": _string_list(home_hero, "keywords", "home_hero"),
+            "links": links_payload,
+            "cards": cards_payload,
+        }
+    }
+
+
+def _parse_about_payload(about: dict) -> dict:
+    return {
+        "about": {
+            "title": _require_string(about, "title", "about"),
+            "subtitle": _require_string(about, "subtitle", "about"),
+            "highlight": {
+                "intro": _require_string(about, "highlight_intro", "about"),
+                "items": [
+                    {"id": f"about-item-{index}", "text": value}
+                    for index, value in enumerate(
+                        _string_list(about, "highlight_items", "about"), start=1
+                    )
+                ],
+            },
+        }
+    }
+
+
+def _parse_promise_payload(promise: dict) -> dict:
     promise_cards = []
     for index, card in enumerate(
         _table_list(promise, "cards", "promise.cards"), start=1
@@ -361,6 +448,16 @@ def _parse_settings_payload(data: dict) -> dict:
             }
         )
 
+    return {
+        "promise": {
+            "title": _require_string(promise, "title", "promise"),
+            "subtitle": _require_string(promise, "subtitle", "promise"),
+            "cards": promise_cards,
+        }
+    }
+
+
+def _parse_method_payload(method: dict) -> dict:
     method_steps = []
     for index, step in enumerate(_table_list(method, "steps", "method.steps"), start=1):
         method_steps.append(
@@ -372,6 +469,17 @@ def _parse_settings_payload(data: dict) -> dict:
             }
         )
 
+    return {
+        "method": {
+            "eyebrow": _require_string(method, "eyebrow", "method"),
+            "title": _require_string(method, "title", "method"),
+            "subtitle": _require_string(method, "subtitle", "method"),
+            "steps": method_steps,
+        }
+    }
+
+
+def _parse_publications_payload(publications: dict) -> dict:
     publication_items = []
     for item_index, item in enumerate(
         _table_list(publications, "items", "publications.items"),
@@ -414,43 +522,6 @@ def _parse_settings_payload(data: dict) -> dict:
         )
 
     return {
-        "header": {
-            "name": _require_string(header, "name", "header"),
-            "title": _require_string(header, "title", "header"),
-            "bookingUrl": _require_string(header, "booking_url", "header"),
-        },
-        "homeHero": {
-            "eyebrow": _require_string(home_hero, "eyebrow", "home_hero"),
-            "title": _require_string(home_hero, "title", "home_hero"),
-            "subtitle": _require_string(home_hero, "subtitle", "home_hero"),
-            "keywords": _string_list(home_hero, "keywords", "home_hero"),
-            "links": links_payload,
-            "cards": cards_payload,
-        },
-        "about": {
-            "title": _require_string(about, "title", "about"),
-            "subtitle": _require_string(about, "subtitle", "about"),
-            "highlight": {
-                "intro": _require_string(about, "highlight_intro", "about"),
-                "items": [
-                    {"id": f"about-item-{index}", "text": value}
-                    for index, value in enumerate(
-                        _string_list(about, "highlight_items", "about"), start=1
-                    )
-                ],
-            },
-        },
-        "promise": {
-            "title": _require_string(promise, "title", "promise"),
-            "subtitle": _require_string(promise, "subtitle", "promise"),
-            "cards": promise_cards,
-        },
-        "method": {
-            "eyebrow": _require_string(method, "eyebrow", "method"),
-            "title": _require_string(method, "title", "method"),
-            "subtitle": _require_string(method, "subtitle", "method"),
-            "steps": method_steps,
-        },
         "publications": {
             "title": _require_string(publications, "title", "publications"),
             "subtitle": _require_string(publications, "subtitle", "publications"),
@@ -463,8 +534,27 @@ def _parse_settings_payload(data: dict) -> dict:
                 ),
             },
             "items": publication_items,
-        },
+        }
     }
+
+
+def _parse_settings_payload(data: dict) -> dict:
+    """Parse each settings section independently to keep validation localized."""
+    header = _require_table(data, "header")
+    home_hero = _require_table(data, "home_hero")
+    about = _require_table(data, "about")
+    promise = _require_table(data, "promise")
+    method = _require_table(data, "method")
+    publications = _require_table(data, "publications")
+
+    return (
+        _parse_header_payload(header)
+        | _parse_home_hero_payload(home_hero)
+        | _parse_about_payload(about)
+        | _parse_promise_payload(promise)
+        | _parse_method_payload(method)
+        | _parse_publications_payload(publications)
+    )
 
 
 def _parse_references_payload(data: dict) -> list[dict]:
@@ -506,6 +596,7 @@ def _parse_references_payload(data: dict) -> list[dict]:
 
 
 def parse_exchange_text(raw_text: str) -> tuple[dict, list[dict]]:
+    """Read an exchange file and return validated settings plus references payloads."""
     try:
         data = tomllib.loads(raw_text)
     except tomllib.TOMLDecodeError as exc:

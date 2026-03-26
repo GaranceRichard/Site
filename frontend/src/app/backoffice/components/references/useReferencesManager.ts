@@ -3,6 +3,14 @@ import type { ChangeEvent, FormEvent } from "react";
 
 import type { Reference } from "../../types";
 import { invalidateReferencesCache } from "../../../lib/references";
+import {
+  ReferencesApiError,
+  deleteAdminReference,
+  listAdminReferences,
+  patchAdminReferenceOrder,
+  saveAdminReference,
+  uploadAdminReferenceFile,
+} from "./referencesApi";
 
 type FormState = {
   reference: string;
@@ -97,6 +105,17 @@ export function useReferencesManager({
     onRequestLogin();
   }, [onRequestLogin, reportError]);
 
+  const handleRequestError = useCallback(
+    (error: unknown) => {
+      if (error instanceof ReferencesApiError && (error.status === 401 || error.status === 403)) {
+        requireAuth();
+        return true;
+      }
+      return false;
+    },
+    [requireAuth],
+  );
+
   const load = useCallback(async () => {
     setErrorMsg("");
     if (!apiBase) {
@@ -113,29 +132,18 @@ export function useReferencesManager({
 
     setStatus("loading");
     try {
-      const res = await fetch(`${apiBase}/api/contact/references/admin`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 401 || res.status === 403) {
-        requireAuth();
-        return;
-      }
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `Erreur API (${res.status})`);
-      }
-
-      const data = (await res.json()) as Reference[];
+      const data = await listAdminReferences(apiBase, token);
       setItems(data.slice().sort((a, b) => a.order_index - b.order_index));
       invalidateReferencesCache();
       setStatus("idle");
     } catch (e: unknown) {
+      if (handleRequestError(e)) {
+        return;
+      }
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
     }
-  }, [apiBase, getToken, requireAuth]);
+  }, [apiBase, getToken, handleRequestError, requireAuth]);
 
   useEffect(() => {
     if (didInitRef.current) return;
@@ -227,47 +235,21 @@ export function useReferencesManager({
       setStatus("loading");
       setErrorMsg("");
       try {
-        const headers = {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        };
-        const resA = await fetch(`${apiBase}/api/contact/references/admin/${current.id}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({ order_index: otherOrder }),
-        });
-        if (resA.status === 401 || resA.status === 403) {
-          requireAuth();
-          return;
-        }
-        if (!resA.ok) {
-          const txt = await resA.text();
-          throw new Error(txt || `Erreur API (${resA.status})`);
-        }
-
-        const resB = await fetch(`${apiBase}/api/contact/references/admin/${other.id}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({ order_index: currentOrder }),
-        });
-        if (resB.status === 401 || resB.status === 403) {
-          requireAuth();
-          return;
-        }
-        if (!resB.ok) {
-          const txt = await resB.text();
-          throw new Error(txt || `Erreur API (${resB.status})`);
-        }
+        await patchAdminReferenceOrder(apiBase, token, current.id, otherOrder);
+        await patchAdminReferenceOrder(apiBase, token, other.id, currentOrder);
 
         invalidateReferencesCache();
         setStatus("idle");
       } catch (e: unknown) {
+        if (handleRequestError(e)) {
+          return;
+        }
         setStatus("error");
         setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
         void load();
       }
     },
-    [apiBase, getToken, items, load, requireAuth],
+    [apiBase, getToken, handleRequestError, items, load, requireAuth],
   );
 
   const onDeleteSelected = useCallback(async () => {
@@ -285,20 +267,7 @@ export function useReferencesManager({
     const ids = Array.from(selectedIds.values());
     try {
       for (const id of ids) {
-        const res = await fetch(`${apiBase}/api/contact/references/admin/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.status === 401 || res.status === 403) {
-          requireAuth();
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Erreur API (${res.status})`);
-        }
+        await deleteAdminReference(apiBase, token, id);
       }
 
       setItems((prev) => prev.filter((r) => !selectedIds.has(r.id)));
@@ -310,10 +279,13 @@ export function useReferencesManager({
       invalidateReferencesCache();
       setStatus("idle");
     } catch (e: unknown) {
+      if (handleRequestError(e)) {
+        return;
+      }
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Erreur inattendue");
     }
-  }, [apiBase, editingId, getToken, requireAuth, resetForm, selectedIds]);
+  }, [apiBase, editingId, getToken, handleRequestError, requireAuth, resetForm, selectedIds]);
 
   const onSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -352,31 +324,7 @@ export function useReferencesManager({
 
       setStatus("loading");
       try {
-        const res = await fetch(
-          editingId
-            ? `${apiBase}/api/contact/references/admin/${editingId}`
-            : `${apiBase}/api/contact/references/admin`,
-          {
-            method: editingId ? "PUT" : "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          },
-        );
-
-        if (res.status === 401 || res.status === 403) {
-          requireAuth();
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Erreur API (${res.status})`);
-        }
-
-        const saved = (await res.json()) as Reference;
+        const saved = await saveAdminReference(apiBase, token, editingId, payload);
         setItems((prev) => {
           if (editingId) {
             return prev
@@ -392,10 +340,13 @@ export function useReferencesManager({
         setModalOpen(false);
         resetForm();
       } catch (e: unknown) {
+        if (handleRequestError(e)) {
+          return;
+        }
         reportError(e instanceof Error ? e.message : "Erreur inattendue");
       }
     },
-    [apiBase, editingId, form, getToken, reportError, requireAuth, resetForm],
+    [apiBase, editingId, form, getToken, handleRequestError, reportError, requireAuth, resetForm],
   );
 
   const uploadFile = useCallback(
@@ -421,26 +372,7 @@ export function useReferencesManager({
       setErrorMsg("");
       setModalError("");
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch(`${apiBase}/api/contact/references/admin/upload`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        if (res.status === 401 || res.status === 403) {
-          requireAuth();
-          return;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `Erreur API (${res.status})`);
-        }
-
-        const data = (await res.json()) as { url?: string; thumbnail_url?: string };
+        const data = await uploadAdminReferenceFile(apiBase, token, file);
         const uploadedUrl = data.url;
         if (typeof uploadedUrl === "string" && uploadedUrl.length > 0) {
           if (target === "image") {
@@ -456,6 +388,9 @@ export function useReferencesManager({
           throw new Error("URL d'image manquante.");
         }
       } catch (e: unknown) {
+        if (handleRequestError(e)) {
+          return;
+        }
         reportError(e instanceof Error ? e.message : "Erreur inattendue");
       } finally {
         if (target === "image") {
@@ -465,7 +400,7 @@ export function useReferencesManager({
         }
       }
     },
-    [apiBase, getToken, reportError, requireAuth],
+    [apiBase, getToken, handleRequestError, reportError, requireAuth],
   );
 
   const onImageChange = useCallback(

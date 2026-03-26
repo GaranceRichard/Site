@@ -54,6 +54,7 @@ class SiteSettings(models.Model):
 
     @classmethod
     def get_solo(cls):
+        """Always return the single row that stores editable site content."""
         obj, _ = cls.objects.get_or_create(
             pk=1,
             defaults={
@@ -68,6 +69,7 @@ class SiteSettings(models.Model):
         return obj
 
     def save(self, *args, **kwargs):
+        # The backoffice edits a single shared document, so writes are pinned to pk=1.
         self.pk = 1
         super().save(*args, **kwargs)
 
