@@ -29,6 +29,8 @@ import {
   subscribeBackofficeSection,
 } from "./sectionStore";
 
+export const dynamic = "force-dynamic";
+
 function getSectionCopy(section: string): { title: string; subtitle: string } {
   if (section === "home") {
     return {

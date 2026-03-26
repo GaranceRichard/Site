@@ -31,8 +31,7 @@ export default function PromiseSection() {
             <div className="grid gap-4 sm:grid-cols-2">
               {promise.cards.map((card, index) => (
                 <div key={card.id} className={cx(index === 0 ? ELEVATED_PANEL_CLASS : PANEL_CLASS, "h-full")}>
-                  <p className="eyebrow">Promesse</p>
-                  <p className="mt-3 text-base font-semibold">{card.title}</p>
+                  <p className="text-base font-semibold">{card.title}</p>
                   <p className="mt-3 text-sm leading-relaxed [color:var(--text-secondary)]">
                     {card.content}
                   </p>

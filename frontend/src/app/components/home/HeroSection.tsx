@@ -10,9 +10,7 @@ import {
 } from "../../content/homeHeroSettings";
 import {
   Container,
-  ELEVATED_PANEL_CLASS,
   InlinePill,
-  MUTED_PANEL_CLASS,
   PrimaryButton,
   SecondaryButton,
   cx,
@@ -137,27 +135,8 @@ export default function HeroSection() {
           </div>
 
           <div className="space-y-4 md:col-span-5">
-            <div className={cx(ELEVATED_PANEL_CLASS, "relative overflow-hidden")}>
-              <div className="absolute inset-x-0 top-0 h-px bg-[color:var(--border-strong)]" />
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="eyebrow">Cap de mission</p>
-                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em]">
-                    Intervenir avec autorite calme, cadence et preuves.
-                  </p>
-                </div>
-                <div className="ui-pill px-3 py-2 text-xs font-semibold">Priorites</div>
-              </div>
-              <p className="mt-5 text-sm leading-7 [color:var(--text-secondary)]">
-                Une posture de direction de projet: clarifier, arbitrer, remettre le flux sous controle et rendre les decisions visibles.
-              </p>
-            </div>
-
-            {settings.cards.map((card, index) => (
-              <div
-                key={card.id}
-                className={cx(index === 0 ? MUTED_PANEL_CLASS : "panel p-5", "relative")}
-              >
+            {settings.cards.map((card) => (
+              <div key={card.id} className={cx("panel p-5", "relative")}>
                 {card.title ? <p className="text-sm font-semibold">{card.title}</p> : null}
                 {card.content ? (
                   <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 [color:var(--text-secondary)]">

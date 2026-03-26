@@ -179,7 +179,7 @@ describe("MethodSettingsManager", () => {
     fireEvent.click(addButton);
     fireEvent.click(addButton);
 
-    expect(screen.getByText("Etape 6")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Etape 6" })).toBeInTheDocument();
     expect(addButton).toBeDisabled();
   });
 
@@ -212,16 +212,16 @@ describe("MethodSettingsManager", () => {
     render(<MethodSettingsManager />);
     fireEvent.click(screen.getByRole("button", { name: "Etapes" }));
 
-    const textboxes = screen.getAllByRole("textbox");
-    fireEvent.change(textboxes[0], { target: { value: "11" } });
-    fireEvent.change(textboxes[1], { target: { value: "Observer le flux" } });
-    fireEvent.change(textboxes[2], { target: { value: "Regarder le systeme" } });
+    fireEvent.change(screen.getByLabelText("Numero"), { target: { value: "11" } });
+    fireEvent.change(screen.getByLabelText("Titre etape"), { target: { value: "Observer le flux" } });
+    fireEvent.change(screen.getByLabelText("Texte"), { target: { value: "Regarder le systeme" } });
 
     expect(screen.getByDisplayValue("11")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "Descendre" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Descendre" }));
+    expect(screen.getByRole("button", { name: "Etape 2" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("Observer le flux")).toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Supprimer" })[1]);
+    fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
     expect(screen.queryByDisplayValue("Observer le flux")).not.toBeInTheDocument();
   });
 
@@ -229,10 +229,10 @@ describe("MethodSettingsManager", () => {
     render(<MethodSettingsManager />);
     fireEvent.click(screen.getByRole("button", { name: "Etapes" }));
 
-    const textboxes = screen.getAllByRole("textbox");
-    fireEvent.change(textboxes[4], { target: { value: "Prioriser" } });
+    fireEvent.click(screen.getByRole("button", { name: "Etape 2" }));
+    fireEvent.change(screen.getByLabelText("Titre etape"), { target: { value: "Prioriser" } });
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Monter" })[1]);
+    fireEvent.click(screen.getByRole("button", { name: "Monter" }));
 
     expect(screen.getByDisplayValue("Prioriser")).toBeInTheDocument();
   });
@@ -241,10 +241,9 @@ describe("MethodSettingsManager", () => {
     render(<MethodSettingsManager />);
     fireEvent.click(screen.getByRole("button", { name: "Etapes" }));
 
-    const textboxes = screen.getAllByRole("textbox");
-    fireEvent.change(textboxes[0], { target: { value: "   " } });
-    fireEvent.change(textboxes[1], { target: { value: "Observer" } });
-    fireEvent.change(textboxes[2], { target: { value: "Comprendre le flux" } });
+    fireEvent.change(screen.getByLabelText("Numero"), { target: { value: "   " } });
+    fireEvent.change(screen.getByLabelText("Titre etape"), { target: { value: "Observer" } });
+    fireEvent.change(screen.getByLabelText("Texte"), { target: { value: "Comprendre le flux" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
@@ -264,9 +263,8 @@ describe("MethodSettingsManager", () => {
     render(<MethodSettingsManager />);
     fireEvent.click(screen.getByRole("button", { name: "Etapes" }));
 
-    const textboxes = screen.getAllByRole("textbox");
-    fireEvent.change(textboxes[1], { target: { value: "   " } });
-    fireEvent.change(textboxes[2], { target: { value: "   " } });
+    fireEvent.change(screen.getByLabelText("Titre etape"), { target: { value: "   " } });
+    fireEvent.change(screen.getByLabelText("Texte"), { target: { value: "   " } });
 
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 

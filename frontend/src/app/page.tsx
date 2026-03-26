@@ -1,32 +1,31 @@
 // frontend/src/app/page.tsx
 import TopNav from "./components/TopNav";
 
+import AboutSection from "./components/home/AboutSection";
 import FooterSection from "./components/home/FooterSection";
-import { BOOKING_URL, METHOD_STEPS } from "./content";
+import HeroSection from "./components/home/HeroSection";
+import MethodSection from "./components/home/MethodSection";
+import PromiseSection from "./components/home/PromiseSection";
+import ReferencesSection from "./components/home/ReferencesSection";
+import ServicesSection from "./components/home/ServicesSection";
+import { BOOKING_URL } from "./content";
 
-import {
-  HOME_SECTIONS,
-  type NavItem,
-} from "./content/homeSections";
+import { HOME_NAV_ITEMS } from "./content/homeSections";
+
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  const nav: NavItem[] = HOME_SECTIONS.map((s) => ({
-    label: s.label,
-    href: `#${s.id}`,
-  }));
-
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
       <div className="app-shell overflow-hidden">
-        <TopNav nav={nav} bookingUrl={BOOKING_URL} />
+        <TopNav nav={HOME_NAV_ITEMS} bookingUrl={BOOKING_URL} />
 
-        {HOME_SECTIONS.map((s) => (
-          <div key={s.id}>
-            {s.render({
-              steps: METHOD_STEPS,
-            })}
-          </div>
-        ))}
+        <HeroSection />
+        <PromiseSection />
+        <MethodSection />
+        <ServicesSection />
+        <ReferencesSection />
+        <AboutSection />
 
         <FooterSection bookingUrl={BOOKING_URL} />
       </div>

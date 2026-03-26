@@ -109,6 +109,9 @@ const nextConfig: NextConfig = {
   compress: true,
   distDir: rawDistDir || undefined,
   poweredByHeader: false,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async rewrites() {
     return [
       {

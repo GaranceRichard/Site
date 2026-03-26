@@ -14,6 +14,7 @@ import { moveItem } from "./HomeSettingsManager";
 
 export default function MethodSettingsManager() {
   const [activeTab, setActiveTab] = useState<"titles" | "steps">("titles");
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
   const persisted = useSyncExternalStore(
     subscribeMethodSettings,
     getMethodSettings,
@@ -26,7 +27,15 @@ export default function MethodSettingsManager() {
 
   useEffect(() => {
     setForm(persisted);
+    setActiveStepIndex(0);
   }, [persisted]);
+
+  useEffect(() => {
+    setActiveStepIndex((prev) => {
+      if (form.steps.length === 0) return 0;
+      return Math.min(prev, form.steps.length - 1);
+    });
+  }, [form.steps.length]);
 
   function updateStep(index: number, next: Partial<MethodStep>) {
     setForm((prev) => {
@@ -163,7 +172,8 @@ export default function MethodSettingsManager() {
               <div className="grid gap-3">
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const nextIndex = form.steps.length;
                     setForm((prev) => ({
                       ...prev,
                       steps: [
@@ -175,86 +185,107 @@ export default function MethodSettingsManager() {
                           text: "",
                         },
                       ],
-                    }))
-                  }
+                    }));
+                    setActiveStepIndex(nextIndex);
+                  }}
                   disabled={form.steps.length >= 6}
                   className="w-fit rounded-lg border border-neutral-200 px-3 py-1 text-xs font-semibold disabled:opacity-50 dark:border-neutral-800"
                 >
                   Ajouter
                 </button>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex flex-wrap gap-2">
                   {form.steps.map((step, index) => (
-                    <div
+                    <button
                       key={step.id}
-                      className="grid gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
+                      type="button"
+                      onClick={() => setActiveStepIndex(index)}
+                      className={[
+                        "rounded-lg border px-3 py-2 text-xs font-semibold",
+                        activeStepIndex === index
+                          ? "border-neutral-300 bg-neutral-100 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
+                          : "border-neutral-200 bg-white text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200",
+                      ].join(" ")}
                     >
-                      <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-                        Etape {index + 1}
-                      </p>
-                      <label className="grid gap-1">
-                        <span className="text-xs font-semibold">Numero</span>
-                        <input
-                          type="text"
-                          value={step.step}
-                          onChange={(e) => updateStep(index, { step: e.currentTarget.value })}
-                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                        />
-                      </label>
-                      <label className="grid gap-1">
-                        <span className="text-xs font-semibold">Titre etape</span>
-                        <input
-                          type="text"
-                          value={step.title}
-                          onChange={(e) => updateStep(index, { title: e.currentTarget.value })}
-                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                        />
-                      </label>
-                      <label className="grid gap-1">
-                        <span className="text-xs font-semibold">Texte</span>
-                        <textarea
-                          rows={5}
-                          value={step.text}
-                          onChange={(e) => updateStep(index, { text: e.currentTarget.value })}
-                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                        />
-                      </label>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({ ...prev, steps: moveItem(prev.steps, index, index - 1) }))
-                          }
-                          disabled={index === 0}
-                          className="rounded-lg border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40 dark:border-neutral-800"
-                        >
-                          Monter
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({ ...prev, steps: moveItem(prev.steps, index, index + 1) }))
-                          }
-                          disabled={index === form.steps.length - 1}
-                          className="rounded-lg border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40 dark:border-neutral-800"
-                        >
-                          Descendre
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              steps: prev.steps.filter((_, i) => i !== index),
-                            }))
-                          }
-                          className="rounded-lg border border-neutral-200 px-2 py-1 text-xs dark:border-neutral-800"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
+                      {`Etape ${index + 1}`}
+                    </button>
                   ))}
                 </div>
+                {form.steps[activeStepIndex] ? (
+                  <div className="grid gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+                    <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+                      Etape {activeStepIndex + 1}
+                    </p>
+                    <label className="grid gap-1">
+                      <span className="text-xs font-semibold">Numero</span>
+                      <input
+                        type="text"
+                        value={form.steps[activeStepIndex].step}
+                        onChange={(e) => updateStep(activeStepIndex, { step: e.currentTarget.value })}
+                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                      />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-xs font-semibold">Titre etape</span>
+                      <input
+                        type="text"
+                        value={form.steps[activeStepIndex].title}
+                        onChange={(e) => updateStep(activeStepIndex, { title: e.currentTarget.value })}
+                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                      />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-xs font-semibold">Texte</span>
+                      <textarea
+                        rows={5}
+                        value={form.steps[activeStepIndex].text}
+                        onChange={(e) => updateStep(activeStepIndex, { text: e.currentTarget.value })}
+                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
+                      />
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm((prev) => ({
+                            ...prev,
+                            steps: moveItem(prev.steps, activeStepIndex, activeStepIndex - 1),
+                          }));
+                          setActiveStepIndex((prev) => Math.max(0, prev - 1));
+                        }}
+                        disabled={activeStepIndex === 0}
+                        className="rounded-lg border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40 dark:border-neutral-800"
+                      >
+                        Monter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm((prev) => ({
+                            ...prev,
+                            steps: moveItem(prev.steps, activeStepIndex, activeStepIndex + 1),
+                          }));
+                          setActiveStepIndex((prev) => prev + 1);
+                        }}
+                        disabled={activeStepIndex === form.steps.length - 1}
+                        className="rounded-lg border border-neutral-200 px-2 py-1 text-xs disabled:opacity-40 dark:border-neutral-800"
+                      >
+                        Descendre
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            steps: prev.steps.filter((_, i) => i !== activeStepIndex),
+                          }))
+                        }
+                        className="rounded-lg border border-neutral-200 px-2 py-1 text-xs dark:border-neutral-800"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
