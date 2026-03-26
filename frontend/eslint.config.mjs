@@ -7,6 +7,9 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
+    // Avoid linting the flat-config file itself; some upstream rule stacks
+    // can break on config modules during major ESLint transitions.
+    "eslint.config.mjs",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
