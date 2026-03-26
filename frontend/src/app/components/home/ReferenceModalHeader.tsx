@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ReferenceModalHeaderProps = {
   nameExpanded: string;
@@ -17,13 +17,49 @@ export default function ReferenceModalHeader({
   closeButtonRef,
 }: ReferenceModalHeaderProps) {
   const [badgeVisible, setBadgeVisible] = useState(Boolean(badgeSrc));
+  const [resolvedBadgeSrc, setResolvedBadgeSrc] = useState(badgeSrc ?? "");
+  const [badgeRetryCount, setBadgeRetryCount] = useState(0);
+  const retryTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (retryTimerRef.current) {
+      window.clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
     setBadgeVisible(Boolean(badgeSrc));
+    setResolvedBadgeSrc(badgeSrc ?? "");
+    setBadgeRetryCount(0);
   }, [badgeSrc]);
 
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) {
+        window.clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, []);
+
   function handleBadgeError() {
-    setBadgeVisible(false);
+    if (!badgeSrc) {
+      setBadgeVisible(false);
+      return;
+    }
+
+    if (badgeRetryCount >= 1) {
+      setBadgeVisible(false);
+      return;
+    }
+
+    if (retryTimerRef.current) {
+      return;
+    }
+
+    retryTimerRef.current = window.setTimeout(() => {
+      const separator = badgeSrc.includes("?") ? "&" : "?";
+      setResolvedBadgeSrc(`${badgeSrc}${separator}retry=${Date.now()}`);
+      setBadgeRetryCount((count) => count + 1);
+      retryTimerRef.current = null;
+    }, 250);
   }
 
   return (
@@ -40,10 +76,10 @@ export default function ReferenceModalHeader({
             <div className="relative h-20 w-28 overflow-hidden bg-transparent">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={badgeSrc}
+                src={resolvedBadgeSrc}
                 alt={badgeAlt}
                 className="h-full w-full object-contain"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
                 onError={handleBadgeError}
               />

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ReferenceModalHeader from "./ReferenceModalHeader";
 
@@ -18,9 +18,14 @@ vi.mock("next/image", () => ({
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
 });
 
 describe("ReferenceModalHeader", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   it("renders title and badge when provided", () => {
     render(
       <ReferenceModalHeader
@@ -79,6 +84,10 @@ describe("ReferenceModalHeader", () => {
     );
 
     fireEvent.error(screen.getByAltText("Badge"));
+    vi.advanceTimersByTime(250);
+    expect(screen.getByAltText("Badge")).toHaveAttribute("src", expect.stringMatching(/\/badge-a\.png\?retry=/));
+
+    fireEvent.error(screen.getByAltText("Badge"));
     expect(screen.queryByAltText("Badge")).toBeNull();
 
     rerender(
@@ -130,5 +139,26 @@ describe("ReferenceModalHeader", () => {
     );
 
     expect(screen.queryByAltText("Badge")).toBeNull();
+  });
+
+  it("retries the same badge source once before hiding it", () => {
+    render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-stable.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    const badge = screen.getByAltText("Badge");
+    fireEvent.error(badge);
+    vi.advanceTimersByTime(250);
+
+    expect(screen.getByAltText("Badge")).toHaveAttribute(
+      "src",
+      expect.stringMatching(/\/badge-stable\.png\?retry=/),
+    );
   });
 });
