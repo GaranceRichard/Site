@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import ScrollTo from "../ScrollTo";
 import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
-import { Container } from "./ui";
+import { Container, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, cx } from "./ui";
 import AuthLoginButton from "../auth/LoginButton";
 import {
   getHeaderSettings,
@@ -21,18 +21,15 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
   const bookingHref = headerSettings.bookingUrl || bookingUrl;
 
   return (
-    <footer id="contact" className="border-t border-neutral-200 dark:border-neutral-800">
+    <footer id="contact" className="border-t subtle-divider">
       <Container>
-        <div className="flex h-[72px] items-center justify-between">
-          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+        <div className="flex min-h-[88px] flex-col justify-between gap-5 py-6 md:flex-row md:items-center">
+          <p className="text-sm [color:var(--text-secondary)]">
             (c) {new Date().getFullYear()} {headerSettings.name} - {headerSettings.title}
           </p>
 
-          <div className="flex flex-wrap items-center justify-end gap-4 text-sm text-neutral-600 dark:text-neutral-300">
-            <ScrollTo
-              targetId="home"
-              className="hover:text-neutral-900 dark:hover:text-neutral-50"
-            >
+          <div className="flex flex-wrap items-center justify-end gap-3 text-sm [color:var(--text-secondary)]">
+            <ScrollTo targetId="home" className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}>
               Haut de page
             </ScrollTo>
 
@@ -46,7 +43,7 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
                   cta_location: "footer",
                 })
               }
-              className="hover:text-neutral-900 dark:hover:text-neutral-50"
+              className={cx(PRIMARY_BUTTON_CLASS, "px-4 py-2")}
             >
               Échanger
             </a>
@@ -59,7 +56,7 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
                   cta_location: "footer",
                 })
               }
-              className="hover:text-neutral-900 dark:hover:text-neutral-50"
+              className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
             >
               Contact
             </Link>

@@ -133,7 +133,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
             name="name"
             value={form.name}
             onChange={onTextChange}
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+            className="field-input text-sm"
           />
         </label>
 
@@ -145,7 +145,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
             name="email"
             value={form.email}
             onChange={onTextChange}
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+            className="field-input text-sm"
           />
         </label>
       </div>
@@ -156,7 +156,7 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
           name="subject"
           value={form.subject}
           onChange={onTextChange}
-          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+          className="field-input text-sm"
         />
       </label>
 
@@ -168,11 +168,11 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
           value={form.message}
           onChange={onTextChange}
           rows={6}
-          className="min-h-[140px] w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+          className="field-input min-h-[140px] text-sm"
         />
       </label>
 
-      <label className="flex items-center gap-3 text-sm">
+      <label className="flex items-center gap-3 text-sm [color:var(--text-secondary)]">
         <input
           type="checkbox"
           checked={form.consent}
@@ -184,13 +184,13 @@ export default function ContactForm({ onSuccess }: { onSuccess?: () => void }) {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded-xl border border-neutral-200 bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
+        className="primary-button interactive-lift px-5 py-3 text-sm font-semibold disabled:opacity-60"
       >
         {status === "sending" ? "Envoi..." : "Envoyer"}
       </button>
 
       {status === "success" && (
-        <p className="text-sm text-neutral-700">Merci, votre message a bien ete envoye.</p>
+        <p className="text-sm [color:var(--text-secondary)]">Merci, votre message a bien ete envoye.</p>
       )}
       {status === "error" && (
         <p className="text-sm text-red-700 whitespace-pre-wrap">Erreur : {errorMsg}</p>

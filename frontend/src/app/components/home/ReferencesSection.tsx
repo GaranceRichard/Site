@@ -1,10 +1,10 @@
-﻿// frontend/src/app/components/home/ReferencesSection.tsx
+// frontend/src/app/components/home/ReferencesSection.tsx
 "use client";
 
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
-import { Container, SectionTitle } from "./ui";
+import { useEffect, useMemo, useState } from "react";
+import { Container, ELEVATED_PANEL_CLASS, MUTED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 import type { ReferenceItem } from "../../content/references";
 import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
 import { toProxiedMediaUrl } from "../../lib/media";
@@ -37,11 +37,8 @@ export default function ReferencesSection() {
   const [items, setItems] = useState<ReferenceItem[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<ReferenceItem | null>(null);
   const [failedImages, setFailedImages] = useState<Record<string, true>>({});
-
-  const desktopWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,185 +70,133 @@ export default function ReferencesSection() {
     };
   }, []);
 
-  function clearActive() {
-    setActiveIndex(null);
-  }
-
   function markImageFailed(id: string) {
     setFailedImages((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
   }
+
+  const featuredItems = useMemo(() => items.slice(0, 4), [items]);
 
   if (!isLoading && items.length === 0) {
     return null;
   }
 
   return (
-    <section id="references" className="py-16 sm:py-20">
+    <section id="references" className="border-b subtle-divider py-16 sm:py-20">
       <Container>
         <SectionTitle
-          eyebrow="Références"
-          title="Ils m’ont fait confiance"
-          description="Survolez pour parcourir, cliquez pour ouvrir la description de mission."
+          eyebrow="Preuves"
+          title="Références, contexte et résultats"
+          description="Des missions présentées comme des éléments de crédibilité: organisation, périmètre, contribution et résultats observables."
         />
 
         {isLoading ? (
-          <p className="mt-6 text-sm text-neutral-500 dark:text-neutral-400">
-            Chargement des références…
-          </p>
+          <p className="mt-6 text-sm [color:var(--text-muted)]">Chargement des références…</p>
         ) : null}
 
-        {items.length > 0 ? (
-          <>
-            {/* Desktop — Accordéon horizontal */}
-            <div className="mt-10 hidden md:block">
-              <div
-                ref={desktopWrapRef}
-                className="flex h-[420px] gap-1"
-                onMouseLeave={clearActive}
-                onBlurCapture={(e) => {
-                  const next = e.relatedTarget as Node | null;
-                  if (desktopWrapRef.current && next && desktopWrapRef.current.contains(next)) return;
-                  clearActive();
-                }}
-              >
-                {items.map((r, i) => {
-                  const isActive = activeIndex === i;
-
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onMouseEnter={() => setActiveIndex(i)}
-                      onFocus={() => setActiveIndex(i)}
-                      onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
-                      aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
-                      aria-expanded={isActive}
-                      className={[
-                        "group relative overflow-hidden rounded-3xl border border-neutral-200 bg-white text-left",
-                        "shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:shadow-lg",
-                        "dark:border-neutral-800 dark:bg-neutral-900",
-                        "transition-[flex,box-shadow,transform,filter] duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-                        "focus:outline-none focus:ring-2 focus:ring-neutral-400/40",
-                      ].join(" ")}
-                      style={{ flex: isActive ? 6 : 1 }}
-                    >
-                      {/* Image plein cadre */}
-                      <div className="absolute inset-0">
-                        {r.imageSrc && !failedImages[r.id] ? (
-                          <Image
-                            src={r.imageSrc}
-                            alt=""
-                            fill
-                            sizes="(min-width: 768px) 33vw, 100vw"
-                            className={[
-                              "object-cover",
-                              "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                              isActive ? "scale-100" : "scale-[0.99]",
-                            ].join(" ")}
-                            priority={false}
-                            onError={() => markImageFailed(r.id)}
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
-                      </div>
-
-                      {/* Contenu : layout stable => textes alignés */}
-                      <div className="relative h-full p-6">
-                        <div className="grid h-full content-end gap-2">
-                          {/* Ligne 1 : nom */}
-                          <p className="text-lg font-semibold text-white">
-                            {isActive ? r.nameExpanded : r.nameCollapsed}
-                          </p>
-
-                          {/* Ligne 2 : situation (1 ligne, hauteur fixe) */}
-                          <div className="h-5 overflow-hidden">
-                            <p
-                              className={[
-                                "text-sm leading-5 text-white/85 line-clamp-1",
-                                "transition-all duration-300",
-                                isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
-                              ].join(" ")}
-                            >
-                              {r.situation}
-                            </p>
-                          </div>
-
-                          {/* Ligne 3 : CTA (hauteur fixe) */}
-                          <div className="h-5 pt-2">
-                            <div
-                              className={[
-                                "text-xs font-semibold text-white/85",
-                                "transition-opacity duration-300",
-                                isActive ? "opacity-100" : "opacity-0",
-                              ].join(" ")}
-                            >
-                              Cliquer pour les détails →
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <p className="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
-                Astuce : survolez pour parcourir, cliquez pour ouvrir le détail.
-              </p>
-            </div>
-
-            {/* Mobile — Carousel snap */}
-            <div className="mt-10 md:hidden">
-              <div className="-mx-5 overflow-x-auto px-5 pb-2">
-                <div className="flex snap-x snap-mandatory gap-3">
-                  {items.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
-                      className={[
-                        "snap-start",
-                        "relative min-w-[84%] overflow-hidden rounded-3xl border border-neutral-200 bg-white text-left",
-                        "shadow-[0_1px_0_rgba(0,0,0,0.04)]",
-                        "dark:border-neutral-800 dark:bg-neutral-900",
-                      ].join(" ")}
-                    >
-                      <div className="relative h-[240px] w-full">
-                        {r.imageSrc && !failedImages[r.id] ? (
-                          <Image
-                            src={r.imageSrc}
-                            alt=""
-                            fill
-                            sizes="90vw"
-                            className="object-cover"
-                            priority={false}
-                            onError={() => markImageFailed(r.id)}
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
-                      </div>
-
-                      <div className="relative p-5">
-                        <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-                          {r.nameExpanded}
-                        </p>
-                        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-                          {r.situation}
-                        </p>
-                        <p className="mt-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
-                          Cliquer pour les détails →
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+        {featuredItems.length > 0 ? (
+          <div className="mt-10 grid gap-4 lg:grid-cols-[1.15fr,0.85fr]">
+            <div className={cx(ELEVATED_PANEL_CLASS, "space-y-6")}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Bloc de preuve</p>
+                  <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em]">
+                    Des interventions cadrées par le contexte et le résultat.
+                  </h3>
+                </div>
+                <div className="ui-pill px-3 py-2 text-xs font-semibold">
+                  {items.length} références actives
                 </div>
               </div>
+              <p className="text-sm leading-7 [color:var(--text-secondary)]">
+                Chaque référence privilégie les éléments utiles à la confiance: organisation, enjeu, rôle assumé et résultat visible. Le détail complet reste accessible au clic.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {featuredItems.map((r, index) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
+                    aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
+                    className={cx(index === 0 ? ELEVATED_PANEL_CLASS : PANEL_CLASS, "h-full text-left")}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="eyebrow">{r.label ?? "Reference"}</p>
+                        <p className="mt-3 text-base font-semibold">{r.nameExpanded}</p>
+                      </div>
+                      {r.badgeSrc ? (
+                        <div className="relative h-10 w-16 shrink-0 overflow-hidden opacity-80">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={r.badgeSrc} alt={r.badgeAlt ?? "Badge"} className="h-full w-full object-contain" />
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <p className="mt-4 text-sm font-medium [color:var(--text-primary)]">
+                      {r.missionTitle || "Mission structurante"}
+                    </p>
+                    <p className="mt-3 line-clamp-3 text-sm leading-7 [color:var(--text-secondary)]">
+                      {r.situation}
+                    </p>
+
+                    {r.results.length > 0 ? (
+                      <div className={cx(MUTED_PANEL_CLASS, "mt-5 p-4")}>
+                        <p className="eyebrow">Resultat</p>
+                        <p className="mt-3 text-sm leading-7 [color:var(--text-secondary)]">
+                          {r.results[0]}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-5 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] [color:var(--text-muted)]">
+                      <span>Ouvrir le dossier</span>
+                      <span>Voir plus</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </>
+
+            <div className="space-y-4">
+              {items.slice(4).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
+                  aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
+                  className={cx(PANEL_CLASS, "flex w-full items-start gap-4 text-left")}
+                >
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                    {r.imageSrc && !failedImages[r.id] ? (
+                      <Image
+                        src={r.imageSrc}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                        priority={false}
+                        onError={() => markImageFailed(r.id)}
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="eyebrow">{r.label ?? "Reference"}</p>
+                    <p className="mt-2 text-sm font-semibold">{r.nameExpanded}</p>
+                    <p className="mt-2 line-clamp-2 text-sm [color:var(--text-secondary)]">
+                      {r.missionTitle || r.situation}
+                    </p>
+                  </div>
+                </button>
+              ))}
+
+              {items.length > 4 ? (
+                <div className={cx(MUTED_PANEL_CLASS, "text-sm [color:var(--text-secondary)]")}>
+                  Les autres références suivent la même logique de lecture. Cliquer ouvre le détail complet avec situation, tâches, actions et résultats.
+                </div>
+              ) : null}
+            </div>
+          </div>
         ) : null}
 
         {apiError ? (

@@ -16,18 +16,20 @@ export default function HomePage() {
   }));
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
-      <TopNav nav={nav} bookingUrl={BOOKING_URL} />
+    <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
+      <div className="app-shell overflow-hidden">
+        <TopNav nav={nav} bookingUrl={BOOKING_URL} />
 
-      {HOME_SECTIONS.map((s) => (
-        <div key={s.id}>
-          {s.render({
-            steps: METHOD_STEPS,
-          })}
-        </div>
-      ))}
+        {HOME_SECTIONS.map((s) => (
+          <div key={s.id}>
+            {s.render({
+              steps: METHOD_STEPS,
+            })}
+          </div>
+        ))}
 
-      <FooterSection bookingUrl={BOOKING_URL} />
+        <FooterSection bookingUrl={BOOKING_URL} />
+      </div>
     </main>
   );
 }

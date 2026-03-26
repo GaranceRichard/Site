@@ -136,6 +136,7 @@ export default function ReferenceModal({
 
       <ReferenceModalShell imageSrc={mountedItem.imageSrc} open={open} ease={ease} dur={dur}>
         <ReferenceModalHeader
+          key={badgeSrc ?? mountedItem.id}
           nameExpanded={mountedItem.nameExpanded}
           badgeSrc={badgeSrc}
           badgeAlt={badgeAlt}

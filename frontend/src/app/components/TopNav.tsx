@@ -15,6 +15,7 @@ import {
   getHeaderSettingsServer,
   subscribeHeaderSettings,
 } from "../content/headerSettings";
+import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, cx } from "./home/ui";
 
 type NavItem = { label: string; href: string };
 
@@ -97,7 +98,7 @@ export default function TopNav({
   }, [hasReferences, nav]);
 
   const NAV_PILL =
-    "inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-neutral-200 bg-white px-2.5 py-1 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
+    "ui-pill inline-flex items-center justify-center whitespace-nowrap px-3 py-2 text-sm font-semibold";
 
   function closeMenu() {
     setOpen(false);
@@ -136,7 +137,7 @@ export default function TopNav({
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-neutral-50/85 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/75">
+    <header className="sticky top-0 z-50 border-b subtle-divider bg-[color:var(--surface)]/95 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="flex h-[72px] items-center justify-between gap-6">
           {/* Branding (logo) : si connecté + backoffice activé -> /backoffice, sinon scroll home */}
@@ -158,7 +159,7 @@ export default function TopNav({
 
             <div className="min-w-0 leading-tight">
               <p className="text-sm font-semibold">{headerSettings.name}</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{headerSettings.title}</p>
+              <p className="text-xs [color:var(--text-muted)]">{headerSettings.title}</p>
             </div>
           </button>
 
@@ -185,7 +186,7 @@ export default function TopNav({
                     cta_location: "topnav_desktop",
                   })
                 }
-                className={NAV_PILL}
+                className={cx(PRIMARY_BUTTON_CLASS, "px-4 py-2")}
               >
                 Échanger
               </a>
@@ -198,7 +199,7 @@ export default function TopNav({
                     cta_location: "topnav_desktop",
                   })
                 }
-                className={NAV_PILL}
+                className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
               >
                 Contact
               </Link>
@@ -246,7 +247,7 @@ export default function TopNav({
                 });
                 closeMenu();
               }}
-              className={NAV_PILL}
+              className={cx(PRIMARY_BUTTON_CLASS, "justify-center")}
             >
               Échanger
             </a>
@@ -260,7 +261,7 @@ export default function TopNav({
                 });
                 closeMenu();
               }}
-              className={NAV_PILL}
+              className={cx(SECONDARY_BUTTON_CLASS, "justify-center")}
             >
               Contact
             </Link>

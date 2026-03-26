@@ -6,7 +6,7 @@ import {
   getPromiseSettingsServer,
   subscribePromiseSettings,
 } from "../../content/promiseSettings";
-import { Container, SectionTitle } from "./ui";
+import { Container, ELEVATED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 
 export default function PromiseSection() {
   const promise = useSyncExternalStore(
@@ -16,7 +16,7 @@ export default function PromiseSection() {
   );
 
   return (
-    <section id="promise" className="py-16 sm:py-20">
+    <section id="promise" className="border-b subtle-divider py-16 sm:py-20">
       <Container>
         <div className="grid gap-10 md:grid-cols-12 md:items-start">
           <div className="md:col-span-5">
@@ -29,13 +29,11 @@ export default function PromiseSection() {
 
           <div className="md:col-span-7">
             <div className="grid gap-4 sm:grid-cols-2">
-              {promise.cards.map((card) => (
-                <div
-                  key={card.id}
-                  className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900"
-                >
-                  <p className="text-sm font-semibold">{card.title}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+              {promise.cards.map((card, index) => (
+                <div key={card.id} className={cx(index === 0 ? ELEVATED_PANEL_CLASS : PANEL_CLASS, "h-full")}>
+                  <p className="eyebrow">Promesse</p>
+                  <p className="mt-3 text-base font-semibold">{card.title}</p>
+                  <p className="mt-3 text-sm leading-relaxed [color:var(--text-secondary)]">
                     {card.content}
                   </p>
                 </div>

@@ -1,4 +1,3 @@
-// frontend/src/app/components/home/HeroSection.tsx
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
@@ -9,7 +8,15 @@ import {
   getHomeHeroSettingsServer,
   subscribeHomeHeroSettings,
 } from "../../content/homeHeroSettings";
-import { Container } from "./ui";
+import {
+  Container,
+  ELEVATED_PANEL_CLASS,
+  InlinePill,
+  MUTED_PANEL_CLASS,
+  PrimaryButton,
+  SecondaryButton,
+  cx,
+} from "./ui";
 
 export default function HeroSection() {
   const settings = useSyncExternalStore(
@@ -69,80 +76,91 @@ export default function HeroSection() {
   }
 
   return (
-    <section id="home" className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-neutral-50 dark:bg-neutral-950" />
-      <div className="absolute inset-x-0 top-0 h-px bg-neutral-200 dark:bg-neutral-800" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-neutral-200 dark:bg-neutral-800" />
+    <section id="home" className="section-band relative overflow-hidden border-b subtle-divider">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(148,163,184,0.16),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--surface-muted)_56%,transparent),transparent_68%)]" />
 
       <Container>
-        <div className="relative grid gap-10 py-16 sm:py-20 md:grid-cols-12 md:items-start">
+        <div className="relative grid gap-12 py-16 sm:py-20 md:grid-cols-12 md:items-start">
           <div className="md:col-span-7">
-            <p className="text-sm font-medium tracking-wide text-neutral-600 dark:text-neutral-300">
-              {settings.eyebrow}
-            </p>
+            <p className="eyebrow">{settings.eyebrow}</p>
 
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">
+            <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.05em] text-balance sm:text-6xl lg:text-[4.5rem]">
               {titleLines[0] ?? ""}
               {titleLines.slice(1).map((line, index) => (
-                <span key={`${line}-${index}`} className="block text-neutral-500 dark:text-neutral-300">
+                <span key={`${line}-${index}`} className="mt-1 block [color:var(--text-secondary)]">
                   {line}
                 </span>
               ))}
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-7 text-neutral-600 dark:text-neutral-300">
-              {settings.subtitle}
-            </p>
+            <p className="section-copy mt-7 max-w-2xl text-base sm:text-lg">{settings.subtitle}</p>
 
             {visibleLinks.length > 0 ? (
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                {visibleLinks.map((link, index) => (
-                  <a
-                    key={link.id}
-                    href={link.id === "message" ? "/contact" : `#${link.id}`}
-                    onClick={() =>
-                      trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
-                        cta_label: link.label,
-                        cta_location: "hero",
-                      })
-                    }
-                    className={
-                      index === 0
-                        ? "rounded-xl border border-neutral-200 bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-800 dark:border-neutral-800"
-                        : "rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
-                    }
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {visibleLinks.map((link, index) =>
+                  index === 0 ? (
+                    <PrimaryButton
+                      key={link.id}
+                      href={link.id === "message" ? "/contact" : `#${link.id}`}
+                      onClick={() =>
+                        trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                          cta_label: link.label,
+                          cta_location: "hero",
+                        })
+                      }
+                    >
+                      {link.label}
+                    </PrimaryButton>
+                  ) : (
+                    <SecondaryButton
+                      key={link.id}
+                      href={link.id === "message" ? "/contact" : `#${link.id}`}
+                      onClick={() =>
+                        trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                          cta_label: link.label,
+                          cta_location: "hero",
+                        })
+                      }
+                    >
+                      {link.label}
+                    </SecondaryButton>
+                  ),
+                )}
               </div>
             ) : null}
 
-            <div className="mt-10 flex flex-wrap justify-center gap-2">
+            <div className="mt-10 flex flex-wrap gap-2">
               {settings.keywords.map((keyword, index) => (
-                <span
-                  key={`${keyword}-${index}`}
-                  className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-medium text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200"
-                >
-                  {keyword}
-                </span>
+                <InlinePill key={`${keyword}-${index}`}>{keyword}</InlinePill>
               ))}
             </div>
           </div>
 
-          <div className="md:col-span-5">
+          <div className="space-y-4 md:col-span-5">
+            <div className={cx(ELEVATED_PANEL_CLASS, "relative overflow-hidden")}>
+              <div className="absolute inset-x-0 top-0 h-px bg-[color:var(--border-strong)]" />
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <p className="eyebrow">Cap de mission</p>
+                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em]">
+                    Intervenir avec autorite calme, cadence et preuves.
+                  </p>
+                </div>
+                <div className="ui-pill px-3 py-2 text-xs font-semibold">Priorites</div>
+              </div>
+              <p className="mt-5 text-sm leading-7 [color:var(--text-secondary)]">
+                Une posture de direction de projet: clarifier, arbitrer, remettre le flux sous controle et rendre les decisions visibles.
+              </p>
+            </div>
+
             {settings.cards.map((card, index) => (
               <div
                 key={card.id}
-                className={
-                  index === 0
-                    ? "rounded-3xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900"
-                    : "mt-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900"
-                }
+                className={cx(index === 0 ? MUTED_PANEL_CLASS : "panel p-5", "relative")}
               >
                 {card.title ? <p className="text-sm font-semibold">{card.title}</p> : null}
                 {card.content ? (
-                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-neutral-600 dark:text-neutral-300">
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 [color:var(--text-secondary)]">
                     {toBullets(card.content).map((bullet, bulletIndex) => (
                       <li key={`${card.id}-bullet-${bulletIndex}`}>{bullet}</li>
                     ))}

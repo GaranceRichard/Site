@@ -161,4 +161,91 @@ describe("ReferenceModalHeader", () => {
       expect.stringMatching(/\/badge-stable\.png\?retry=/),
     );
   });
+
+  it("ignores duplicate image errors while a retry timer is already pending", () => {
+    render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-pending.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    const badge = screen.getByAltText("Badge");
+    fireEvent.error(badge);
+    fireEvent.error(badge);
+    vi.advanceTimersByTime(250);
+
+    expect(screen.getByAltText("Badge")).toHaveAttribute(
+      "src",
+      expect.stringMatching(/\/badge-pending\.png\?retry=/),
+    );
+  });
+
+  it("does not overwrite a newer badge source when a pending retry resolves", () => {
+    const { rerender } = render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-a.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText("Badge"));
+
+    rerender(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-b.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    vi.advanceTimersByTime(250);
+    expect(screen.getByAltText("Badge")).toHaveAttribute("src", "/badge-b.png");
+  });
+
+  it("appends retry with an ampersand when the badge source already has query params", () => {
+    render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-query.png?size=small"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText("Badge"));
+    vi.advanceTimersByTime(250);
+
+    expect(screen.getByAltText("Badge")).toHaveAttribute(
+      "src",
+      expect.stringMatching(/\/badge-query\.png\?size=small&retry=/),
+    );
+  });
+
+  it("clears the pending retry timer on unmount", () => {
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+    const { unmount } = render(
+      <ReferenceModalHeader
+        nameExpanded="Titre"
+        badgeSrc="/badge-cleanup.png"
+        badgeAlt="Badge"
+        onClose={() => {}}
+        closeButtonRef={{ current: null }}
+      />,
+    );
+
+    fireEvent.error(screen.getByAltText("Badge"));
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+  });
 });

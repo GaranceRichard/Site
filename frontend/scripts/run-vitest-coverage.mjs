@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 import path from "node:path";
 
@@ -8,6 +8,8 @@ const vitestArgs = [
   "./scripts/vite-child-process-patch.mjs",
   "./node_modules/vitest/vitest.mjs",
   "run",
+  "--configLoader",
+  "runner",
   "--coverage",
   ...forwardedArgs,
 ];
@@ -101,17 +103,6 @@ function stripCoverageTmpUnhandledRejection(output) {
   return filtered.join("\n").trim();
 }
 
-function runVitest() {
-  rmSync(coverageDir, { recursive: true, force: true });
-
-  return spawnSync(process.execPath, vitestArgs, {
-    cwd: process.cwd(),
-    stdio: "pipe",
-    env: { ...process.env, FORCE_COLOR: process.env.FORCE_COLOR || "1" },
-    encoding: "utf-8",
-  });
-}
-
 function waitBeforeRetry() {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
 }
@@ -122,17 +113,60 @@ function shouldRetrySpawnError(error) {
   }
 
   const message = String(error.message || "");
-  return /spawnSync .* EPERM/i.test(message) || /spawn EPERM/i.test(message);
+  return /spawn .* EPERM/i.test(message) || /spawnSync .* EPERM/i.test(message);
 }
 
-let result = runVitest();
+function runVitest() {
+  rmSync(coverageDir, { recursive: true, force: true });
+
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(process.execPath, vitestArgs, {
+        cwd: process.cwd(),
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, FORCE_COLOR: process.env.FORCE_COLOR || "1" },
+      });
+    } catch (error) {
+      resolve({ error, status: 1, stdout: "", stderr: "" });
+      return;
+    }
+
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+
+    child.stdout?.setEncoding("utf8");
+    child.stderr?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr += chunk;
+    });
+
+    child.on("error", (error) => {
+      if (settled) return;
+      settled = true;
+      resolve({ error, status: 1, stdout, stderr });
+    });
+
+    child.on("close", (status) => {
+      if (settled) return;
+      settled = true;
+      resolve({ error: null, status: status ?? 1, stdout, stderr });
+    });
+  });
+}
+
+let result = await runVitest();
 
 let attempt = 1;
 while (result.error && shouldRetrySpawnError(result.error) && attempt < maxStartupAttempts) {
   console.warn(`Vitest coverage spawn failed on attempt ${attempt}, retrying...`);
   waitBeforeRetry();
   attempt += 1;
-  result = runVitest();
+  result = await runVitest();
 }
 
 if (result.error) {
@@ -149,7 +183,7 @@ while ((result.status ?? 1) !== 0 && hasTransientStartupError(normalizedOutput) 
   console.warn(`Vitest coverage startup failed on attempt ${attempt}, retrying...`);
   waitBeforeRetry();
   attempt += 1;
-  result = runVitest();
+  result = await runVitest();
 
   if (result.error && !shouldRetrySpawnError(result.error)) {
     console.error(result.error.message);

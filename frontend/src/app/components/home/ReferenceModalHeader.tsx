@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 
 type ReferenceModalHeaderProps = {
@@ -16,20 +17,10 @@ export default function ReferenceModalHeader({
   onClose,
   closeButtonRef,
 }: ReferenceModalHeaderProps) {
-  const [badgeVisible, setBadgeVisible] = useState(Boolean(badgeSrc));
-  const [resolvedBadgeSrc, setResolvedBadgeSrc] = useState(badgeSrc ?? "");
-  const [badgeRetryCount, setBadgeRetryCount] = useState(0);
   const retryTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (retryTimerRef.current) {
-      window.clearTimeout(retryTimerRef.current);
-      retryTimerRef.current = null;
-    }
-    setBadgeVisible(Boolean(badgeSrc));
-    setResolvedBadgeSrc(badgeSrc ?? "");
-    setBadgeRetryCount(0);
-  }, [badgeSrc]);
+  const badgeImageRef = useRef<HTMLImageElement | null>(null);
+  const retryPerformedRef = useRef<Record<string, true>>({});
+  const [hiddenSources, setHiddenSources] = useState<Record<string, true>>({});
 
   useEffect(() => {
     return () => {
@@ -39,14 +30,12 @@ export default function ReferenceModalHeader({
     };
   }, []);
 
-  function handleBadgeError() {
-    if (!badgeSrc) {
-      setBadgeVisible(false);
-      return;
-    }
+  const currentSource = badgeSrc ?? "";
+  const badgeVisible = Boolean(currentSource) && !hiddenSources[currentSource];
 
-    if (badgeRetryCount >= 1) {
-      setBadgeVisible(false);
+  function handleBadgeError() {
+    if (retryPerformedRef.current[currentSource]) {
+      setHiddenSources((prev) => (prev[currentSource] ? prev : { ...prev, [currentSource]: true }));
       return;
     }
 
@@ -55,28 +44,30 @@ export default function ReferenceModalHeader({
     }
 
     retryTimerRef.current = window.setTimeout(() => {
-      const separator = badgeSrc.includes("?") ? "&" : "?";
-      setResolvedBadgeSrc(`${badgeSrc}${separator}retry=${Date.now()}`);
-      setBadgeRetryCount((count) => count + 1);
+      retryPerformedRef.current[currentSource] = true;
+      const img = badgeImageRef.current;
+      if (img && img.getAttribute("src") === currentSource) {
+        const separator = currentSource.includes("?") ? "&" : "?";
+        img.setAttribute("src", `${currentSource}${separator}retry=${Date.now()}`);
+      }
       retryTimerRef.current = null;
     }, 250);
   }
 
   return (
-    <div className="relative z-10 flex items-start justify-between gap-6 border-b border-neutral-200/70 bg-transparent p-6 dark:border-neutral-800/70">
+    <div className="relative z-10 flex items-start justify-between gap-6 border-b subtle-divider bg-transparent p-6">
       <div className="min-w-0">
-        <h3 className="truncate text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
-          {nameExpanded}
-        </h3>
+        <h3 className="truncate text-3xl font-semibold tracking-[-0.04em]">{nameExpanded}</h3>
       </div>
 
       <div className="flex shrink-0 items-start gap-3">
-        {badgeSrc && badgeVisible ? (
+        {badgeVisible ? (
           <div className="shrink-0">
             <div className="relative h-20 w-28 overflow-hidden bg-transparent">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={resolvedBadgeSrc}
+                ref={badgeImageRef}
+                src={currentSource}
                 alt={badgeAlt}
                 className="h-full w-full object-contain"
                 loading="eager"
@@ -92,9 +83,7 @@ export default function ReferenceModalHeader({
           ref={closeButtonRef}
           onClick={onClose}
           aria-label="Fermer"
-          className="rounded-full border border-neutral-200/70 bg-white/60 px-3 py-2 text-sm font-semibold text-neutral-900 backdrop-blur-sm hover:bg-white/80
-                     focus:outline-none focus:ring-2 focus:ring-neutral-400/40
-                     dark:border-neutral-800/70 dark:bg-neutral-950/35 dark:text-neutral-50 dark:hover:bg-neutral-950/55"
+          className="secondary-button px-3 py-2 text-sm font-semibold backdrop-blur-sm focus:outline-none"
         >
           X
         </button>

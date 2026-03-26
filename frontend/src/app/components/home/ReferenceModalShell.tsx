@@ -21,8 +21,7 @@ export default function ReferenceModalShell({
   return (
     <div
       className={[
-        "relative mx-auto w-[min(980px,95vw)] overflow-hidden rounded-3xl border border-neutral-200 bg-white/85 shadow-2xl backdrop-blur-md",
-        "dark:border-neutral-800 dark:bg-neutral-900/80",
+        "panel-elevated relative mx-auto w-[min(980px,95vw)] overflow-hidden backdrop-blur-md",
         "transition-[transform,opacity] will-change-transform",
         ease,
         dur,
@@ -42,9 +41,9 @@ export default function ReferenceModalShell({
             priority={false}
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 opacity-[0.35]" />
+          <div className="h-full w-full bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 opacity-[0.35]" />
         )}
-        <div className="absolute inset-0 bg-white/18 dark:bg-black/18" />
+        <div className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--surface-elevated)_80%,transparent)]/80" />
       </div>
 
       {children}

@@ -64,7 +64,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
 
   const base = className
     ? className
-    : "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-900 shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-50 dark:hover:bg-neutral-800";
+    : "ui-pill inline-flex items-center justify-center px-3 py-2 text-sm font-semibold";
 
   return (
     <button

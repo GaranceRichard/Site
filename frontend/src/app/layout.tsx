@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import AnalyticsInit from "./components/AnalyticsInit";
 import FlashToast from "./components/FlashToast";
 import SentryInit from "./components/SentryInit";
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -45,7 +53,7 @@ export default function RootLayout({
   modal: React.ReactNode;
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning className={ibmPlexSans.variable}>
       <body suppressHydrationWarning>
         <SentryInit />
         <AnalyticsInit />

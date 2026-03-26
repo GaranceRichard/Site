@@ -1,7 +1,197 @@
 @config "../../tailwind.config.mjs";
 @import "tailwindcss";
 
+:root {
+  --background: #f5f1ea;
+  --surface: #f9f6f1;
+  --surface-muted: #efe9df;
+  --surface-elevated: #fffdf9;
+  --border: #d8d0c3;
+  --border-strong: #b7ac9b;
+  --text-primary: #14171f;
+  --text-secondary: #425066;
+  --text-muted: #6b7280;
+  --accent: #111111;
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06), 0 1px 1px rgba(17, 24, 39, 0.04);
+  --shadow-md: 0 18px 40px rgba(17, 24, 39, 0.08), 0 2px 8px rgba(17, 24, 39, 0.05);
+  --radius-sm: 0.875rem;
+  --radius-md: 1.25rem;
+  --radius-lg: 1.75rem;
+}
+
+.dark {
+  --background: #111827;
+  --surface: #172033;
+  --surface-muted: #1d2738;
+  --surface-elevated: #202b3f;
+  --border: #2b3649;
+  --border-strong: #48546c;
+  --text-primary: #f3f4f6;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent: #e5e7eb;
+  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.32), 0 1px 1px rgba(2, 6, 23, 0.22);
+  --shadow-md: 0 20px 44px rgba(2, 6, 23, 0.34), 0 4px 12px rgba(2, 6, 23, 0.24);
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(148, 163, 184, 0.14), transparent 32%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 78%, var(--background)) 0%, var(--background) 100%);
+  color: var(--text-primary);
+  font-family: var(--font-body), "IBM Plex Sans", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.app-shell {
+  min-height: calc(100vh - 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--background) 88%, transparent)),
+    var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-band {
+  position: relative;
+}
+
+.section-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--surface-muted) 34%, transparent));
+  opacity: 0.65;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-muted {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-muted) 88%, var(--surface));
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-elevated {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), color-mix(in srgb, var(--surface) 92%, transparent)),
+    var(--surface-elevated);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-elevated) 88%, var(--surface));
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.eyebrow {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  color: var(--text-primary);
+  font-size: clamp(2rem, 3vw, 3.35rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.section-copy {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.primary-button {
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: color-mix(in srgb, var(--surface-elevated) 94%, white);
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .primary-button {
+  border-color: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: #111827;
+}
+
+.secondary-button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, var(--surface));
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.interactive-lift:hover {
+  transform: translateY(-1px);
+}
+
+.field-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, var(--surface));
+  color: var(--text-primary);
+  padding: 0.85rem 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.subtle-divider {
+  border-color: var(--border);
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    min-height: calc(100vh - 1rem);
+  }
 }

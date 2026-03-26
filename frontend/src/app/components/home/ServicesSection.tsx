@@ -7,7 +7,14 @@ import {
   type PublicationReferenceLink,
   subscribePublicationsSettings,
 } from "../../content/publicationsSettings";
-import { Container, SectionTitle } from "./ui";
+import {
+  Container,
+  ELEVATED_PANEL_CLASS,
+  MUTED_PANEL_CLASS,
+  PANEL_CLASS,
+  SectionTitle,
+  cx,
+} from "./ui";
 
 type PublicationModalItem = {
   title: string;
@@ -55,7 +62,7 @@ export default function ServicesSection() {
 
   return (
     <>
-      <section id="services" className="py-16 sm:py-20">
+      <section id="services" className="border-b subtle-divider py-16 sm:py-20">
         <Container>
           <div className="grid gap-10 md:grid-cols-12">
             <div className="md:col-span-5">
@@ -65,9 +72,10 @@ export default function ServicesSection() {
                 description={settings.subtitle}
               />
 
-              <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:border-neutral-800 dark:bg-neutral-900">
-                <p className="text-sm font-semibold">{settings.highlight.title}</p>
-                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-neutral-600 dark:text-neutral-300">
+              <div className={cx(ELEVATED_PANEL_CLASS, "mt-6")}>
+                <p className="eyebrow">Repere</p>
+                <p className="mt-3 text-base font-semibold">{settings.highlight.title}</p>
+                <ul className="mt-4 list-disc space-y-2 pl-5 text-sm [color:var(--text-secondary)]">
                   {toBullets(settings.highlight.content).map((point, index) => (
                     <li key={`highlight-${index}`}>{point}</li>
                   ))}
@@ -88,12 +96,15 @@ export default function ServicesSection() {
                         links: item.links ?? [],
                       })
                     }
-                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-6 text-left shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+                    className={cx(PANEL_CLASS, "flex w-full items-center justify-between gap-4 text-left hover:border-[color:var(--border-strong)]")}
                     aria-haspopup="dialog"
                     aria-expanded={activeService?.title === item.title}
                   >
-                    <span className="text-sm font-semibold">{item.title}</span>
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
+                    <div>
+                      <p className="eyebrow">Publication</p>
+                      <span className="mt-3 block text-sm font-semibold">{item.title}</span>
+                    </div>
+                    <span className="ui-pill inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm">
                       +
                     </span>
                   </button>
@@ -106,14 +117,14 @@ export default function ServicesSection() {
 
       {activeService ? (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-neutral-950/55 p-4"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="service-modal-title"
           onClick={() => setActiveService(null)}
         >
           <div
-            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900 sm:p-8"
+            className={cx(ELEVATED_PANEL_CLASS, "flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden sm:p-8")}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -123,19 +134,19 @@ export default function ServicesSection() {
               <button
                 type="button"
                 onClick={() => setActiveService(null)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 text-lg text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                className="ui-pill inline-flex h-10 w-10 shrink-0 items-center justify-center text-lg"
                 aria-label="Fermer la modale"
               >
                 x
               </button>
             </div>
 
-            <p className="mt-6 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+            <p className="mt-6 overflow-y-auto whitespace-pre-line text-sm leading-relaxed [color:var(--text-secondary)]">
               {activeService.content}
             </p>
             {activeService.links.length > 0 ? (
-              <div className="mt-6 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">
+              <div className={cx(MUTED_PANEL_CLASS, "mt-6 pt-4")}>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] [color:var(--text-muted)]">
                   References
                 </p>
                 <div className="mt-3 flex flex-col gap-2">
@@ -145,7 +156,7 @@ export default function ServicesSection() {
                       href={link.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm font-semibold text-neutral-900 underline decoration-neutral-300 underline-offset-4 transition-colors hover:text-neutral-600 dark:text-neutral-50 dark:decoration-neutral-700 dark:hover:text-neutral-300"
+                      className="text-sm font-semibold underline underline-offset-4 [color:var(--text-primary)] decoration-[color:var(--border-strong)] hover:[color:var(--text-secondary)]"
                     >
                       {link.title}
                     </a>
