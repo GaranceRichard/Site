@@ -4,7 +4,7 @@ Ce document formalise la discipline d'execution attendue sur ce repo.
 
 ## Sequence obligatoire avant finalisation
 
-1. Relire `BLOCKERS.md`.
+1. Relire les contraintes de projet en vigueur.
 2. Appliquer les decisions durables qui concernent la tache en cours.
 3. Executer la task VS Code `Tests`.
 4. Si un seul check est rouge, continuer le travail jusqu'au vert complet.
@@ -19,6 +19,4 @@ Ce document formalise la discipline d'execution attendue sur ce repo.
 
 ## Artefacts de reference
 
-- Gate principal: `GATE.md`
-- Journal des blocages: `BLOCKERS.md`
 - Definition of Done: `docs/Definition-of-Done.md`
