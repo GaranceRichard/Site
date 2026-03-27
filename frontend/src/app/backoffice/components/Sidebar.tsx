@@ -21,7 +21,7 @@ const SECTIONS: Array<{ id: BackofficeSection; label: string }> = [
   { id: "method", label: "Approche" },
   { id: "publications", label: "Publications" },
   { id: "references", label: "References" },
-  { id: "about", label: "A propos" },
+  { id: "about", label: "À propos" },
   { id: "stats", label: "Statistiques" },
 ];
 
@@ -85,7 +85,12 @@ export default function Sidebar({
             type="button"
             data-section={item.id}
             onClick={handleSectionClick}
-            className={getSectionButtonClass(section === item.id)}
+            className={[
+              getSectionButtonClass(section === item.id),
+              item.id === "header" ? "mt-4" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             {item.label}
           </button>
@@ -113,7 +118,7 @@ export default function Sidebar({
           aria-label="Rafraîchir"
           className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
         >
-          Rafraichir
+          Rafraîchir
         </button>
         <button
           type="button"
@@ -121,7 +126,7 @@ export default function Sidebar({
           aria-label="Se déconnecter"
           className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-left text-sm font-semibold hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
         >
-          Se deconnecter
+          Se déconnecter
         </button>
       </div>
     </aside>

@@ -25,7 +25,7 @@ test("header settings are editable and reflected on front", async ({ page }) => 
   await expect(page.getByText(/Header mis a jour/i)).toBeVisible();
 
   await page.goto("/");
-  const brandButton = page.getByRole("button", { name: /Aller au backoffice|Aller Ã  lâ€™accueil/i });
+  const brandButton = page.getByRole("button", { name: /Aller au backoffice|Aller à l’accueil/i });
   await expect(brandButton.getByText(name)).toBeVisible();
   await expect(brandButton.getByText(title)).toBeVisible();
   await expect(page.locator("header").getByRole("link", { name: /changer/i })).toHaveAttribute(

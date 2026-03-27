@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    ContentExchangeDictionaryAdminView,
     ContentExchangeExportAdminView,
     ContentExchangeImportAdminView,
     ContentExchangeTemplateAdminView,
@@ -29,6 +30,11 @@ urlpatterns = [
         "exchange/admin/template",
         ContentExchangeTemplateAdminView.as_view(),
         name="content-exchange-template-admin",
+    ),
+    path(
+        "exchange/admin/dictionary",
+        ContentExchangeDictionaryAdminView.as_view(),
+        name="content-exchange-dictionary-admin",
     ),
     path(
         "exchange/admin/export",

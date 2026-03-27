@@ -46,9 +46,11 @@ from .serializers import (
 )
 from .throttles import ContactAnonRateThrottle
 from .text_exchange import (
+    DICTIONARY_FILENAME,
     EXPORT_FILENAME,
     TEMPLATE_FILENAME,
     TextExchangeError,
+    build_exchange_dictionary,
     build_exchange_template,
     export_exchange_text,
     import_exchange_text,
@@ -265,6 +267,28 @@ class ContentExchangeExportAdminView(APIView):
             content_type="application/toml; charset=utf-8",
         )
         response["Content-Disposition"] = f'attachment; filename="{EXPORT_FILENAME}"'
+        return response
+
+
+class ContentExchangeDictionaryAdminView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    @extend_schema(
+        responses={
+            200: OpenApiResponse(
+                response=OpenApiTypes.STR,
+                description="Dictionnaire des parties du format d'echange texte.",
+            )
+        }
+    )
+    def get(self, request):
+        response = HttpResponse(
+            build_exchange_dictionary(),
+            content_type="text/plain; charset=utf-8",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{DICTIONARY_FILENAME}"'
+        )
         return response
 
 

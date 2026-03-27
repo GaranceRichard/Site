@@ -66,7 +66,7 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
 
     await waitFor(() => expect(clickMock).toHaveBeenCalled());
     expect(fetchMock).toHaveBeenCalledWith(
@@ -95,10 +95,42 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger le canevas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger le canevas" }));
 
     await waitFor(() =>
-      expect(screen.getByText("Canevas telecharge.")).toBeInTheDocument(),
+      expect(screen.getByText("Canevas téléchargé.")).toBeInTheDocument(),
+    );
+  });
+
+  it("can download the dictionary file", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("format_version = 1\n", { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(new Blob(["dictionary"], { type: "text/plain" }), {
+          status: 200,
+          headers: { "Content-Disposition": 'attachment; filename="dictionary.txt"' },
+        }),
+      );
+
+    render(<ContentExchangeManager apiBase="http://example.test" onRequestLogin={vi.fn()} />);
+
+    await waitFor(() =>
+      expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toContain(
+        "format_version = 1",
+      ),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger le dictionnaire" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Dictionnaire téléchargé.")).toBeInTheDocument(),
+    );
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "http://example.test/api/contact/exchange/admin/dictionary",
+      expect.objectContaining({
+        headers: { Authorization: "Bearer token-123" },
+      }),
     );
   });
 
@@ -115,7 +147,7 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
     await waitFor(() => expect(clickMock).toHaveBeenCalled());
   });
 
@@ -143,7 +175,7 @@ describe("ContentExchangeManager", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() =>
-      expect(screen.getByText("Import termine: 2 reference(s) rechargee(s).")).toBeInTheDocument(),
+      expect(screen.getByText("Import terminé : 2 référence(s) rechargée(s).")).toBeInTheDocument(),
     );
     expect(replaceSiteSettingsMock).toHaveBeenCalledWith({ header: { name: "X" } });
     expect(invalidateReferencesCacheMock).toHaveBeenCalled();
@@ -184,7 +216,7 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
     expect(await screen.findAllByText("Erreur inattendue.")).not.toHaveLength(0);
   });
 
@@ -200,7 +232,7 @@ describe("ContentExchangeManager", () => {
   it("handles missing apiBase during download and import actions", async () => {
     render(<ContentExchangeManager apiBase={undefined} onRequestLogin={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["format_version = 1"], "import.toml", { type: "text/plain" });
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -229,7 +261,7 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
     expect(await screen.findByText("boom export")).toBeInTheDocument();
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -311,7 +343,7 @@ describe("ContentExchangeManager", () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
     await waitFor(() => expect(onRequestLogin).toHaveBeenCalledTimes(1));
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -329,7 +361,7 @@ describe("ContentExchangeManager", () => {
 
     await waitFor(() => expect(onRequestLogin).toHaveBeenCalled());
     expect(
-      screen.getByText("Connexion requise pour acceder au chargeur / extracteur."),
+      screen.getByText("Connexion requise pour accéder au chargeur / extracteur."),
     ).toBeInTheDocument();
   });
 
@@ -346,8 +378,8 @@ describe("ContentExchangeManager", () => {
     );
 
     sessionStorage.removeItem("access_token");
-    fireEvent.click(screen.getByRole("button", { name: "Telecharger l'extraction" }));
-    expect(await screen.findByText("Connexion requise pour acceder au chargeur / extracteur.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger l'extraction" }));
+    expect(await screen.findByText("Connexion requise pour accéder au chargeur / extracteur.")).toBeInTheDocument();
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File(["format_version = 1"], "import.toml", { type: "text/plain" });

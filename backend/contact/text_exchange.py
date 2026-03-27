@@ -20,6 +20,7 @@ from .serializers import SiteSettingsSerializer
 
 EXPORT_FILENAME = "backoffice-exchange-export.toml"
 TEMPLATE_FILENAME = "backoffice-exchange-template.toml"
+DICTIONARY_FILENAME = "backoffice-exchange-dictionary.txt"
 
 
 class TextExchangeError(serializers.ValidationError):
@@ -177,6 +178,90 @@ situation = "Contexte ou situation"
 tasks = ["Tache 1", "Tache 2"]
 actions = ["Action 1", "Action 2"]
 results = ["Resultat 1", "Resultat 2"]
+"""
+
+
+def build_exchange_dictionary() -> str:
+    return """Dictionnaire du chargeur / extracteur
+===================================
+
+Ce document liste les parties du format d'échange texte et leurs champs.
+Il sert d'aide-mémoire quand les noms des sections sont mal entendus.
+
+Racine
+------
+- `format_version` : version du format. Valeur attendue : `1`
+
+Sections de réglages
+--------------------
+- `[header]`
+  - `name`
+  - `title`
+  - `booking_url`
+
+- `[home_hero]`
+  - `eyebrow`
+  - `title`
+  - `subtitle`
+  - `keywords`
+
+- `[[home_hero.links]]`
+  - `target` : `services`, `method`, `references`, `promise`, `about`, `message`
+  - `label`
+  - `enabled`
+
+- `[[home_hero.cards]]`
+  - `title`
+  - `content`
+
+- `[about]`
+  - `title`
+  - `subtitle`
+  - `highlight_intro`
+  - `highlight_items`
+
+- `[promise]`
+  - `title`
+  - `subtitle`
+
+- `[[promise.cards]]`
+  - `title`
+  - `content`
+
+- `[method]`
+  - `eyebrow`
+  - `title`
+  - `subtitle`
+
+- `[[method.steps]]`
+  - `step`
+  - `title`
+  - `text`
+
+- `[publications]`
+  - `title`
+  - `subtitle`
+  - `highlight_title`
+  - `highlight_content`
+
+- `[[publications.items]]`
+  - `title`
+  - `content`
+
+- `[[publications.items.links]]`
+  - `title`
+  - `url`
+
+References
+----------
+- `[[references]]`
+  - `reference`
+  - `reference_short`
+  - `icon`
+  - `situation`
+  - `tasks`
+  - `actions`
+  - `results`
 """
 
 

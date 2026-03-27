@@ -25,21 +25,66 @@ jobs:
       ci: ${{ steps.filter.outputs.ci }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Paths filter
-        id: filter
-        uses: dorny/paths-filter@v3
+        uses: actions/checkout@v5
         with:
-          filters: |
-            backend:
-              - 'backend/**'
-              - 'docker-compose*.yml'
-            frontend:
-              - 'frontend/**'
-              - 'docker-compose*.yml'
-            ci:
-              - '.github/workflows/**'
+          fetch-depth: 0
+
+      - name: Detect paths
+        id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "schedule" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            echo "ci=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            base_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
+          fi
+
+          if [[ -z "${base_sha}" || "${base_sha}" == "0000000000000000000000000000000000000000" ]]; then
+            changed_files="$(git ls-files)"
+          else
+            changed_files="$(git diff --name-only "${base_sha}" "${head_sha}")"
+          fi
+
+          backend=false
+          frontend=false
+          ci=false
+
+          while IFS= read -r file; do
+            [[ -z "${file}" ]] && continue
+
+            case "${file}" in
+              backend/*|docker-compose*.yml)
+                backend=true
+                ;;
+            esac
+
+            case "${file}" in
+              frontend/*|docker-compose*.yml)
+                frontend=true
+                ;;
+            esac
+
+            case "${file}" in
+              .github/workflows/*|.github/actions/*)
+                ci=true
+                ;;
+            esac
+          done <<< "${changed_files}"
+
+          echo "backend=${backend}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${frontend}" >> "$GITHUB_OUTPUT"
+          echo "ci=${ci}" >> "$GITHUB_OUTPUT"
 
   backend_unit:
     name: Backend (Django unit)
@@ -57,7 +102,7 @@ jobs:
       DJANGO_ENABLE_JWT: "true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup backend toolchain
         uses: ./.github/actions/setup-backend
@@ -80,7 +125,7 @@ jobs:
         working-directory: backend
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup backend toolchain
         uses: ./.github/actions/setup-backend
@@ -111,7 +156,7 @@ jobs:
       NEXT_PUBLIC_BACKOFFICE_ENABLED: "true"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup frontend toolchain
         uses: ./.github/actions/setup-frontend
@@ -147,7 +192,7 @@ jobs:
       E2E_BASE_URL: http://localhost:3000
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup backend toolchain
         uses: ./.github/actions/setup-backend
@@ -199,7 +244,7 @@ jobs:
       E2E_BASE_URL: http://localhost:3000
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup backend toolchain
         uses: ./.github/actions/setup-backend
@@ -277,7 +322,7 @@ jobs:
       REDIS_URL: redis://127.0.0.1:6379/0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup backend toolchain
         uses: ./.github/actions/setup-backend
@@ -294,7 +339,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build backend image
         run: docker build -t monsite-backend ./backend

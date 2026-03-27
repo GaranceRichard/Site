@@ -17,6 +17,15 @@ npm run test:e2e:full
 npm run build
 ```
 
+## Prevention Windows `spawn EPERM`
+
+- Ne pas lancer `next` ou `playwright` nus sur ce repo Windows.
+- `npm run dev` passe par [run-next.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-next.mjs), qui relance `next` en cas d'echec transitoire de spawn au demarrage.
+- `npm run build` passe aussi par [run-next.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-next.mjs) apres `npm run typecheck`, pour eviter un lancement `next build` nu.
+- `npm run test:e2e`, `npm run test:e2e:smoke`, `npm run test:e2e:full` et `npm run test:e2e:coverage` passent par [run-playwright.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-playwright.mjs), qui retente Playwright sur `spawn EPERM` et force `--workers=1` par defaut sous Windows si aucun worker n'est demande.
+- Le webServer frontend des E2E passe par [start-e2e-frontend.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/start-e2e-frontend.mjs), pour eviter la chaine `npx cross-env ... npm run dev` pendant le boot Playwright.
+- Si un `spawn EPERM` remonte encore malgre ces wrappers, le statut doit etre traite comme blocage d'environnement Windows et non comme echec fonctionnel du scenario teste.
+
 ## Coverage frontend
 
 - `npm run test:coverage` : coverage CLI stable pour le terminal et les tasks VS Code.
@@ -70,6 +79,7 @@ npm run build
 - Le backoffice inclut maintenant un flux `Chargeur / extracteur` dedie, avec telechargement du canevas TOML, export de contenu et import valide avec feedback utilisateur.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 - Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
+- Les commandes `next` et `playwright` du frontend sont maintenant encapsulees dans des wrappers de prevention (`run-next.mjs`, `run-playwright.mjs`, `start-e2e-frontend.mjs`) pour reduire les `spawn EPERM` Windows avant rerun manuel.
 
 ## Audit de performance local
 
@@ -89,6 +99,7 @@ Ce que fait `perf:local` :
 - 3 runs Lighthouse sur `/` et `/contact`
 - assertions de budget (LCP, FCP, TBT, CLS, score perf)
 - rapports HTML/JSON generes dans `frontend/.lighthouseci/`
+- le wrapper `frontend/scripts/run-lhci.cjs` filtre le warning Node `DEP0060` d'une dependance transitive outillage (`@lhci/cli` -> `lighthouse` -> Sentry/offline -> `localforage`), sans lien avec le code applicatif du site
 
 Config : `frontend/lighthouserc.json`.
 

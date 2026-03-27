@@ -41,7 +41,7 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
 
   if (section === "about") {
     return {
-      title: "A propos",
+      title: "À propos",
       subtitle: "Edition du titre, du sous-titre, de l'encart et des encadres compacts.",
     };
   }
@@ -70,7 +70,7 @@ function getSectionCopy(section: string): { title: string; subtitle: string } {
   if (section === "method") {
     return {
       title: "Approche",
-      subtitle: "Edition du surtitre, des textes et des etapes de la section approche.",
+      subtitle: "Edition des textes et des etapes de la section approche.",
     };
   }
 

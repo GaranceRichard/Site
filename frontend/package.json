@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "npm run typecheck && next build",
+    "dev": "node ./scripts/run-next.mjs dev --webpack",
+    "build": "npm run typecheck && node ./scripts/run-next.mjs build",
     "start": "next start",
     "perf": "node ./scripts/run-lhci.cjs ./lighthouserc.json",
     "perf:local": "npm run build && npm run perf",
@@ -15,10 +15,10 @@
     "test:coverage": "node scripts/run-vitest-coverage.mjs --config vitest.config.mjs",
     "test:coverage:vitals": "node scripts/run-vitest-coverage.mjs --config vitest.config.vitals.mjs",
     "test:coverage:html": "node --import ./scripts/vite-child-process-patch.mjs ./node_modules/vitest/vitest.mjs run --configLoader runner --config vitest.config.mjs --coverage --coverage.reporter=html",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test --grep @smoke",
-    "test:e2e:full": "playwright test",
-    "test:e2e:coverage": "node scripts/clean-e2e-coverage.mjs && cross-env E2E_COVERAGE=true playwright test --workers=1 --grep @coverage",
+    "test:e2e": "node ./scripts/run-playwright.mjs test",
+    "test:e2e:smoke": "node ./scripts/run-playwright.mjs test --grep @smoke",
+    "test:e2e:full": "node ./scripts/run-playwright.mjs test",
+    "test:e2e:coverage": "node scripts/clean-e2e-coverage.mjs && cross-env E2E_COVERAGE=true node ./scripts/run-playwright.mjs test --workers=1 --grep @coverage",
     "test:e2e:coverage:report": "npm run test:e2e:coverage && node scripts/e2e-coverage-report.mjs"
   },
   "dependencies": {

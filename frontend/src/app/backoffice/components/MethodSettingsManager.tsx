@@ -51,8 +51,8 @@ export default function MethodSettingsManager() {
     setError(null);
 
     const normalized = normalizeMethodSettingsForSubmit(form);
-    if (!normalized.eyebrow || !normalized.title || !normalized.subtitle) {
-      setError("Le surtitre, le titre et le sous-titre sont obligatoires.");
+    if (!normalized.title || !normalized.subtitle) {
+      setError("Le titre et le sous-titre sont obligatoires.");
       return;
     }
 
@@ -84,7 +84,7 @@ export default function MethodSettingsManager() {
       <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
         <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Approche</h3>
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Editez le surtitre, les textes et les etapes de la section approche.
+          Editez les textes et les etapes de la section approche.
         </p>
 
         <form onSubmit={onSubmit} className="mt-5 grid gap-6">
@@ -127,19 +127,6 @@ export default function MethodSettingsManager() {
 
             {activeTab === "titles" ? (
               <div className="grid gap-4">
-                <label className="block">
-                  <span className="text-sm font-semibold">Surtitre</span>
-                  <input
-                    type="text"
-                    value={form.eyebrow}
-                    onChange={(e) => {
-                      const value = e.currentTarget.value;
-                      setForm((prev) => ({ ...prev, eyebrow: value }));
-                    }}
-                    className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 dark:border-neutral-800 dark:bg-neutral-950"
-                  />
-                </label>
-
                 <label className="block">
                   <span className="text-sm font-semibold">Titre</span>
                   <input

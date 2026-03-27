@@ -1,5 +1,35 @@
 # Deploiement (production / staging)
 
+Ce guide decrit la procedure de deploiement reelle du repo.
+
+En version courte:
+- la CI verifie le code;
+- le CD construit et pousse les images Docker sur GHCR;
+- le staging n'est deploie automatiquement que si `ENABLE_STAGING_DEPLOY=true`.
+
+## Vue d'ensemble
+
+### Ce qui est automatique
+1. `push` sur `main` :
+   - build et push des images backend/frontend sur GHCR;
+   - deploiement staging seulement si `ENABLE_STAGING_DEPLOY=true`.
+2. `workflow_dispatch` sur le workflow CD :
+   - build et push des images;
+   - deploiement staging seulement si `ENABLE_STAGING_DEPLOY=true`.
+
+### Ce qui n'est pas automatique
+- La production n'est pas deployee par un job dedie dans ce repo.
+- Le staging ne part pas tant que la variable de repo `ENABLE_STAGING_DEPLOY` n'est pas a `true`.
+- Le serveur n'est pas initialise par GitHub Actions: `.env.prod`, certificats, Docker et les acces SSH doivent exister avant.
+
+### Fichiers utilises par le CD
+- `.github/workflows/deploy.yml`
+- `docker-compose.prod.yml`
+- `docker-compose.monitoring.yml`
+- `nginx/prod.conf`
+- `monitoring/prometheus/prometheus.yml`
+- `monitoring/grafana/provisioning/datasources/prometheus.yml`
+
 ## Prerequis
 - Docker + Docker Compose sur le serveur.
 - Un fichier `.env.prod` sur le serveur (ne pas versionner).
@@ -7,6 +37,15 @@
 - Un certificat TLS et sa cle privee accessibles par Docker.
 
 Exemple: voir `docs/env.prod.example`.
+
+## Checklist avant premier deploiement
+- Le serveur cible repond en SSH.
+- Docker et Docker Compose sont installes.
+- Le dossier cible existe, par exemple `/home/ubuntu/mon-site`.
+- Le fichier `.env.prod` est present sur le serveur.
+- Les certificats TLS pointes par `.env.prod` existent reellement.
+- Les secrets GitHub Actions sont renseignes.
+- La variable GitHub `ENABLE_STAGING_DEPLOY` vaut `true` si vous attendez un deploiement staging automatique.
 
 ## Installation serveur pas a pas
 1) Copier les fichiers de deploiement sur le serveur dans un dossier dedie, par exemple `/home/ubuntu/mon-site`.
@@ -47,6 +86,29 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 docker compose -f docker-compose.prod.yml --env-file .env.prod ps
 docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f nginx backend frontend
 ```
+
+## Procedure accessible: deployer le staging
+
+### Option A - activer le deploiement automatique
+1. Preparer le serveur une fois avec la section "Installation serveur pas a pas".
+2. Ajouter les secrets GitHub Actions listes plus bas.
+3. Ajouter la variable GitHub `ENABLE_STAGING_DEPLOY=true`.
+4. Fusionner ou pousser sur `main`.
+5. Attendre la fin du workflow `CD`.
+6. Verifier:
+   - `https://<staging>/api/health`
+   - `https://<staging>/`
+
+### Option B - relancer le CD manuellement
+1. Ouvrir GitHub Actions.
+2. Choisir le workflow `CD`.
+3. Cliquer sur `Run workflow`.
+4. Verifier que `build_push` passe.
+5. Si `ENABLE_STAGING_DEPLOY=true`, verifier ensuite `deploy_staging`.
+
+### Comment savoir si le staging va vraiment partir
+- Si `ENABLE_STAGING_DEPLOY=false` ou absent: seules les images GHCR seront publiees.
+- Si `ENABLE_STAGING_DEPLOY=true`: le workflow poussera aussi la stack sur le serveur staging.
 
 ## Deploiement local (prod-like)
 ```bash
@@ -142,6 +204,24 @@ Configurer dans Settings -> Secrets -> Actions:
 Le serveur doit contenir `docker-compose.prod.yml`, `docker-compose.monitoring.yml`,
 `nginx/prod.conf` et `.env.prod`.
 
+### Ce que le job de deploiement fait reellement sur le serveur
+1. Upload de:
+   - `docker-compose.prod.yml`
+   - `docker-compose.monitoring.yml`
+   - `nginx/prod.conf`
+   - `monitoring/prometheus/prometheus.yml`
+   - `monitoring/grafana/provisioning/datasources/prometheus.yml`
+2. `docker login ghcr.io`
+3. export de `BACKEND_IMAGE` et `FRONTEND_IMAGE` avec le tag `${github.sha}`
+4. `docker compose ... pull`
+5. `docker compose ... up -d`
+6. smoke tests HTTP sur `STAGING_BASE_URL`
+
+### Point important
+- Le workflow ne cree pas `.env.prod`.
+- Le workflow ne cree pas les certificats TLS.
+- Le workflow suppose que `STAGING_PATH` existe deja et pointe vers le dossier de deploiement.
+
 ## CDN / stockage medias (S3 + CloudFront)
 Pour activer le stockage S3:
 1) Renseigner les variables AWS dans `.env.prod` (voir `docs/env.prod.example`).
@@ -162,6 +242,39 @@ export FRONTEND_IMAGE=ghcr.io/<owner>/<repo>-frontend:<sha-precedent>
 docker compose -f docker-compose.prod.yml --env-file .env.prod pull
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
+
+## Depannage rapide
+
+### Le workflow CD passe, mais rien n'est deploye
+- Verifier la variable GitHub `ENABLE_STAGING_DEPLOY`.
+- Si elle n'est pas a `true`, c'est normal: seules les images sont poussees.
+
+### `deploy_staging` echoue avant le SSH
+- Verifier les secrets:
+  - `STAGING_HOST`
+  - `STAGING_USER`
+  - `STAGING_SSH_KEY`
+  - `STAGING_PATH`
+  - `STAGING_BASE_URL`
+  - `REGISTRY_USER`
+  - `REGISTRY_TOKEN`
+
+### `deploy_staging` echoue sur le serveur
+- Verifier que `.env.prod` existe dans `STAGING_PATH`.
+- Verifier que les certificats TLS existent aux chemins declares.
+- Verifier `docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod config` sur le serveur.
+- Consulter les logs:
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env-file .env.prod logs -f
+```
+
+### Les smoke tests finaux echouent
+- Tester manuellement:
+```bash
+curl -fsS https://<staging>/api/health
+curl -fsS https://<staging>/
+```
+- Verifier `nginx`, `backend` et `frontend` dans les logs compose.
 
 ## Monitoring post-deploiement
 Recommande:

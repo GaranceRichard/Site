@@ -1,3 +1,4 @@
+import { networkInterfaces } from "node:os";
 import type { NextConfig } from "next";
 
 const rawCdnUrl = process.env.NEXT_PUBLIC_CDN_URL?.trim() ?? "";
@@ -16,6 +17,32 @@ const normalizeOrigin = (value: string): string | null => {
     return null;
   }
 };
+
+const currentDevPort = process.env.PORT?.trim() || "3000";
+
+const localNetworkDevOrigins = (() => {
+  if (process.env.NODE_ENV === "production") return [];
+
+  const interfaces = networkInterfaces();
+  const origins = new Set<string>();
+
+  for (const addresses of Object.values(interfaces)) {
+    for (const address of addresses ?? []) {
+      if (address.internal || address.family !== "IPv4") continue;
+
+      const value = address.address.trim();
+      const isPrivateIPv4 =
+        value.startsWith("10.") ||
+        value.startsWith("192.168.") ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(value);
+
+      if (!isPrivateIPv4) continue;
+      origins.add(`http://${value}:${currentDevPort}`);
+    }
+  }
+
+  return Array.from(origins);
+})();
 
 const cdnHostname = (() => {
   if (!cdnUrl) return null;
@@ -96,6 +123,7 @@ const allowedDevOrigins = Array.from(
       "http://127.0.0.1:3000",
       "http://localhost:3000",
       normalizeOrigin(rawSiteUrl),
+      ...localNetworkDevOrigins,
       ...rawAllowedDevOrigins
         .split(",")
         .map((value) => normalizeOrigin(value.trim())),

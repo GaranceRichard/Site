@@ -16,6 +16,7 @@ from contact.image_upload import MAX_UPLOAD_BYTES
 from contact.ga4 import GA4FetchError
 from contact.text_exchange import (
     TextExchangeError,
+    build_exchange_dictionary,
     export_exchange_text,
     import_exchange_text,
     parse_exchange_text,
@@ -39,6 +40,7 @@ class TextExchangeApiTests(APITestCase):
     def setUp(self):
         cache.clear()
         self.template_url = "/api/contact/exchange/admin/template"
+        self.dictionary_url = "/api/contact/exchange/admin/dictionary"
         self.export_url = "/api/contact/exchange/admin/export"
         self.import_url = "/api/contact/exchange/admin/import"
 
@@ -154,6 +156,28 @@ results = ["Resultat B"]
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("format_version = 1", response.content.decode("utf-8"))
         self.assertIn("[[references]]", response.content.decode("utf-8"))
+
+    def test_dictionary_download_returns_section_guide(self):
+        response = self.client.get(
+            self.dictionary_url,
+            **self._auth_headers(),
+        )
+
+        text = response.content.decode("utf-8")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("Dictionnaire du chargeur / extracteur", text)
+        self.assertIn("format d'échange texte", text)
+        self.assertIn("aide-mémoire", text)
+        self.assertIn("`[[references]]`", text)
+        self.assertIn("`[[method.steps]]`", text)
+
+    def test_dictionary_builder_mentions_main_sections(self):
+        text = build_exchange_dictionary()
+
+        self.assertIn("`[header]`", text)
+        self.assertIn("`[home_hero]`", text)
+        self.assertIn("`[method]`", text)
+        self.assertIn("`[[references]]`", text)
 
     def test_export_returns_current_content(self):
         settings = SiteSettings.get_solo()

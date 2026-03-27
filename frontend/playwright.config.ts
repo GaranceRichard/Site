@@ -38,8 +38,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command:
-        `npx cross-env NEXT_DIST_DIR=.e2e-virtual/.next NEXT_DEV_ALLOWED_ORIGINS=${e2eUrls.baseURL},http://localhost:${e2eUrls.frontendPort} npm run dev -- --port ${e2eUrls.frontendPort}`,
+      command: "node ./scripts/start-e2e-frontend.mjs",
       cwd: __dirname,
       url: e2eUrls.baseURL,
       reuseExistingServer: false,

@@ -188,7 +188,7 @@ if (browserPath && !process.env.CHROME_PATH) {
 
 const result = spawnSync(
   process.execPath,
-  [lhciCli, "autorun", `--config=${configPath}`],
+  ["--no-deprecation", lhciCli, "autorun", `--config=${configPath}`],
   {
     stdio: "pipe",
     env: process.env,

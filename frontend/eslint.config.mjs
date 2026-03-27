@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     // Avoid linting the flat-config file itself; some upstream rule stacks
     // can break on config modules during major ESLint transitions.
     "eslint.config.mjs",
+    // Next config modules are executable config, not React source files.
+    "next.config.ts",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",

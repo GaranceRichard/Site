@@ -40,23 +40,28 @@ garancerichard-site/
 - frontend/tests/helpers.ts (helpers E2E partages)
 - frontend/scripts/e2e-coverage-report.mjs (agregation coverage E2E)
 
-## CI (GitHub Actions)
-- PR et main : tests unitaires backend + frontend + lint + build front
-- Nightly (02:00 UTC) : E2E Playwright
-- Push sur `main` : smoke E2E rapide + build des images Docker dans la CI
-- Workflow CD separe : push des images GHCR puis deploiement staging optionnel
+## CI / CD (GitHub Actions)
 
+### Ce qui se passe selon le contexte
+- Pull request vers `main` : CI selective par chemins. Les jobs backend, frontend et CI ne tournent que si leurs fichiers ont change.
+- Push sur `main` : la CI rejoue les checks applicatifs, lance le smoke E2E, puis construit les images Docker.
+- Nightly a `02:00 UTC` et declenchement manuel : la suite E2E complete tourne en plus.
+- CD separe : le workflow `.github/workflows/deploy.yml` pousse toujours les images sur GHCR, mais ne deploie vers staging que si `ENABLE_STAGING_DEPLOY=true`.
 
-## Quality & CI
-- Le workflow `.github/workflows/deploy.yml` pousse les images vers GHCR; le deploiement staging ne s'execute que si la variable GitHub `ENABLE_STAGING_DEPLOY=true`.
-- Pull requests: lint + tests + coverage gates avant merge.
-- Front quality gate: npm run test:coverage avec seuil 80% (lines/statements/branches/functions) dans Vitest, avec enforcement `perFile`.
-- Back quality gate: coverage report --fail-under=80.
-- Sur `main`: tests/build, smoke E2E, puis build Docker backend + frontend dans la CI.
-- Nightly (02:00 UTC): suite E2E Playwright complete.
-- Push sur `main`: E2E smoke rapide (contact + login invalide backoffice).
-- En cas d'echec E2E: logs serveurs + traces/screenshots Playwright en artifacts.
-- CI optimisee par chemins: jobs front/back declenches selon les fichiers modifies.
+### Checks couverts par la CI
+- Backend unit : `coverage run manage.py test` puis seuil global `>= 80%`.
+- Backend lint : `ruff` + `black --check`.
+- Backend integration : Django sur Postgres + Redis reels.
+- Frontend : `npm run lint`, `npm run test:coverage`, `npm run typecheck`, `npm run build`.
+- E2E smoke sur push : `contact.spec.ts` + login backoffice invalide.
+- E2E full sur nightly / manuel : `npm run test:e2e`.
+- Docker build sur `main` : build image backend et frontend.
+
+### A retenir
+- Un merge dans `main` ne deploie pas automatiquement en staging par defaut.
+- Le deploiement staging est garde par une variable GitHub de repo.
+- Si le staging est desactive, le CD continue quand meme a publier les images GHCR.
+- En cas d'echec E2E, la CI publie les logs serveur et les artefacts Playwright.
 
 ## Prérequis
 - Node.js (LTS recommandé)
@@ -460,6 +465,37 @@ Ne pas committer :
 - Base de données de production (PostgreSQL recommandé)
 - Redis en production (recommandé pour le throttling)
 - HTTPS en frontal
+
+## Deploiement accessible
+
+### Ce que le repo fait automatiquement
+1. Un push sur `main` lance `.github/workflows/deploy.yml`.
+2. Le job `build_push` construit puis pousse deux images GHCR :
+   - backend : `ghcr.io/<owner>/<repo>-backend:<sha>`
+   - frontend : `ghcr.io/<owner>/<repo>-frontend:<sha>`
+3. Si `ENABLE_STAGING_DEPLOY=true`, le job `deploy_staging` envoie les fichiers de compose/config sur le serveur, relance la stack et execute deux smoke tests:
+   - `GET <STAGING_BASE_URL>/api/health`
+   - `GET <STAGING_BASE_URL>/`
+
+### Ce qu'il faut preparer avant le premier deploiement
+- Un serveur avec Docker et Docker Compose.
+- Un dossier de deploiement contenant `.env.prod`.
+- Les secrets GitHub Actions requis:
+  - `STAGING_HOST`
+  - `STAGING_USER`
+  - `STAGING_SSH_KEY`
+  - `STAGING_PATH`
+  - `STAGING_BASE_URL`
+  - `REGISTRY_USER`
+  - `REGISTRY_TOKEN`
+  - `STAGING_SSH_PORT` en option
+- La variable GitHub `ENABLE_STAGING_DEPLOY=true` si l'on veut activer le staging automatique.
+- Un certificat TLS accessible par Nginx.
+
+### Ou lire la suite
+- Pas-a-pas complet : `docs/deployment.md`
+- Source de verite CI : `.github/workflows/ci.yml`
+- Source de verite CD : `.github/workflows/deploy.yml`
 
 ## Standards d'ingenierie (DoD)
 - Discipline d'execution : `docs/engineering-lifecycle-gate.md`

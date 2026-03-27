@@ -72,9 +72,6 @@ describe("MethodSettingsManager", () => {
   it("saves method settings when form is valid", async () => {
     render(<MethodSettingsManager />);
 
-    fireEvent.change(screen.getByLabelText("Surtitre"), {
-      target: { value: "Approche revisee" },
-    });
     fireEvent.change(screen.getByLabelText("Titre"), {
       target: { value: "Nouvelle approche" },
     });
@@ -100,12 +97,12 @@ describe("MethodSettingsManager", () => {
   it("shows an error when mandatory fields are empty", () => {
     render(<MethodSettingsManager />);
 
-    fireEvent.change(screen.getByLabelText("Surtitre"), {
+    fireEvent.change(screen.getByLabelText("Titre"), {
       target: { value: "   " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
 
-    expect(screen.getByText("Le surtitre, le titre et le sous-titre sont obligatoires.")).toBeInTheDocument();
+    expect(screen.getByText("Le titre et le sous-titre sont obligatoires.")).toBeInTheDocument();
   });
 
   it("shows an auth error when token lookup fails", async () => {
@@ -206,6 +203,7 @@ describe("MethodSettingsManager", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Titres" }));
     expect(screen.getByLabelText("Sous-titre")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Surtitre")).not.toBeInTheDocument();
   });
 
   it("can edit, reorder and remove steps", () => {
@@ -235,6 +233,19 @@ describe("MethodSettingsManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Monter" }));
 
     expect(screen.getByDisplayValue("Prioriser")).toBeInTheDocument();
+  });
+
+  it("hides the step editor when all steps are removed", () => {
+    render(<MethodSettingsManager />);
+    fireEvent.click(screen.getByRole("button", { name: "Etapes" }));
+
+    for (let index = 0; index < DEFAULT_METHOD_SETTINGS.steps.length; index += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Supprimer" }));
+    }
+
+    expect(screen.queryByLabelText("Numero")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Titre etape")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Texte")).not.toBeInTheDocument();
   });
 
   it("normalizes empty step numbers before saving", async () => {

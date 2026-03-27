@@ -120,6 +120,7 @@ E2E:
 CI (GitHub Actions):
 - Ajouter les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS` dans le repo GitHub.
 - Settings -> Secrets and variables -> Actions -> New repository secret.
+- Pour le deploiement staging, voir aussi `docs/deployment.md` et la variable de repo `ENABLE_STAGING_DEPLOY=true`.
 
 ## Documentation utile
 

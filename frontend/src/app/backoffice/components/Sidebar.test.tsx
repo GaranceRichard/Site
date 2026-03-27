@@ -31,7 +31,7 @@ describe("Sidebar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Messages contact" }));
     fireEvent.click(screen.getByRole("button", { name: "Chargeur / extracteur" }));
     fireEvent.click(screen.getByRole("button", { name: "Accueil" }));
-    fireEvent.click(screen.getByRole("button", { name: "A propos" }));
+    fireEvent.click(screen.getByRole("button", { name: "À propos" }));
     fireEvent.click(screen.getByRole("button", { name: "Positionnement" }));
     fireEvent.click(screen.getByRole("button", { name: "Approche" }));
     fireEvent.click(screen.getByRole("button", { name: "Publications" }));
@@ -156,7 +156,7 @@ describe("Sidebar", () => {
     );
   });
 
-  it("affiche le style actif pour A propos", () => {
+  it("affiche le style actif pour À propos", () => {
     render(
       <Sidebar
         section="about"
@@ -167,7 +167,7 @@ describe("Sidebar", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "A propos" }).className).toContain(
+    expect(screen.getByRole("button", { name: "À propos" }).className).toContain(
       "bg-neutral-900 text-white",
     );
   });
@@ -218,5 +218,19 @@ describe("Sidebar", () => {
     expect(screen.getByRole("button", { name: "Statistiques" }).className).toContain(
       "bg-neutral-900 text-white",
     );
+  });
+
+  it("ajoute un espace avant Header", () => {
+    render(
+      <Sidebar
+        section="messages"
+        onSelectSection={vi.fn()}
+        onGoHome={vi.fn()}
+        onRefresh={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Header" }).className).toContain("mt-4");
   });
 });

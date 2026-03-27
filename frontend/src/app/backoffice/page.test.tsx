@@ -356,7 +356,7 @@ describe("BackofficePage", () => {
   it("renders about section when stored", () => {
     setBackofficeSection("about");
     render(<BackofficePage />);
-    expect(screen.getByRole("heading", { name: "A propos" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "À propos" })).toBeInTheDocument();
     expect(screen.getByTestId("about-settings-manager")).toBeInTheDocument();
     expect(screen.queryAllByTestId("messages-table")).toHaveLength(0);
     expect(screen.queryAllByTestId("references-manager")).toHaveLength(0);
