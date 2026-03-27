@@ -23,6 +23,17 @@ type DemoSnapshotPayload = {
 
 const rawSnapshot = snapshot as DemoSnapshotPayload;
 
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 const demoSiteSettings = normalizeSiteSettings(rawSnapshot.settings);
 const demoReferences = Array.isArray(rawSnapshot.references)
   ? rawSnapshot.references
@@ -35,9 +46,9 @@ const demoReferences = Array.isArray(rawSnapshot.references)
         image_thumb: String(item.image_thumb ?? "").trim(),
         icon: String(item.icon ?? "").trim(),
         situation: String(item.situation ?? "").trim(),
-        tasks: Array.isArray(item.tasks) ? item.tasks.map((value) => String(value).trim()).filter(Boolean) : [],
-        actions: Array.isArray(item.actions) ? item.actions.map((value) => String(value).trim()).filter(Boolean) : [],
-        results: Array.isArray(item.results) ? item.results.map((value) => String(value).trim()).filter(Boolean) : [],
+        tasks: normalizeStringList(item.tasks),
+        actions: normalizeStringList(item.actions),
+        results: normalizeStringList(item.results),
       }))
       .filter((item) => item.reference)
       .sort((left, right) => left.order_index - right.order_index)

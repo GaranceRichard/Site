@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.core.management.base import CommandError
 from django.core.management import call_command
 from django.test.utils import override_settings
 from rest_framework.test import APITestCase
@@ -264,6 +265,59 @@ class MediaCleanupUnitTests(APITestCase):
                 self.assertIn('"reference_media_broken_references": 1', payload)
                 self.assertIn('"probable_test_messages": 1', payload)
                 self.assertIn('"messages_without_consent": 1', payload)
+
+    def test_export_demo_snapshot_command_writes_current_content(self):
+        with workspace_tempdir() as tempdir:
+            output_path = Path(tempdir) / "demo-snapshot.json"
+            settings = SiteSettings.get_solo()
+            settings.header = {
+                "name": "Garance Richard",
+                "title": "Delivery & Transformation",
+                "bookingUrl": "https://example.com/book",
+            }
+            settings.save()
+            Reference.objects.create(
+                reference="Reference exportee",
+                reference_short="Ref",
+                order_index=1,
+                image="references/export.webp",
+                image_thumb="references/thumbs/export.webp",
+                icon="",
+                situation="Situation",
+                tasks=["Task"],
+                actions=["Action"],
+                results=["Result"],
+            )
+
+            out = StringIO()
+            call_command("export_demo_snapshot", "--output", str(output_path), stdout=out)
+
+            payload = output_path.read_text(encoding="utf-8")
+            self.assertIn("Demo snapshot exported", out.getvalue())
+            self.assertIn('"settings"', payload)
+            self.assertIn('"references"', payload)
+            self.assertIn('"Reference exportee"', payload)
+
+    def test_export_demo_snapshot_command_raises_command_error_on_write_failure(self):
+        with workspace_tempdir() as tempdir:
+            output_path = Path(tempdir) / "demo-snapshot.json"
+
+            with patch("pathlib.Path.write_text", side_effect=OSError("disk full")):
+                with self.assertRaises(CommandError) as ctx:
+                    call_command("export_demo_snapshot", "--output", str(output_path))
+
+            self.assertIn("Unable to write snapshot", str(ctx.exception))
+
+    def test_export_demo_snapshot_command_resolves_relative_output_from_cwd(self):
+        with workspace_tempdir() as tempdir:
+            relative_output = Path("exports") / "demo-snapshot.json"
+
+            with patch("pathlib.Path.cwd", return_value=Path(tempdir)):
+                call_command("export_demo_snapshot", "--output", str(relative_output))
+
+            output_path = Path(tempdir) / relative_output
+            self.assertTrue(output_path.exists())
+            self.assertIn('"settings"', output_path.read_text(encoding="utf-8"))
 
     @override_settings(MEDIA_URL="/media/")
     def test_reference_delete_cleans_orphaned_media(self):
