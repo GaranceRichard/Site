@@ -290,7 +290,9 @@ class MediaCleanupUnitTests(APITestCase):
             )
 
             out = StringIO()
-            call_command("export_demo_snapshot", "--output", str(output_path), stdout=out)
+            call_command(
+                "export_demo_snapshot", "--output", str(output_path), stdout=out
+            )
 
             payload = output_path.read_text(encoding="utf-8")
             self.assertIn("Demo snapshot exported", out.getvalue())
