@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "eslint.config.mjs",
     // Next config modules are executable config, not React source files.
     "next.config.ts",
+    // Tooling config modules are not React components and can trip React rules
+    // during upstream ESLint/plugin version transitions.
+    "playwright.config.ts",
+    "vitest.config.mjs",
+    "vitest.config.vitals.mjs",
+    "postcss.config.mjs",
+    "tailwind.config.mjs",
+    "lighthouserc*.json",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
