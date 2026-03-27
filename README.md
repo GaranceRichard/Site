@@ -8,6 +8,7 @@ https://garancerichard.github.io/Site/
 
 Cette démo présente le frontoffice public du produit.
 Le backend, le backoffice et les fonctions d’administration ne sont pas exposés dans cette version.
+Pour le premier déploiement, GitHub Pages doit être activé une fois dans les réglages du dépôt avec la source `GitHub Actions`.
 
 Site vitrine avec page de contact.
 - Frontend : Next.js (App Router)
