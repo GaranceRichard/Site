@@ -12,26 +12,24 @@ export const metadata: Metadata = {
     template: "%s | Garance Richard",
   },
   description:
-    "Accompagnement Lean-Agile pragmatique pour clarifier les priorités, stabiliser le flux et renforcer l'autonomie des équipes.",
+    "Accompagnement Lean-Agile pragmatique pour clarifier les priorites, stabiliser le flux et renforcer l'autonomie des equipes.",
   keywords: [
     "coach lean agile",
     "transformation agile",
-    "accompagnement équipes",
+    "accompagnement equipes",
     "optimisation flux",
     "garance richard",
   ],
   openGraph: {
     title: "Garance Richard | Coach Lean-Agile",
-    description:
-      "Des équipes plus sereines, des livraisons plus fiables. Accompagnement orienté résultats.",
+    description: "Des equipes plus sereines, des livraisons plus fiables. Accompagnement oriente resultats.",
     type: "website",
     locale: "fr_CA",
   },
   twitter: {
     card: "summary_large_image",
     title: "Garance Richard | Coach Lean-Agile",
-    description:
-      "Accompagnement Lean-Agile pragmatique pour clarifier la priorité et stabiliser le flux.",
+    description: "Accompagnement Lean-Agile pragmatique pour clarifier la priorite et stabiliser le flux.",
   },
   icons: {
     icon: withBasePath("/brand/logo.png"),
@@ -69,8 +67,6 @@ export default function RootLayout({
         />
         {children}
         {modal}
-
-        {/* Notification légère globale */}
         <FlashToast />
       </body>
     </html>

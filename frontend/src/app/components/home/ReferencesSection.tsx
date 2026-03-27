@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Container, ELEVATED_PANEL_CLASS, MUTED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 import type { ReferenceItem } from "../../content/references";
 import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
-import { isDemoMode, withBasePath } from "../../lib/demo";
+import { isDemoMode, toDemoAssetUrl } from "../../lib/demo";
 import { toProxiedMediaUrl } from "../../lib/media";
 
 const ReferenceModal = dynamic(() => import("./ReferenceModal"), { ssr: false });
@@ -25,8 +25,8 @@ function toReferenceItem(item: ApiReference): ReferenceItem {
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
-    imageSrc: demoMode ? withBasePath(imageSrc) : toProxiedMediaUrl(imageSrc),
-    badgeSrc: (demoMode ? withBasePath(item.icon) : toProxiedMediaUrl(item.icon)) || undefined,
+    imageSrc: demoMode ? toDemoAssetUrl(imageSrc) : toProxiedMediaUrl(imageSrc),
+    badgeSrc: (demoMode ? toDemoAssetUrl(item.icon) : toProxiedMediaUrl(item.icon)) || undefined,
     badgeAlt: item.icon ? "Icône" : undefined,
     situation: item.situation || "",
     tasks: item.tasks ?? [],

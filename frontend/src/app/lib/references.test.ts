@@ -137,10 +137,10 @@ describe("references lib cache", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const { fetchReferencesOnce } = await import("./references");
+    const { getDemoReferences } = await import("../content/demoSnapshot");
     const data = await fetchReferencesOnce();
 
-    expect(data.length).toBeGreaterThan(0);
-    expect(data[0]?.reference).toBe("Les Castas");
+    expect(data).toEqual(getDemoReferences());
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

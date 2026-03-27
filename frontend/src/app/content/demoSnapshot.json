@@ -1,0 +1,339 @@
+{
+  "settings": {
+    "header": {
+      "name": "Garance Richard",
+      "title": "Delivery & Transformation",
+      "bookingUrl": "https://calendar.app.google/hYgX38RpfWiu65Vh8"
+    },
+    "homeHero": {
+      "eyebrow": "Delivery & Transformation",
+      "title": "Faire de la complexité un levier d’action.",
+      "subtitle": "J’interviens dans des contextes complexes pour aider les organisations à ne plus subir cette complexité, mais à en faire un levier de transformation, en sécurisant leur produit et leur trajectoire.",
+      "links": [
+        {
+          "id": "services",
+          "label": "Publications",
+          "enabled": true
+        },
+        {
+          "id": "references",
+          "label": "Exemples d'impact",
+          "enabled": false
+        },
+        {
+          "id": "promise",
+          "label": "Promesse",
+          "enabled": false
+        },
+        {
+          "id": "about",
+          "label": "A propos",
+          "enabled": false
+        },
+        {
+          "id": "method",
+          "label": "Méthode",
+          "enabled": false
+        },
+        {
+          "id": "message",
+          "label": "Message",
+          "enabled": true
+        }
+      ],
+      "keywords": [
+        "Delivery",
+        "Gouvernance",
+        "Prévisibilité",
+        "Sécurisation",
+        "Transformation"
+      ],
+      "cards": [
+        {
+          "id": "card-1",
+          "title": "Mode d’intervention",
+          "content": "Diagnostic ciblé. Quelques leviers structurants. Des routines utiles, sans bureaucratie. Stabilisation, puis transfert."
+        },
+        {
+          "id": "card-2",
+          "title": "Ce qui est remis sous contrôle",
+          "content": "Priorités explicites. Flux mieux maîtrisé. Cadence soutenable. Arbitrages assumés."
+        },
+        {
+          "id": "card-1774326152587",
+          "title": "Effets visibles",
+          "content": "Moins de friction interne. Moins de surprises tardives. Plus de prévisibilité. Responsabilités clarifiées."
+        }
+      ]
+    },
+    "about": {
+      "title": "Une responsabilité de delivery, un cadre exigeant",
+      "subtitle": "Intervenir là où la livraison est exposée : programmes complexes, organisations contraintes, enjeux de fiabilité.\nUn cadre sobre pour sécuriser l’exécution sans créer de friction inutile.",
+      "highlight": {
+        "intro": "Expérience de contextes publics et privés, sur des programmes à forte contrainte.\nIntervention orientée résultat : clarifier les priorités, stabiliser le flux, rendre les décisions explicites et transférer la capacité à livrer.",
+        "items": [
+          {
+            "id": "about-item-1",
+            "text": "Pragmatisme"
+          },
+          {
+            "id": "about-item-2",
+            "text": "Exigence"
+          },
+          {
+            "id": "about-item-3",
+            "text": "Respect du contexte"
+          },
+          {
+            "id": "about-item-4",
+            "text": "Responsabilité"
+          }
+        ]
+      }
+    },
+    "promise": {
+      "title": "Sécuriser la capacité à livrer",
+      "subtitle": "Une approche structurée et sobre, centrée sur le flux, pour stabiliser l’exécution, clarifier les arbitrages et rendre la livraison prévisible",
+      "cards": [
+        {
+          "id": "promise-card-1",
+          "title": "Diagnostic ciblé",
+          "content": "Observer le flux, clarifier les irritants, choisir peu d actions a fort impact."
+        },
+        {
+          "id": "promise-card-2",
+          "title": "Cadre de pilotage",
+          "content": "Mettre en place des repères simples : métriques utiles, rituels légers, arbitrages explicites."
+        },
+        {
+          "id": "promise-card-3",
+          "title": "Stabilisation de l’exécution",
+          "content": "Limiter le WIP, réduire les reprises, sécuriser le terminé et fiabiliser le flux."
+        },
+        {
+          "id": "promise-card-4",
+          "title": "Transfert et autonomie",
+          "content": "Ancrer les pratiques, formaliser les standards, permettre une amélioration continue sans dépendance durable."
+        }
+      ]
+    },
+    "method": {
+      "eyebrow": "Approche",
+      "title": "Un chemin clair, etape par etape",
+      "subtitle": "Diagnostiquer, décider, mettre en œuvre, stabiliser, avec rigueur et sobriété.",
+      "steps": [
+        {
+          "id": "method-step-1",
+          "step": "01",
+          "title": "Observer",
+          "text": "Cartographier le flux, clarifier les irritants et comprendre les contraintes réelles."
+        },
+        {
+          "id": "method-step-2",
+          "step": "02",
+          "title": "Choisir",
+          "text": "Définir deux ou trois leviers maximum : priorisation, travail en cours, qualité, gouvernance."
+        },
+        {
+          "id": "method-step-3",
+          "step": "03",
+          "title": "Mettre en œuvre",
+          "text": "Installer des routines utiles, ajuster le pilotage et renforcer l’autonomie des équipes."
+        },
+        {
+          "id": "method-step-4",
+          "step": "04",
+          "title": "Ancrer",
+          "text": "Stabiliser dans la durée : standards légers, suivi, transfert et montée en compétence."
+        }
+      ]
+    },
+    "publications": {
+      "title": "Points de vue",
+      "subtitle": "Pilotage, arbitrages et capacité à livrer — des analyses ancrées dans le réel, sans surcouche.",
+      "highlight": {
+        "title": "Pilotage par la preuve, arbitrages assumés",
+        "content": "Passer d’un pilotage déclaratif à un pilotage fondé sur la donnée : rendre le flux lisible, objectiver les décisions et sécuriser la trajectoire."
+      },
+      "items": [
+        {
+          "id": "publication-1",
+          "title": "Arbitrer avec la donnée : du pilotage déclaratif à la simulation Monte Carlo",
+          "content": "Dans de nombreuses organisations, le pilotage repose encore sur des engagements déclaratifs, des plannings figés et des indicateurs peu reliés au flux réel. Les arbitrages deviennent alors tardifs, subjectifs et souvent contestés.\n\nUn pilotage fiable repose sur une base simple : observer le flux tel qu’il est, et non tel qu’il est prévu.\n\nÀ partir des données de production (cycle time, throughput, variabilité), il devient possible de :\n\nmesurer la capacité réelle à livrer\nobjectiver les délais plutôt que les estimer\nidentifier les points de saturation du système\nrendre visibles les compromis\n\nLa simulation Monte Carlo permet d’aller plus loin. En s’appuyant sur l’historique du flux, elle projette plusieurs scénarios probabilistes :\n\nP50 : scénario médian\nP70 / P85 : scénarios de sécurisation\nP90 : scénario prudent\n\nCes projections ne donnent pas une date unique, mais une fourchette fiable, permettant d’arbitrer en connaissance de cause.\n\nOn ne demande plus :\n\n“Quand sera-ce terminé ?”\n\nMais :\n\n“Quel niveau de risque sommes-nous prêts à accepter ?”\n\nCe basculement change profondément le pilotage :\n\nles décisions deviennent explicites\nles arbitrages sont assumés\nla trajectoire est lisible\nla pression inutile diminue\n\nLe rôle du pilotage n’est plus de promettre, mais de rendre la décision possible.\n\nLa donnée ne remplace pas le jugement.\nElle le rend responsable.",
+          "links": [
+            {
+              "id": "publication-1-link-1",
+              "title": "Démo",
+              "url": "https://garancerichard.github.io/monte-carlo-azure/"
+            }
+          ]
+        }
+      ]
+    },
+    "updated_at": "2026-03-26T20:58:43.514143Z"
+  },
+  "references": [
+    {
+      "id": 202,
+      "reference": "Ministère de l'Emploi et de la Solidarité Sociale",
+      "reference_short": "MESS",
+      "order_index": 1,
+      "image": "/media/references/0dfe0de2953c4f1a8879a4dcdcaf12df.webp",
+      "image_thumb": "/media/references/thumbs/3d72d33caafc4201bfc0fc74cd975a39.webp",
+      "icon": "/media/references/82ac88eb191e46e58bcec703a7ff37aa.webp",
+      "situation": "Organisation publique contrainte, avec besoin de lisibilité, de fiabilité et de progression soutenable.",
+      "tasks": [
+        "Clarifier le cadre",
+        "Rendre le pilotage plus utile",
+        "Soutenir l’autonomie des équipes"
+      ],
+      "actions": [
+        "Travail sur les pratiques de pilotage",
+        "Structuration de repères simples",
+        "Accompagnement du transfert de responsabilité"
+      ],
+      "results": [
+        "Cadre plus lisible",
+        "Décision plus fluide",
+        "Progression plus soutenable"
+      ],
+      "created_at": "2026-03-21T20:52:18.073932Z",
+      "updated_at": "2026-03-26T13:37:10.909847Z"
+    },
+    {
+      "id": 192,
+      "reference": "Banque Nationale du Canada",
+      "reference_short": "BNC",
+      "order_index": 2,
+      "image": "/media/references/00272fa717b14514ae111db515cdccae.webp",
+      "image_thumb": "/media/references/thumbs/e70c2da37709457db08d048b1f4397ea.webp",
+      "icon": "/media/references/80db4a4cba6543beb109748882fbcc20.webp",
+      "situation": "Contexte exigeant de transformation et de sécurisation de la capacité à livrer.",
+      "tasks": [
+        "Réduire les délais",
+        "Améliorer la capacité collective",
+        "Sécuriser l’exécution"
+      ],
+      "actions": [
+        "Travail sur le système de delivery",
+        "Clarification des priorités",
+        "Accompagnement des arbitrages"
+      ],
+      "results": [
+        "Réduction significative des délais",
+        "Capacité renforcée",
+        "Delivery plus prévisible"
+      ],
+      "created_at": "2026-03-19T03:36:21.479494Z",
+      "updated_at": "2026-03-26T13:40:30.049070Z"
+    },
+    {
+      "id": 191,
+      "reference": "Beneva",
+      "reference_short": "",
+      "order_index": 3,
+      "image": "/media/references/431f99e03f154cf49fbad9b9d541a7ed.webp",
+      "image_thumb": "/media/references/thumbs/70e1f7ca2e8d4f439e4223633474fd47.webp",
+      "icon": "/media/references/b139b11d6449427791f825ed9cbe3fee.webp",
+      "situation": "Programme complexe avec enjeux de coordination et de prévisibilité.",
+      "tasks": [
+        "Stabiliser la cadence",
+        "Améliorer la coordination",
+        "Rendre les arbitrages explicites"
+      ],
+      "actions": [
+        "Accompagnement des équipes et des responsables",
+        "Travail sur le flux et les dépendances",
+        "Mise en place de repères de pilotage"
+      ],
+      "results": [
+        "Flux plus maîtrisé",
+        "Cadence plus soutenable",
+        "Prévisibilité renforcée"
+      ],
+      "created_at": "2026-03-19T03:34:34.451156Z",
+      "updated_at": "2026-03-26T13:37:59.192331Z"
+    },
+    {
+      "id": 179,
+      "reference": "FASST",
+      "reference_short": "",
+      "order_index": 4,
+      "image": "/media/references/666844359ef4448fbe231f26c6901de7.webp",
+      "image_thumb": "/media/references/thumbs/bcd02b78368e467b800d34a38dda2936.webp",
+      "icon": "/media/references/7f59ec7932cb4ce2ae3ba736c5697537.webp",
+      "situation": "Environnement produit nécessitant un cadre de delivery soutenable et une exécution fiable",
+      "tasks": [
+        "Sécuriser la livraison",
+        "Renforcer la qualité",
+        "Structurer les arbitrages"
+      ],
+      "actions": [
+        "Travail sur les priorités et le flux",
+        "Clarification des pratiques utiles",
+        "Appui à la stabilisation de l’exécution"
+      ],
+      "results": [
+        "Livraison plus fiable",
+        "Moins de friction",
+        "Responsabilités plus claires"
+      ],
+      "created_at": "2026-03-19T00:28:50.081571Z",
+      "updated_at": "2026-03-26T13:38:00.805161Z"
+    },
+    {
+      "id": 190,
+      "reference": "Solutions30",
+      "reference_short": "S30",
+      "order_index": 5,
+      "image": "/media/references/718372a11dde485f82494000060629fd.webp",
+      "image_thumb": "/media/references/thumbs/886e3c0ffb6045748889db5acf5ececc.webp",
+      "icon": "",
+      "situation": "Contexte de transformation nécessitant plus de lisibilité et de coordination.",
+      "tasks": [
+        "Clarifier les priorités",
+        "Réduire les frictions",
+        "Structurer la coordination"
+      ],
+      "actions": [
+        "Diagnostic du fonctionnement réel",
+        "Identification des irritants majeurs",
+        "Mise en place de repères plus simples"
+      ],
+      "results": [
+        "Priorités plus explicites",
+        "Décisions plus fluides",
+        "Cadre plus lisible"
+      ],
+      "created_at": "2026-03-19T03:33:33.009074Z",
+      "updated_at": "2026-03-26T13:38:00.833297Z"
+    },
+    {
+      "id": 189,
+      "reference": "Biodiv-Wind",
+      "reference_short": "BdW",
+      "order_index": 6,
+      "image": "/media/references/20a7652804f64e90a12a2798b6f4f3ac.webp",
+      "image_thumb": "/media/references/thumbs/81efd481088547bcb75eb597f64a6bf7.webp",
+      "icon": "/media/references/2ff55cd59c1a46d197051b9b262b13fa.webp",
+      "situation": "tructuration d’un environnement en croissance, avec enjeux de qualité de livraison et de montée en maturité",
+      "tasks": [
+        "Stabiliser l’exécution\"",
+        "Clarifier le cadre de travail",
+        "Soutenir la montée en maturité"
+      ],
+      "actions": [
+        "Mise en place d’un cadre de travail plus lisible",
+        "Accompagnement des équipes sur les pratiques de delivery",
+        "Renforcement de la visibilité sur le flux et les priorités"
+      ],
+      "results": [
+        "Exécution plus lisible",
+        "Cadre plus stable",
+        "Meilleure capacité à livrer"
+      ],
+      "created_at": "2026-03-19T03:32:54.161454Z",
+      "updated_at": "2026-03-26T13:37:20.547581Z"
+    }
+  ]
+}

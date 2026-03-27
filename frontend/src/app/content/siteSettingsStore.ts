@@ -2,6 +2,7 @@
 
 import { resolveApiBaseUrl } from "../lib/backoffice";
 import { isDemoMode } from "../lib/demo";
+import { getDemoSiteSettings } from "./demoSnapshot";
 import {
   normalizeAboutSettings,
   normalizeHeaderSettings,
@@ -58,7 +59,7 @@ export {
 };
 
 const listeners = new Set<() => void>();
-let cachedValue: SiteSettings = DEFAULT_SITE_SETTINGS;
+let cachedValue: SiteSettings = isDemoMode() ? getDemoSiteSettings() : DEFAULT_SITE_SETTINGS;
 let hasLoaded = false;
 let hasLoadedFromApi = false;
 let pendingLoad: Promise<SiteSettings> | null = null;
@@ -110,12 +111,18 @@ export function getSiteSettings(): SiteSettings {
 }
 
 export function getSiteSettingsServer(): SiteSettings {
-  return DEFAULT_SITE_SETTINGS;
+  return isDemoMode() ? getDemoSiteSettings() : DEFAULT_SITE_SETTINGS;
 }
 
 export async function ensureSiteSettingsLoaded(): Promise<SiteSettings> {
   if (typeof window === "undefined") {
-    return DEFAULT_SITE_SETTINGS;
+    return getSiteSettingsServer();
+  }
+
+  if (isDemoMode()) {
+    cachedValue = getDemoSiteSettings();
+    hasLoaded = true;
+    return cachedValue;
   }
 
   if (hasLoaded) {
@@ -308,7 +315,7 @@ export function setPublicationsSettings(next: PublicationsSettings) {
 }
 
 export function resetSiteSettingsStoreForTests() {
-  cachedValue = DEFAULT_SITE_SETTINGS;
+  cachedValue = isDemoMode() ? getDemoSiteSettings() : DEFAULT_SITE_SETTINGS;
   hasLoaded = false;
   hasLoadedFromApi = false;
   pendingLoad = null;

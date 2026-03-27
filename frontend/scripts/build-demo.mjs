@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
@@ -42,6 +42,19 @@ async function prepareDemoWorkspace() {
     .replace(/\s*\{modal\}\s*\n/, "\n");
 
   await writeFile(layoutPath, patchedLayout, "utf8");
+
+  const backendMediaRoot = path.join(root, "..", "backend", "media");
+  try {
+    const mediaStats = await stat(backendMediaRoot);
+    if (mediaStats.isDirectory()) {
+      await mkdir(path.join(demoRoot, "public", "demo-media"), { recursive: true });
+      await cp(backendMediaRoot, path.join(demoRoot, "public", "demo-media"), {
+        recursive: true,
+      });
+    }
+  } catch {
+    // Demo builds stay functional even when backend media is absent locally.
+  }
 }
 
 function runDemoBuild() {

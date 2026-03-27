@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { getBasePath, isDemoMode, withBasePath } from "./demo";
+import { getBasePath, isDemoMode, toDemoAssetUrl, withBasePath } from "./demo";
 
 describe("demo helpers", () => {
   const originalEnv = process.env;
@@ -37,5 +37,13 @@ describe("demo helpers", () => {
 
     expect(withBasePath("/brand/logo.png")).toBe("/Site/brand/logo.png");
     expect(withBasePath("https://example.test/logo.png")).toBe("https://example.test/logo.png");
+  });
+
+  it("maps backend media paths to demo media paths", () => {
+    process.env.NEXT_PUBLIC_BASE_PATH = "/Site/";
+
+    expect(toDemoAssetUrl("/media/references/demo.webp")).toBe("/Site/demo-media/references/demo.webp");
+    expect(toDemoAssetUrl("references/demo.webp")).toBe("/Site/demo-media/references/demo.webp");
+    expect(toDemoAssetUrl("/brand/logo.png")).toBe("/Site/brand/logo.png");
   });
 });

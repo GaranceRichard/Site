@@ -10,6 +10,7 @@ vi.mock("../lib/demo", () => ({
 
 import { resolveApiBaseUrl } from "../lib/backoffice";
 import { isDemoMode } from "../lib/demo";
+import { getDemoSiteSettings } from "./demoSnapshot";
 import { DEFAULT_SITE_SETTINGS } from "./siteSettingsSchema";
 import {
   DEFAULT_ABOUT_SETTINGS,
@@ -688,10 +689,13 @@ describe("siteSettingsStore", () => {
 
   it("short-circuits loading in demo mode", async () => {
     mockedIsDemoMode.mockReturnValue(true);
+    resetSiteSettingsStoreForTests();
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
-    await expect(ensureSiteSettingsLoaded()).resolves.toEqual(getSiteSettings());
+    await expect(ensureSiteSettingsLoaded()).resolves.toEqual(getDemoSiteSettings());
+    expect(getSiteSettings()).toEqual(getDemoSiteSettings());
+    expect(getSiteSettingsServer()).toEqual(getDemoSiteSettings());
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
