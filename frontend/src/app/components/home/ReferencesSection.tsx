@@ -1,7 +1,6 @@
 // frontend/src/app/components/home/ReferencesSection.tsx
 "use client";
 
-import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { Container, ELEVATED_PANEL_CLASS, MUTED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
@@ -129,14 +128,16 @@ export default function ReferencesSection() {
                       </div>
                       {r.badgeSrc ? (
                         <div className="relative h-10 w-16 shrink-0 overflow-hidden opacity-80">
-                          <Image
-                            src={r.badgeSrc}
-                            alt={r.badgeAlt ?? "Badge"}
-                            fill
-                            sizes="64px"
-                            className="object-contain"
-                            unoptimized
-                          />
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={r.badgeSrc}
+                              alt={r.badgeAlt ?? "Badge"}
+                              className="h-full w-full object-contain"
+                              loading="eager"
+                              decoding="async"
+                            />
+                          </>
                         </div>
                       ) : null}
                     </div>
@@ -177,15 +178,17 @@ export default function ReferencesSection() {
                 >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]">
                     {r.imageSrc && !failedImages[r.id] ? (
-                      <Image
-                        src={r.imageSrc}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                        priority={false}
-                        onError={() => markImageFailed(r.id)}
-                      />
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={r.imageSrc}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                          onError={() => markImageFailed(r.id)}
+                        />
+                      </>
                     ) : null}
                   </div>
                   <div className="min-w-0">

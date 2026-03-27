@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { ReactNode } from "react";
 
 type ReferenceModalShellProps = {
@@ -32,14 +31,16 @@ export default function ReferenceModalShell({
     >
       <div className="pointer-events-none absolute inset-0 z-0">
         {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt=""
-            fill
-            sizes="(min-width: 768px) 980px, 95vw"
-            className="object-cover opacity-[0.22] dark:opacity-[0.16] blur-[6px]"
-            priority={false}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt=""
+              className="h-full w-full object-cover opacity-[0.22] blur-[6px] dark:opacity-[0.16]"
+              loading="eager"
+              decoding="async"
+            />
+          </>
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 opacity-[0.35]" />
         )}
