@@ -1,6 +1,5 @@
 // frontend/src/app/page.tsx
 import TopNav from "./components/TopNav";
-import DemoNotice from "./components/DemoNotice";
 
 import AboutSection from "./components/home/AboutSection";
 import FooterSection from "./components/home/FooterSection";
@@ -17,7 +16,6 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
       <div className="app-shell overflow-hidden">
-        <DemoNotice />
         <TopNav nav={HOME_NAV_ITEMS} bookingUrl={BOOKING_URL} />
 
         <HeroSection />
