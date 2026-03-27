@@ -9,6 +9,7 @@ import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import { ANALYTICS_EVENTS, trackEvent } from "../lib/analytics";
 import { isAccessTokenValid, isBackofficeEnabled } from "../lib/backoffice";
+import { isDemoMode, withBasePath } from "../lib/demo";
 import { fetchReferencesOnce } from "../lib/references";
 import {
   getHeaderSettings,
@@ -27,6 +28,7 @@ export default function TopNav({
   bookingUrl: string;
 }) {
   const router = useRouter();
+  const demoMode = isDemoMode();
   const backofficeEnabled = isBackofficeEnabled();
   const headerSettings = useSyncExternalStore(
     subscribeHeaderSettings,
@@ -149,7 +151,7 @@ export default function TopNav({
             title={isLogged && backofficeEnabled ? "Backoffice" : "Accueil"}
           >
             <Image
-              src="/brand/logo.png"
+              src={withBasePath("/brand/logo.png")}
               alt={headerSettings.name}
               width={48}
               height={48}
@@ -191,18 +193,20 @@ export default function TopNav({
                 Échanger
               </a>
 
-              <Link
-                href="/contact"
-                onClick={() =>
-                  trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
-                    cta_label: "contact",
-                    cta_location: "topnav_desktop",
-                  })
-                }
-                className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
-              >
-                Contact
-              </Link>
+              {!demoMode ? (
+                <Link
+                  href="/contact"
+                  onClick={() =>
+                    trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                      cta_label: "contact",
+                      cta_location: "topnav_desktop",
+                    })
+                  }
+                  className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
+                >
+                  Contact
+                </Link>
+              ) : null}
 
               <ThemeToggle className={`${NAV_PILL} shrink-0`} />
             </div>
@@ -252,19 +256,21 @@ export default function TopNav({
               Échanger
             </a>
 
-            <Link
-              href="/contact"
-              onClick={() => {
-                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
-                  cta_label: "contact",
-                  cta_location: "topnav_mobile",
-                });
-                closeMenu();
-              }}
-              className={cx(SECONDARY_BUTTON_CLASS, "justify-center")}
-            >
-              Contact
-            </Link>
+            {!demoMode ? (
+              <Link
+                href="/contact"
+                onClick={() => {
+                  trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                    cta_label: "contact",
+                    cta_location: "topnav_mobile",
+                  });
+                  closeMenu();
+                }}
+                className={cx(SECONDARY_BUTTON_CLASS, "justify-center")}
+              >
+                Contact
+              </Link>
+            ) : null}
 
             <ThemeToggle className={NAV_PILL} />
           </div>

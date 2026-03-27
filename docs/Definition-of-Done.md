@@ -21,6 +21,7 @@ Aucune fusion n'est autorisee si un seul de ces checks echoue.
 ### Seuils minimaux par couche
 - Backend: couverture globale >= 80 %.
 - Frontend: couverture globale >= 80 %.
+- Frontend: aucune ligne rouge restante sur la zone demandee quand la tache porte sur de la couverture frontend.
 
 ### Seuils sur les points vitaux
 - Les points vitaux doivent viser >= 95 % de couverture.

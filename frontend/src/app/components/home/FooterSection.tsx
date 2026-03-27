@@ -11,8 +11,10 @@ import {
   getHeaderSettingsServer,
   subscribeHeaderSettings,
 } from "../../content/headerSettings";
+import { isDemoMode } from "../../lib/demo";
 
 export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
+  const demoMode = isDemoMode();
   const headerSettings = useSyncExternalStore(
     subscribeHeaderSettings,
     getHeaderSettings,
@@ -21,7 +23,7 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
   const bookingHref = headerSettings.bookingUrl || bookingUrl;
 
   return (
-    <footer id="contact" className="border-t subtle-divider">
+    <footer id={demoMode ? undefined : "contact"} className="border-t subtle-divider">
       <Container>
         <div className="flex min-h-[88px] flex-col justify-between gap-5 py-6 md:flex-row md:items-center">
           <p className="text-sm [color:var(--text-secondary)]">
@@ -48,18 +50,20 @@ export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
               Échanger
             </a>
 
-            <Link
-              href="/contact"
-              onClick={() =>
-                trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
-                  cta_label: "contact",
-                  cta_location: "footer",
-                })
-              }
-              className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
-            >
-              Contact
-            </Link>
+            {!demoMode ? (
+              <Link
+                href="/contact"
+                onClick={() =>
+                  trackEvent(ANALYTICS_EVENTS.CTA_CLICK, {
+                    cta_label: "contact",
+                    cta_location: "footer",
+                  })
+                }
+                className={cx(SECONDARY_BUTTON_CLASS, "px-4 py-2")}
+              >
+                Contact
+              </Link>
+            ) : null}
 
             <AuthLoginButton size={70} className="ml-1" />
           </div>

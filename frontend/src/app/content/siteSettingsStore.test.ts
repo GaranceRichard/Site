@@ -4,7 +4,13 @@ vi.mock("../lib/backoffice", () => ({
   resolveApiBaseUrl: vi.fn(() => "/api-proxy"),
 }));
 
+vi.mock("../lib/demo", () => ({
+  isDemoMode: vi.fn(() => false),
+}));
+
 import { resolveApiBaseUrl } from "../lib/backoffice";
+import { isDemoMode } from "../lib/demo";
+import { DEFAULT_SITE_SETTINGS } from "./siteSettingsSchema";
 import {
   DEFAULT_ABOUT_SETTINGS,
   DEFAULT_HEADER_SETTINGS,
@@ -30,10 +36,12 @@ import {
   setPublicationsSettings,
   setPromiseSettings,
   subscribeSiteSettings,
+  replaceSiteSettings,
   type SiteSettings,
 } from "./siteSettingsStore";
 
 const mockedResolveApiBaseUrl = vi.mocked(resolveApiBaseUrl);
+const mockedIsDemoMode = vi.mocked(isDemoMode);
 
 describe("siteSettingsStore", () => {
   beforeEach(() => {
@@ -41,6 +49,7 @@ describe("siteSettingsStore", () => {
     vi.restoreAllMocks();
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
     mockedResolveApiBaseUrl.mockReturnValue("/api-proxy");
+    mockedIsDemoMode.mockReturnValue(false);
   });
 
   it("returns defaults on the server without fetching", async () => {
@@ -674,6 +683,16 @@ describe("siteSettingsStore", () => {
 
     await expect(ensureSiteSettingsLoaded()).resolves.toEqual(getSiteSettings());
     await expect(ensureSiteSettingsLoaded()).resolves.toEqual(getSiteSettings());
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("short-circuits loading in demo mode", async () => {
+    mockedIsDemoMode.mockReturnValue(true);
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(ensureSiteSettingsLoaded()).resolves.toEqual(getSiteSettings());
+
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -1430,5 +1449,15 @@ describe("siteSettingsStore", () => {
       method: DEFAULT_METHOD_SETTINGS,
       publications: DEFAULT_PUBLICATIONS_SETTINGS,
     } satisfies SiteSettings);
+  });
+
+  it("marks the store as loaded when replacing site settings", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    replaceSiteSettings(DEFAULT_SITE_SETTINGS);
+
+    await expect(ensureSiteSettingsLoaded()).resolves.toEqual(DEFAULT_SITE_SETTINGS);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

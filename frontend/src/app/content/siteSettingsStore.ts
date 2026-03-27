@@ -1,6 +1,7 @@
 "use client";
 
 import { resolveApiBaseUrl } from "../lib/backoffice";
+import { isDemoMode } from "../lib/demo";
 import {
   normalizeAboutSettings,
   normalizeHeaderSettings,
@@ -71,6 +72,10 @@ function normalizeApiBaseUrl(value: string | undefined): string | null {
 }
 
 function getApiBaseCandidates(): string[] {
+  if (isDemoMode()) {
+    return [];
+  }
+
   const resolved = normalizeApiBaseUrl(resolveApiBaseUrl());
   const envBase = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
 

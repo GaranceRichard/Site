@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
     "coverage-e2e/**",
     "coverage-e2e-report/**",
     ".e2e-virtual/**",
+    ".demo-build-workdir/**",
     ".lighthouseci/**",
     "test-results/**",
   ]),

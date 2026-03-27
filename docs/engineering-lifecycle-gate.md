@@ -16,6 +16,7 @@ Ce document formalise la discipline d'execution attendue sur ce repo.
 - Une correction locale ne suffit pas si le gate reel du repo n'est pas vert.
 - Toute modification de schema DB implique verification des migrations avant validation finale.
 - Toute modification qui touche les zones de couverture doit etre verifiee avec la commande de coverage correspondante.
+- Si `Test coverage frontend` affiche encore des lignes rouges sur la zone demandee, le check doit etre traite comme rouge.
 
 ## Artefacts de reference
 

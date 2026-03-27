@@ -1,0 +1,248 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import BackofficeModal from "../components/BackofficeModal";
+import { isBackofficeEnabled, resolveApiBaseUrl } from "../lib/backoffice";
+import { clearAuthTokens } from "./logic";
+import AuthAlert from "./components/AuthAlert";
+import AboutSettingsManager from "./components/AboutSettingsManager";
+import ContentExchangeManager from "./components/ContentExchangeManager";
+import DisabledView from "./components/DisabledView";
+import HeaderSettingsManager from "./components/HeaderSettingsManager";
+import HomeSettingsManager from "./components/HomeSettingsManager";
+import MethodSettingsManager from "./components/MethodSettingsManager";
+import MessageModal from "./components/MessageModal";
+import MessagesTable from "./components/MessagesTable";
+import PublicationsSettingsManager from "./components/PublicationsSettingsManager";
+import PromiseSettingsManager from "./components/PromiseSettingsManager";
+import ReferencesManager from "./components/ReferencesManager";
+import Sidebar from "./components/Sidebar";
+import StatsBlock from "./components/StatsBlock";
+import StatusBlocks from "./components/StatusBlocks";
+import UndoToast from "./components/UndoToast";
+import { useBackofficeMessages } from "./useBackofficeMessages";
+import {
+  getBackofficeSection,
+  getBackofficeSectionServer,
+  setBackofficeSection,
+  subscribeBackofficeSection,
+} from "./sectionStore";
+
+function getSectionCopy(section: string): { title: string; subtitle: string } {
+  if (section === "home") {
+    return {
+      title: "Accueil",
+      subtitle: "Edition du hero, des liens, des mots-cles et des encarts.",
+    };
+  }
+
+  if (section === "about") {
+    return {
+      title: "À propos",
+      subtitle: "Edition du titre, du sous-titre, de l'encart et des encadres compacts.",
+    };
+  }
+
+  if (section === "references") {
+    return {
+      title: "References",
+      subtitle: "Gestion des references visibles sur le site.",
+    };
+  }
+
+  if (section === "header") {
+    return {
+      title: "Header",
+      subtitle: "Edition du nom, du titre et du lien de prise de rendez-vous.",
+    };
+  }
+
+  if (section === "promise") {
+    return {
+      title: "Positionnement",
+      subtitle: "Edition des titres et des encarts de la section positionnement.",
+    };
+  }
+
+  if (section === "method") {
+    return {
+      title: "Approche",
+      subtitle: "Edition des textes et des etapes de la section approche.",
+    };
+  }
+
+  if (section === "publications") {
+    return {
+      title: "Publications",
+      subtitle: "Edition du titre, du sous-titre, de l'encart et des publications.",
+    };
+  }
+
+  if (section === "stats") {
+    return {
+      title: "Statistiques",
+      subtitle: "Synthese trafic GA4 et sante systeme du site.",
+    };
+  }
+
+  if (section === "exchange") {
+    return {
+      title: "Chargeur / extracteur",
+      subtitle: "Preparation, extraction et rechargement integral des contenus via un fichier texte.",
+    };
+  }
+
+  return {
+    title: "Messages de contact",
+    subtitle: "Vue condensee des messages les plus recents.",
+  };
+}
+
+export default function BackofficePageClient() {
+  const router = useRouter();
+  const backofficeEnabled = isBackofficeEnabled();
+  const apiBase = resolveApiBaseUrl();
+
+  const section = useSyncExternalStore(
+    subscribeBackofficeSection,
+    getBackofficeSection,
+    getBackofficeSectionServer,
+  );
+  const sectionCopy = getSectionCopy(section);
+
+  const {
+    openLogin,
+    setOpenLogin,
+    status,
+    errorMsg,
+    authMsg,
+    selected,
+    setSelected,
+    page,
+    setPage,
+    query,
+    selectedIds,
+    undoIds,
+    totalCount,
+    totalPages,
+    visibleItems,
+    load,
+    toggleSelected,
+    changeSort,
+    getSortArrow,
+    deleteSelected,
+    undoDelete,
+    closeLoginModal,
+    onSearchChange,
+  } = useBackofficeMessages({
+    apiBase,
+    backofficeEnabled,
+    routerPush: router.push,
+  });
+
+  function goHome() {
+    router.push("/");
+  }
+
+  function logoutAndGoHome() {
+    clearAuthTokens();
+    router.push("/");
+  }
+
+  if (!backofficeEnabled) {
+    return <DisabledView onGoHome={goHome} />;
+  }
+
+  return (
+    <main className="h-screen overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
+      <div className="flex h-full">
+        <Sidebar
+          section={section}
+          onSelectSection={setBackofficeSection}
+          onGoHome={goHome}
+          onRefresh={() => load(page)}
+          onLogout={logoutAndGoHome}
+        />
+
+        <section className="flex min-w-0 flex-1 flex-col px-6 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">{sectionCopy.title}</h2>
+              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+                {sectionCopy.subtitle}
+              </p>
+            </div>
+          </div>
+
+          {section === "messages" ? (
+            <>
+              <div className="mt-6">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => onSearchChange(e.currentTarget.value)}
+                  placeholder="Rechercher par nom, email ou sujet"
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm outline-none focus:border-neutral-400
+                             dark:border-neutral-800 dark:bg-neutral-950"
+                />
+              </div>
+
+              <AuthAlert
+                message={authMsg}
+                onReconnect={() => setOpenLogin(true)}
+                onGoHome={logoutAndGoHome}
+              />
+
+              <div className="mt-6 flex-1">
+                <StatusBlocks status={status} errorMsg={errorMsg} itemsLength={visibleItems.length} />
+
+                <MessagesTable
+                  items={visibleItems}
+                  selectedIds={selectedIds}
+                  page={page}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  onToggleSelected={toggleSelected}
+                  onSelectMessage={setSelected}
+                  onDeleteSelected={deleteSelected}
+                  onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
+                  onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onSetPage={setPage}
+                  onChangeSort={changeSort}
+                  getSortArrow={getSortArrow}
+                />
+              </div>
+            </>
+          ) : null}
+
+          {section === "references" ? (
+            <ReferencesManager apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
+          ) : null}
+          {section === "exchange" ? (
+            <ContentExchangeManager
+              apiBase={apiBase}
+              onRequestLogin={() => setOpenLogin(true)}
+            />
+          ) : null}
+
+          {section === "header" ? <HeaderSettingsManager /> : null}
+          {section === "home" ? <HomeSettingsManager /> : null}
+          {section === "about" ? <AboutSettingsManager /> : null}
+          {section === "promise" ? <PromiseSettingsManager /> : null}
+          {section === "method" ? <MethodSettingsManager /> : null}
+          {section === "publications" ? <PublicationsSettingsManager /> : null}
+          {section === "stats" ? (
+            <StatsBlock apiBase={apiBase} onRequestLogin={() => setOpenLogin(true)} />
+          ) : null}
+        </section>
+      </div>
+
+      <BackofficeModal open={openLogin} onClose={closeLoginModal} />
+
+      <UndoToast undoCount={undoIds?.length ?? 0} onUndo={undoDelete} />
+
+      <MessageModal message={selected} onClose={() => setSelected(null)} />
+    </main>
+  );
+}

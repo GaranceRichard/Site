@@ -43,6 +43,12 @@ describe("isBackofficeEnabled", () => {
     process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "   ";
     expect(isBackofficeEnabled()).toBe(true);
   });
+
+  it("always disables backoffice in demo mode", () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "true";
+    process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED = "true";
+    expect(isBackofficeEnabled()).toBe(false);
+  });
 });
 
 describe("isAccessTokenValid", () => {
@@ -144,6 +150,11 @@ describe("resolveApiBaseUrl", () => {
   it("returns proxy path in the browser when env is missing", () => {
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
     expect(resolveApiBaseUrl()).toBe("/api-proxy");
+  });
+
+  it("returns undefined in demo mode", () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "true";
+    expect(resolveApiBaseUrl()).toBeUndefined();
   });
 
   it("uses the trimmed env value on the server", () => {

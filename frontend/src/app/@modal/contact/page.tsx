@@ -4,11 +4,13 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import ContactForm from "../../contact/ContactForm";
+import { isDemoMode } from "../../lib/demo";
 
 const EXIT_MS = 520;
 const FLASH_KEY = "flash";
 
 export default function ContactModal() {
+  const demoMode = isDemoMode();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -71,6 +73,10 @@ export default function ContactModal() {
       // no-op
     }
     close();
+  }
+
+  if (demoMode) {
+    return null;
   }
 
   if (pathname !== "/contact") return null;

@@ -4,6 +4,7 @@ import "./globals.css";
 import AnalyticsInit from "./components/AnalyticsInit";
 import FlashToast from "./components/FlashToast";
 import SentryInit from "./components/SentryInit";
+import { withBasePath } from "./lib/demo";
 
 export const metadata: Metadata = {
   title: {
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
       "Accompagnement Lean-Agile pragmatique pour clarifier la priorité et stabiliser le flux.",
   },
   icons: {
-    icon: "/brand/logo.png",
+    icon: withBasePath("/brand/logo.png"),
   },
 };
 

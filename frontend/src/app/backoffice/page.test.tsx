@@ -4,6 +4,8 @@ import BackofficePage from "./page";
 import { setBackofficeSection } from "./sectionStore";
 
 const isBackofficeEnabledMock = vi.fn();
+const isDemoModeMock = vi.fn();
+const notFoundMock = vi.fn();
 const routerPushMock = vi.fn();
 const clearAuthTokensMock = vi.fn();
 const setOpenLoginMock = vi.fn();
@@ -20,11 +22,16 @@ const onSearchChangeMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: routerPushMock }),
+  notFound: () => notFoundMock(),
 }));
 
 vi.mock("../lib/backoffice", () => ({
   isBackofficeEnabled: () => isBackofficeEnabledMock(),
   resolveApiBaseUrl: () => "/api-proxy",
+}));
+
+vi.mock("../lib/demo", () => ({
+  isDemoMode: () => isDemoModeMock(),
 }));
 
 vi.mock("./logic", () => ({
@@ -247,6 +254,8 @@ describe("BackofficePage", () => {
   beforeEach(() => {
     cleanup();
     window.localStorage.removeItem(SECTION_KEY);
+    isDemoModeMock.mockReturnValue(false);
+    notFoundMock.mockReset();
     isBackofficeEnabledMock.mockReturnValue(true);
     routerPushMock.mockReset();
     clearAuthTokensMock.mockReset();
@@ -268,6 +277,14 @@ describe("BackofficePage", () => {
     render(<BackofficePage />);
     fireEvent.click(screen.getByTestId("disabled-view"));
     expect(routerPushMock).toHaveBeenCalledWith("/");
+  });
+
+  it("calls notFound in demo mode", () => {
+    isDemoModeMock.mockReturnValue(true);
+
+    render(<BackofficePage />);
+
+    expect(notFoundMock).toHaveBeenCalled();
   });
 
   it("renders messages section by default and wires message actions", () => {

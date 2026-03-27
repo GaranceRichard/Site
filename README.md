@@ -1,6 +1,14 @@
 # GaranceRichard — Site (Frontend Next.js + Backend Django/DRF)
 ![CI](https://github.com/GaranceRichard/Site/actions/workflows/ci.yml/badge.svg)
 
+## Démo publique
+
+Le frontoffice du produit est disponible en version de démonstration statique sur GitHub Pages à l’adresse suivante :
+https://garancerichard.github.io/Site/
+
+Cette démo présente le frontoffice public du produit.
+Le backend, le backoffice et les fonctions d’administration ne sont pas exposés dans cette version.
+
 Site vitrine avec page de contact.
 - Frontend : Next.js (App Router)
 - Backend : Django + Django REST Framework
@@ -168,6 +176,7 @@ Tasks de verification utiles :
 - `Tests` : lance les couvertures backend, integration, frontend, E2E, `Vitals compliance`, `npm lint` et `npm build`.
   Les runs backend de cette task utilisent chacun un `COVERAGE_FILE` dedie pour eviter les collisions de `.coverage` quand les checks tournent en parallele.
   La task est volontairement sequencee pour eviter les faux rouges Windows lies aux spawns Node/esbuild pendant les checks frontend/vitals.
+  Si `Test coverage frontend` laisse des lignes rouges sur la zone demandee, alors le check est considere rouge.
 - Regle de completion : aucune tache n'est consideree complete tant que la task VS Code `Tests` n'a pas ete relancee en entier et tout au vert dans la session courante.
 - `Vitals compliance` : valide la couverture vitale frontend (`95/95/95/95` avec `perFile`) puis la couverture d'integration backend avec un seuil global backend de `95%` et un controle backend vital par fichier.
 
@@ -328,6 +337,7 @@ python -m coverage run manage.py test
 python -m coverage report --fail-under=80
 python -m coverage html
 ```
+- Si un test backend valide volontairement une reponse HTTP d'erreur attendue, le bruit de log associe doit etre capture ou neutralise dans le test pour ne pas polluer un run vert.
 - Lint/format Python :
 ```powershell
 python -m ruff check .
@@ -408,6 +418,7 @@ npm run test:e2e:coverage:report
 Notes tests :
 - Les tests unitaires front ne scannent que `src/**/*.test.*`.
 - `npm run test:coverage` est la commande stable pour CLI/VS Code. Le HTML est volontairement sorti dans `npm run test:coverage:html`. Le wrapper nettoie `frontend/coverage/` avant chaque run pour eviter les etats de coverage stale entre executions.
+- Si `npm run test:coverage` affiche encore des lignes rouges sur la zone demandee, le sujet n'est pas considere valide.
 - Les commandes Vitest frontend stables (`npm run test`, `npm run test:coverage`, `npm run test:coverage:html`) prechargent `frontend/scripts/vite-child-process-patch.mjs` pour neutraliser un faux `EPERM` Windows observe pendant l'initialisation Vite/Vitest.
 - Les tests E2E nécessitent un compte admin `is_staff` et un backend en cours d'exécution.
 - CI GitHub Actions : definir les secrets `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
@@ -627,6 +638,8 @@ docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml --env
 - `npm run test:coverage` cote frontend utilise un wrapper plus robuste: nettoyage du dossier `coverage/`, tolerance du faux echec Windows lie a `coverage/.tmp`, et retry automatique en cas de faux depart Vitest/Vite/esbuild.
 - Les scripts frontend de test/coverage reposent maintenant sur `vitest.config.mjs`, `vitest.config.vitals.mjs` et un prechargement `vite-child-process-patch.mjs` pour stabiliser les runs Windows.
 - Le rapport texte de coverage frontend force une largeur d'affichage plus confortable pour eviter les noms de fichiers tronques dans le terminal.
+- Une ligne rouge restante dans le rapport de coverage frontend sur la zone demandee garde le check au rouge, meme si le seuil global est passe.
 - Les tests backend utilisent maintenant un `MEDIA_ROOT` dedie (`backend/.test-media/`) pour ne plus jamais toucher aux medias locaux du projet pendant `manage.py test`.
+- Les tests backend qui valident un `503` attendu sur `/api/stats/summary/` capturent maintenant le log `django.request` associe pour garder des runs lisibles.
 - Le backend E2E Playwright est maintenant demarre via un lanceur Node multiplateforme, pour que le smoke CI fonctionne aussi sous Linux sans dependre de PowerShell.
 - Les médias locaux des références passent désormais par un proxy Next same-origin (`frontend/src/app/api-proxy/media/[...path]/route.ts`) pour éviter les flakes de chargement d'icônes/images entre frontend et backend en E2E/CI.

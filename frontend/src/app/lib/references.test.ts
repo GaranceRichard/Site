@@ -130,4 +130,17 @@ describe("references lib cache", () => {
       "Configuration manquante : NEXT_PUBLIC_API_BASE_URL."
     );
   });
+
+  it("returns static demo references without calling fetch", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "true";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { fetchReferencesOnce } = await import("./references");
+    const data = await fetchReferencesOnce();
+
+    expect(data.length).toBeGreaterThan(0);
+    expect(data[0]?.reference).toBe("Les Castas");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

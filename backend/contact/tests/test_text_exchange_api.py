@@ -520,16 +520,20 @@ results = ["Resultat B"]
         self.assertEqual(first.data, second.data)
 
     def test_stats_summary_returns_503_when_fetch_fails_without_stale_cache(self):
-        with patch("contact.views.is_ga4_configured", return_value=True), patch(
-            "contact.views.fetch_ga4_summary",
-            side_effect=GA4FetchError("ga4 indisponible"),
-        ):
-            response = self.client.get(
-                self.stats_summary_url,
-                **self._auth_headers(),
-            )
+        with self.assertLogs("django.request", level="ERROR") as captured_logs:
+            with patch("contact.views.is_ga4_configured", return_value=True), patch(
+                "contact.views.fetch_ga4_summary",
+                side_effect=GA4FetchError("ga4 indisponible"),
+            ):
+                response = self.client.get(
+                    self.stats_summary_url,
+                    **self._auth_headers(),
+                )
 
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
         self.assertEqual(response.data["configured"], True)
         self.assertEqual(response.data["stale"], True)
         self.assertEqual(response.data["warning"], "ga4 indisponible")
+        self.assertTrue(
+            any("/api/stats/summary/" in message for message in captured_logs.output)
+        )

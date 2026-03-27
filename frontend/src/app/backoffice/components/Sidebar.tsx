@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import Image from "next/image";
 import ThemeToggle from "../../components/ThemeToggle";
+import { withBasePath } from "../../lib/demo";
 import type { BackofficeSection } from "../types";
 
 type SidebarProps = {
@@ -62,7 +63,7 @@ export default function Sidebar({
             className="rounded-lg p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             <Image
-              src="/brand/logo.png"
+              src={withBasePath("/brand/logo.png")}
               alt=""
               width={34}
               height={34}

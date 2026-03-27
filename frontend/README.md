@@ -32,6 +32,7 @@ npm run build
 - Le script passe par [run-vitest-coverage.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/run-vitest-coverage.mjs) pour tolerer le faux echec Windows lie a `coverage/.tmp`, repartir d'un dossier `coverage/` propre a chaque run et precharger [vite-child-process-patch.mjs](/c:/Users/garan/Desktop/Projets/Mon%20site/frontend/scripts/vite-child-process-patch.mjs) avant Vitest.
 - Reporters actifs par defaut : `text` + `lcov`.
 - `npm run test:coverage` impose `80/80/80/80` avec `perFile: true` sur les fichiers couverts par `vitest.config.mjs`.
+- Si le rapport laisse une ligne rouge sur la zone frontend demandee, le check est considere rouge meme si le seuil global est atteint.
 - `npm run test:coverage:vitals` : meme commande frontend, mais avec des seuils `95/95/95/95` sur le sous-ensemble aligne avec `docs/critical-paths.md` : `app/backoffice`, `contact/ContactForm`, `BackofficeModal`, `components/backoffice` et `lib/backoffice`, via `vitest.config.vitals.mjs`.
 - `npm run test:coverage:html` : generation explicite du rapport HTML si besoin.
 - Le perimetre couvert inclut desormais le manager backoffice `AboutSettingsManager` dans `app/backoffice`, avec ses tests dedies et la normalisation `aboutSettings`.
@@ -60,6 +61,7 @@ npm run build
 - `Tests` : lance `Test coverage Backend`, `Test integration`, `Test coverage frontend`, `Test coverage e2e`, `Vitals compliance`, `npm lint` et `npm build`.
 - L'ordre de `Tests` est volontairement sequence pour eviter les faux echecs Windows lies aux spawns Node/esbuild quand plusieurs checks frontend lourds partent ensemble.
 - Regle de completion du repo : aucune tache n'est complete tant que la task complete `Tests` n'a pas ete relancee et integralement verte dans la session courante.
+- Pour `Test coverage frontend`, une ligne rouge restante sur la zone demandee suffit a garder la tache ouverte.
 - `Vitals compliance` : combine le coverage frontend vital (`95/95/95/95` avec `perFile: true` sur le sous-ensemble explicite defini dans `vitest.config.vitals.mjs`, aligne avec `docs/critical-paths.md`) et le coverage d'integration backend avec seuil global `95%` puis controle backend vital par fichier via `backend/scripts/check_vitals_coverage.py`.
 
 ## Backoffice chargeur / extracteur

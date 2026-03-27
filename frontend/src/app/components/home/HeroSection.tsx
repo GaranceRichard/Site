@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
+import { isDemoMode } from "../../lib/demo";
 import { fetchReferencesOnce } from "../../lib/references";
 import {
   getHomeHeroSettings,
@@ -17,6 +18,7 @@ import {
 } from "./ui";
 
 export default function HeroSection() {
+  const demoMode = isDemoMode();
   const settings = useSyncExternalStore(
     subscribeHomeHeroSettings,
     getHomeHeroSettings,
@@ -60,9 +62,12 @@ export default function HeroSection() {
   const visibleLinks = useMemo(
     () =>
       settings.links.filter(
-        (link) => link.enabled && (link.id !== "references" || hasReferences),
+        (link) =>
+          link.enabled &&
+          (!demoMode || link.id !== "message") &&
+          (link.id !== "references" || hasReferences),
       ),
-    [hasReferences, settings.links],
+    [demoMode, hasReferences, settings.links],
   );
 
   function toBullets(content: string): string[] {

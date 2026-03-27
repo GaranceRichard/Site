@@ -91,6 +91,7 @@ pre-commit run --all-files
 - [ ] Tests OK (unit + lint + build)
 - [ ] E2E si impact front / backoffice
 - [ ] Couverture maintenue (cible 95% sur points vitaux)
+- [ ] Pas de ligne rouge restante dans `Test coverage frontend` sur la zone modifiee
 - [ ] Screenshots/video si UI
 - [ ] Migrations incluses si modele change
 - [ ] Notes de deploy/rollback si migration non triviale
@@ -112,6 +113,7 @@ Frontend:
 - `npm run build`
 - `npm run test:coverage`
   - Verifier que le seuil est >= 80%
+  - Verifier aussi l'absence de lignes rouges sur la zone modifiee quand la tache porte sur de la couverture frontend
 
 E2E:
 - `npm run test:e2e`

@@ -1,6 +1,15 @@
 import { networkInterfaces } from "node:os";
 import type { NextConfig } from "next";
 
+const isDemoMode = ["1", "true", "yes", "on"].includes(
+  process.env.NEXT_PUBLIC_DEMO_MODE?.trim().toLowerCase() ?? "",
+);
+const basePath = (() => {
+  const raw = process.env.NEXT_PUBLIC_BASE_PATH?.trim() ?? "";
+  if (!raw) return "";
+  const normalized = raw.startsWith("/") ? raw : `/${raw}`;
+  return normalized.replace(/\/+$/, "");
+})();
 const rawCdnUrl = process.env.NEXT_PUBLIC_CDN_URL?.trim() ?? "";
 const cdnUrl = rawCdnUrl.replace(/\/$/, "");
 const rawDistDir = process.env.NEXT_DIST_DIR?.trim() ?? "";
@@ -133,27 +142,32 @@ const allowedDevOrigins = Array.from(
 
 const nextConfig: NextConfig = {
   allowedDevOrigins,
-  assetPrefix: process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
+  assetPrefix: isDemoMode ? basePath || undefined : process.env.NODE_ENV === "production" && cdnUrl ? cdnUrl : undefined,
+  basePath: isDemoMode ? basePath || undefined : undefined,
   compress: true,
   distDir: rawDistDir || undefined,
+  output: isDemoMode ? "export" : undefined,
   poweredByHeader: false,
+  skipTrailingSlashRedirect: isDemoMode,
+  trailingSlash: isDemoMode,
   typescript: {
     ignoreBuildErrors: true,
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api-proxy/:path*",
-        destination: `${backendOrigin}/:path*`,
-      },
-    ];
   },
   images: {
     remotePatterns,
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 7,
-    unoptimized: process.env.NODE_ENV === "development",
+    unoptimized: process.env.NODE_ENV === "development" || isDemoMode,
   },
 };
+
+if (!isDemoMode) {
+  nextConfig.rewrites = async () => [
+    {
+      source: "/api-proxy/:path*",
+      destination: `${backendOrigin}/:path*`,
+    },
+  ];
+}
 
 export default nextConfig;

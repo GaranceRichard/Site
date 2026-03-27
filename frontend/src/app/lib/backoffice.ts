@@ -1,4 +1,7 @@
+import { isDemoMode } from "./demo";
+
 export function isBackofficeEnabled() {
+  if (isDemoMode()) return false;
   const raw = process.env.NEXT_PUBLIC_BACKOFFICE_ENABLED;
   if (!raw) return true;
   const normalized = raw.trim().toLowerCase();
@@ -7,6 +10,10 @@ export function isBackofficeEnabled() {
 }
 
 export function resolveApiBaseUrl(): string | undefined {
+  if (isDemoMode()) {
+    return undefined;
+  }
+
   if (typeof window !== "undefined") {
     return "/api-proxy";
   }

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { isAccessTokenValid, isBackofficeEnabled } from "../../lib/backoffice";
+import { withBasePath } from "../../lib/demo";
 
 const BackofficeModal = dynamic(() => import("../BackofficeModal"), { ssr: false });
 
@@ -82,7 +83,13 @@ export default function LoginButton({
           className ?? "",
         ].join(" ")}
       >
-        <Image src="/brand/logo.png" alt="" width={size} height={size} className="object-contain" />
+        <Image
+          src={withBasePath("/brand/logo.png")}
+          alt=""
+          width={size}
+          height={size}
+          className="object-contain"
+        />
       </button>
 
       <BackofficeModal

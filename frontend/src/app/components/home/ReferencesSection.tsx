@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Container, ELEVATED_PANEL_CLASS, MUTED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 import type { ReferenceItem } from "../../content/references";
 import { fetchReferencesOnce, type ApiReference } from "../../lib/references";
+import { isDemoMode, withBasePath } from "../../lib/demo";
 import { toProxiedMediaUrl } from "../../lib/media";
 
 const ReferenceModal = dynamic(() => import("./ReferenceModal"), { ssr: false });
@@ -17,14 +18,15 @@ function pickMissionTitle(item: ApiReference): string {
 
 function toReferenceItem(item: ApiReference): ReferenceItem {
   const imageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
+  const demoMode = isDemoMode();
   return {
     id: `ref-${item.id}`,
     nameCollapsed: item.reference_short?.trim() ? item.reference_short : item.reference,
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
-    imageSrc: toProxiedMediaUrl(imageSrc),
-    badgeSrc: toProxiedMediaUrl(item.icon) || undefined,
+    imageSrc: demoMode ? withBasePath(imageSrc) : toProxiedMediaUrl(imageSrc),
+    badgeSrc: (demoMode ? withBasePath(item.icon) : toProxiedMediaUrl(item.icon)) || undefined,
     badgeAlt: item.icon ? "Icône" : undefined,
     situation: item.situation || "",
     tasks: item.tasks ?? [],
@@ -127,8 +129,14 @@ export default function ReferencesSection() {
                       </div>
                       {r.badgeSrc ? (
                         <div className="relative h-10 w-16 shrink-0 overflow-hidden opacity-80">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={r.badgeSrc} alt={r.badgeAlt ?? "Badge"} className="h-full w-full object-contain" />
+                          <Image
+                            src={r.badgeSrc}
+                            alt={r.badgeAlt ?? "Badge"}
+                            fill
+                            sizes="64px"
+                            className="object-contain"
+                            unoptimized
+                          />
                         </div>
                       ) : null}
                     </div>
