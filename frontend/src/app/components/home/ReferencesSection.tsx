@@ -113,7 +113,10 @@ export default function ReferencesSection() {
               </p>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                {featuredItems.map((r, index) => (
+                {featuredItems.map((r, index) => {
+                  const featuredVisualSrc = failedImages[r.id] ? "" : r.imageSrc;
+
+                  return (
                   <button
                     key={r.id}
                     type="button"
@@ -126,16 +129,17 @@ export default function ReferencesSection() {
                         <p className="eyebrow">{r.label ?? "Reference"}</p>
                         <p className="mt-3 text-base font-semibold">{r.nameExpanded}</p>
                       </div>
-                      {r.badgeSrc ? (
-                        <div className="relative h-10 w-16 shrink-0 overflow-hidden opacity-80">
+                      {featuredVisualSrc ? (
+                        <div className="relative h-10 w-16 shrink-0 overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]">
                           <>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={r.badgeSrc}
-                              alt={r.badgeAlt ?? "Badge"}
-                              className="h-full w-full object-contain"
+                              src={featuredVisualSrc}
+                              alt=""
+                              className="h-full w-full object-cover"
                               loading="eager"
                               decoding="async"
+                              onError={() => markImageFailed(r.id)}
                             />
                           </>
                         </div>
@@ -163,7 +167,8 @@ export default function ReferencesSection() {
                       <span>Voir plus</span>
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

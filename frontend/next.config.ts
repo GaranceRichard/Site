@@ -150,9 +150,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   skipTrailingSlashRedirect: isDemoMode,
   trailingSlash: isDemoMode,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns,
     formats: ["image/avif", "image/webp"],

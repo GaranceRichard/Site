@@ -6,14 +6,30 @@
 Le frontoffice du produit est disponible en version de démonstration statique sur GitHub Pages à l’adresse suivante :
 https://garancerichard.github.io/Site/
 
-Cette démo présente le frontoffice public du produit.
-Le backend, le backoffice et les fonctions d’administration ne sont pas exposés dans cette version.
+### Ce que la démo montre
+- Le frontoffice public du produit
+- La structure du site vitrine
+- Les contenus visibles côté visiteur
+
+### Ce que la démo ne montre pas
+- Le backend Django / DRF
+- Le backoffice
+- Les fonctions d’administration
+- Le flux complet du formulaire de contact avec persistance en base
+
+La GitHub Page est donc une vitrine statique du frontoffice, pas le produit complet en exécution.
 Pour le premier déploiement, GitHub Pages doit être activé une fois dans les réglages du dépôt avec la source `GitHub Actions`.
 
-Site vitrine avec page de contact.
+## Produit complet
+
+Le repository contient le produit complet derrière cette démo publique.
+
+Site vitrine avec page de contact, backoffice, backend d’administration et pipeline de tests.
 - Frontend : Next.js (App Router)
 - Backend : Django + Django REST Framework
-- Fonctionnalité : formulaire /contact → API /api/contact/messages → stockage en base + consultation via admin Django
+- Contact : formulaire /contact → API /api/contact/messages → stockage en base + consultation via admin Django
+- Administration : backoffice applicatif + admin Django
+- Qualité : tests backend, frontend, E2E et CI/CD
 
 ## Fonctionnalités
 - Page d’accueil (vitrine)
