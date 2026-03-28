@@ -2,6 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import type { ReferenceItem } from "../../content/references";
 import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import ReferenceModalBackdrop from "./ReferenceModalBackdrop";
@@ -10,6 +11,16 @@ import ReferenceModalHeader from "./ReferenceModalHeader";
 import ReferenceModalShell from "./ReferenceModalShell";
 
 const EXIT_MS = 520;
+
+function clearTimeoutRef(ref: MutableRefObject<number | null>) {
+  window.clearTimeout(ref.current as number);
+  ref.current = null;
+}
+
+function cancelAnimationFrameRef(ref: MutableRefObject<number | null>) {
+  cancelAnimationFrame(ref.current as number);
+  ref.current = null;
+}
 
 export default function ReferenceModal({
   item,
@@ -35,7 +46,7 @@ export default function ReferenceModal({
 
       setOpen(false);
 
-      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+      clearTimeoutRef(closeTimerRef);
       closeTimerRef.current = window.setTimeout(() => {
         setMountedItem(null);
         closingRef.current = false;
@@ -65,7 +76,7 @@ export default function ReferenceModal({
     if (!item) {
       // Parent forced close: animate out but do not call onClose again.
       if (mountedItem && !closingRef.current) {
-        if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
+        clearTimeoutRef(forcedCloseRef);
         forcedCloseRef.current = window.setTimeout(() => beginClose(false), 0);
       }
       return;
@@ -79,7 +90,7 @@ export default function ReferenceModal({
     setMountedItem(item);
     closingRef.current = false;
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    cancelAnimationFrameRef(rafRef);
     rafRef.current = requestAnimationFrame(() => {
       setOpen(true);
       // Focus a safe control once visible.
@@ -87,8 +98,8 @@ export default function ReferenceModal({
     });
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
+      cancelAnimationFrameRef(rafRef);
+      clearTimeoutRef(forcedCloseRef);
     };
   }, [item, mountedItem, beginClose]);
 
@@ -111,9 +122,9 @@ export default function ReferenceModal({
 
   useEffect(() => {
     return () => {
-      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (forcedCloseRef.current) window.clearTimeout(forcedCloseRef.current);
+      clearTimeoutRef(closeTimerRef);
+      cancelAnimationFrameRef(rafRef);
+      clearTimeoutRef(forcedCloseRef);
     };
   }, []);
 

@@ -295,7 +295,7 @@ class MediaCleanupUnitTests(APITestCase):
             )
 
             payload = output_path.read_text(encoding="utf-8")
-            self.assertIn("Demo snapshot exported", out.getvalue())
+            self.assertEqual("", out.getvalue())
             self.assertIn('"settings"', payload)
             self.assertIn('"references"', payload)
             self.assertIn('"Reference exportee"', payload)

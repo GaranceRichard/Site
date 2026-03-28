@@ -24,9 +24,37 @@ const coverageDir = path.join(
   configPath.includes("vitals") ? "coverage-vitals" : "coverage",
 );
 const maxStartupAttempts = 4;
+const knownWarningPatterns = [
+  /\[DEP0060\].*util\._extend.*deprecated/i,
+  /^\(Use `node --trace-deprecation \.\.\.` to show where the warning was created\)\s*$/im,
+];
 
 function stripAnsi(output) {
   return output.replaceAll(ansiPattern, "");
+}
+
+function stripKnownNodeWarnings(output) {
+  const lines = output.split(/\r?\n/);
+  const filtered = [];
+  let skipTraceHint = false;
+
+  for (const line of lines) {
+    const normalized = stripAnsi(line).trim();
+    if (knownWarningPatterns[0].test(normalized)) {
+      skipTraceHint = true;
+      continue;
+    }
+
+    if (skipTraceHint && knownWarningPatterns[1].test(normalized)) {
+      skipTraceHint = false;
+      continue;
+    }
+
+    skipTraceHint = false;
+    filtered.push(line);
+  }
+
+  return filtered.join("\n");
 }
 
 function hasCoverageTmpError(output) {
@@ -139,10 +167,10 @@ function runVitest() {
     child.stdout?.setEncoding("utf8");
     child.stderr?.setEncoding("utf8");
     child.stdout?.on("data", (chunk) => {
-      stdout += chunk;
+      stdout += stripKnownNodeWarnings(chunk);
     });
     child.stderr?.on("data", (chunk) => {
-      stderr += chunk;
+      stderr += stripKnownNodeWarnings(chunk);
     });
 
     child.on("error", (error) => {

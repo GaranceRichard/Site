@@ -17,6 +17,9 @@ process.env.NEXT_PUBLIC_API_BASE_URL = process.env.E2E_API_BASE_URL;
 const e2eUrls = getE2EUrls(process.env);
 const e2ePaths = getE2EPaths(process.env);
 const backendEnv = getE2EBackendEnv(process.env);
+const reuseExistingE2EServer =
+  process.env.PW_E2E_REUSE_EXISTING_SERVER === "1" ||
+  process.env.PW_E2E_REUSE_EXISTING_SERVER === "true";
 
 process.env.E2E_SANDBOX_ROOT = e2ePaths.sandboxRoot;
 
@@ -29,19 +32,20 @@ export default defineConfig({
   testMatch: /.*\.spec\.ts/,
   testIgnore: /(?:^|[\\/])(fixtures|helpers)\.ts$/,
   timeout: 30_000,
+  workers: process.env.CI ? 1 : undefined,
   webServer: [
     {
       command: "node ./scripts/start-e2e-backend.mjs",
       cwd: __dirname,
       url: `${e2eUrls.apiBaseURL}/api/health`,
-      reuseExistingServer: false,
+      reuseExistingServer: reuseExistingE2EServer,
       timeout: 120_000,
     },
     {
       command: "node ./scripts/start-e2e-frontend.mjs",
       cwd: __dirname,
       url: e2eUrls.baseURL,
-      reuseExistingServer: false,
+      reuseExistingServer: reuseExistingE2EServer,
       timeout: 120_000,
     },
   ],

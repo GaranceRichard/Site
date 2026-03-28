@@ -38,5 +38,3 @@ class Command(BaseCommand):
             )
         except OSError as exc:
             raise CommandError(f"Unable to write snapshot: {exc}") from exc
-
-        self.stdout.write(self.style.SUCCESS(f"Demo snapshot exported to {output}"))

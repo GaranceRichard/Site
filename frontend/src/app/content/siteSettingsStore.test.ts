@@ -700,6 +700,19 @@ describe("siteSettingsStore", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("does not resolve API bases in demo mode when saving", async () => {
+    mockedIsDemoMode.mockReturnValue(true);
+    resetSiteSettingsStoreForTests();
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await expect(saveSiteSettings(getDemoSiteSettings(), "token")).rejects.toThrow(
+      "Configuration manquante : NEXT_PUBLIC_API_BASE_URL.",
+    );
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("saves settings, normalizes the payload, and notifies subscribers", async () => {
     const listener = vi.fn();
     const fetchSpy = vi

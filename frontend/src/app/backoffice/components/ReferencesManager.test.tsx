@@ -1473,6 +1473,56 @@ describe("ReferencesManager", () => {
     });
   });
 
+  it("désactive l'enregistrement tant que l'upload d'image n'a pas terminé", async () => {
+    const store = setupSessionStorage();
+    store.set("access_token", "token");
+
+    const uploadDeferred = createDeferred<{ url: string; thumbnail_url: string }>();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([]),
+      })
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          json: vi.fn().mockImplementation(() => uploadDeferred.promise),
+        }),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ReferencesManager apiBase="http://example.test" onRequestLogin={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Aucune référence.")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Ajouter" })[0]);
+
+    const submitButton = screen.getByRole("button", { name: "Enregistrer" });
+    expect(submitButton).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Charger l’image" }));
+    const inputs = document.querySelectorAll("input[type='file']");
+    const file = new File(["img"], "image.png", { type: "image/png" });
+    fireEvent.change(inputs[0], { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Upload en cours…" })).toBeDisabled();
+    });
+
+    uploadDeferred.resolve({
+      url: "http://example.test/media/references/ref.webp",
+      thumbnail_url: "http://example.test/media/references/thumbs/ref.webp",
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Enregistrer" })).not.toBeDisabled();
+    });
+  });
+
   it("met à jour une référence existante", async () => {
     const store = setupSessionStorage();
     store.set("access_token", "token");

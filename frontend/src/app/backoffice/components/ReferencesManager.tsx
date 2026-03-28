@@ -34,6 +34,7 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
     setModalOpen,
     setForm,
   } = useReferencesManager({ apiBase, onRequestLogin });
+  const isUploadPending = isUploadingImage || isUploadingIcon;
 
   return (
     <div className="mt-6">
@@ -330,9 +331,10 @@ export default function ReferencesManager({ apiBase, onRequestLogin }: Reference
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="submit"
+                  disabled={isUploadPending}
                   className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white"
                 >
-                  Enregistrer
+                  {isUploadPending ? "Upload en cours…" : "Enregistrer"}
                 </button>
               </div>
             </form>

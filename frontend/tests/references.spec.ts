@@ -98,6 +98,8 @@ async function maybeGetLoadedImageSrc(cardButton: import("@playwright/test").Loc
 type AdminReference = {
   id: number;
   reference: string;
+  image: string;
+  image_thumb?: string;
   icon: string;
 };
 
@@ -148,6 +150,49 @@ async function fetchPublicReferenceByName(
   return reference as AdminReference;
 }
 
+async function expectPublicReferenceToMatchAdmin(
+  request: import("@playwright/test").APIRequestContext,
+  referenceName: string,
+  expected: Partial<Pick<AdminReference, "image" | "image_thumb" | "icon">>,
+) {
+  const normalizedExpected: Record<string, string> = {};
+  if (typeof expected.image !== "undefined") {
+    normalizedExpected.image = expected.image;
+  }
+  if (typeof expected.image_thumb !== "undefined") {
+    normalizedExpected.image_thumb = expected.image_thumb ?? "";
+  }
+  if (typeof expected.icon !== "undefined") {
+    normalizedExpected.icon = expected.icon ?? "";
+  }
+
+  await expect
+    .poll(async () => {
+      const reference = await fetchPublicReferenceByName(request, referenceName);
+      return {
+        image: reference.image,
+        image_thumb: reference.image_thumb ?? "",
+        icon: reference.icon,
+      };
+    })
+    .toMatchObject(normalizedExpected);
+}
+
+async function waitForMediaReady(
+  request: import("@playwright/test").APIRequestContext,
+  mediaUrl: string | null | undefined,
+) {
+  const target = mediaUrl?.trim() ?? "";
+  expect(target).not.toBe("");
+
+  await expect
+    .poll(async () => {
+      const response = await request.get(target);
+      return response.status();
+    })
+    .toBe(200);
+}
+
 test("backoffice references create and delete", async ({ page }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
@@ -157,7 +202,7 @@ test("backoffice references create and delete", async ({ page }) => {
   await deleteReference(page, referenceName);
 });
 
-test("frontoffice reference modal shows details @coverage", async ({ page }) => {
+test("frontoffice reference modal shows details", async ({ page }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
 
@@ -178,7 +223,33 @@ test("frontoffice reference modal shows details @coverage", async ({ page }) => 
   await deleteReference(page, referenceName);
 });
 
-test("references flow: create, replace image, add icon, delete all and hide menu", async ({ page }) => {
+test("frontoffice reference modal renders mocked public data @coverage", async ({ page }) => {
+  await page.goto("/e2e-reference-modal");
+
+  const openButton = page.getByRole("button", { name: "Open modal" });
+  await openButton.focus();
+  await openButton.click();
+
+  const modal = page.getByRole("dialog", { name: /Ref Harness Modal/i });
+  await expect(modal).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByText("Close count: 1")).toBeVisible();
+
+  await page.getByRole("button", { name: "Open modal" }).click();
+  await expect(modal).toBeVisible();
+  await page.getByRole("button", { name: "Force close modal" }).click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByText("Close count: 1")).toBeVisible();
+
+  await page.getByRole("button", { name: "Open modal" }).click();
+  await expect(modal).toBeVisible();
+  await modal.getByText("X", { exact: true }).click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.getByText("Close count: 2")).toBeVisible();
+});
+
+test("references flow: create, replace image, add icon, delete all and hide menu", async ({ page, request }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
   await openReferencesManager(page);
@@ -194,8 +265,18 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await uploadWithChooser(page, /Charger l.?image/i, firstImagePath);
   await page.getByLabel(/R.f.rence/i).fill(referenceName);
   await page.getByLabel("Situation").fill("Situation flux complet E2E");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/contact/references/admin") &&
+        response.request().method() === "POST" &&
+        response.ok(),
+    ),
+    page.getByRole("button", { name: "Enregistrer" }).click(),
+  ]);
   await expect(page.getByText(referenceName)).toBeVisible();
+  const createdReference = await fetchPublicReferenceByName(request, referenceName);
+  await waitForMediaReady(request, createdReference.image_thumb || createdReference.image);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
@@ -207,7 +288,22 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await page.getByRole("row", { name: new RegExp(referenceName) }).click();
   await expect(page.getByText(/Modifier la r.f.rence/i)).toBeVisible();
   await uploadWithChooser(page, /Charger l.?image/i, secondImagePath);
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/contact/references/admin/") &&
+        response.request().method() === "PUT" &&
+        response.ok(),
+    ),
+    page.getByRole("button", { name: "Enregistrer" }).click(),
+  ]);
+  const updatedAdminReference = await fetchAdminReferenceByName(request, referenceName);
+  await expectPublicReferenceToMatchAdmin(request, referenceName, {
+    image: updatedAdminReference.image,
+    image_thumb: updatedAdminReference.image_thumb,
+  });
+  const updatedReference = await fetchPublicReferenceByName(request, referenceName);
+  await waitForMediaReady(request, updatedReference.image_thumb || updatedReference.image);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
@@ -221,7 +317,21 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   await openReferencesManager(page);
   await page.getByRole("row", { name: new RegExp(referenceName) }).click();
   await uploadWithChooser(page, /Charger l.?ic.ne/i, iconPath);
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/contact/references/admin/") &&
+        response.request().method() === "PUT" &&
+        response.ok(),
+    ),
+    page.getByRole("button", { name: "Enregistrer" }).click(),
+  ]);
+  const iconAdminReference = await fetchAdminReferenceByName(request, referenceName);
+  await expectPublicReferenceToMatchAdmin(request, referenceName, {
+    icon: iconAdminReference.icon,
+  });
+  const iconReadyReference = await fetchPublicReferenceByName(request, referenceName);
+  await waitForMediaReady(request, iconReadyReference.icon);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();

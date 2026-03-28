@@ -1,14 +1,40 @@
 import { expect, test } from "./fixtures";
-import { loginAsAdmin, requireAdminCreds } from "./helpers";
+import { fillStableValue, loginAsAdmin, requireAdminCreds } from "./helpers";
+import { getE2EUrls } from "../src/e2e/config";
 
 test.describe.configure({ mode: "serial" });
+
+const apiBase = getE2EUrls(process.env).apiBaseURL;
 
 async function openSidebarSection(page: import("@playwright/test").Page, label: RegExp) {
   await page.goto("/backoffice");
   await page.getByRole("button", { name: label }).click();
 }
 
-test("header settings are editable and reflected on front", async ({ page }) => {
+async function expectPublicHeaderSettings(
+  request: import("@playwright/test").APIRequestContext,
+  expected: {
+    name: string;
+    title: string;
+    bookingUrl: string;
+  },
+) {
+  await expect
+    .poll(async () => {
+      const response = await request.get(`${apiBase}/api/settings/`);
+      if (!response.ok()) {
+        return null;
+      }
+
+      const payload = (await response.json()) as {
+        header?: { name?: string; title?: string; bookingUrl?: string };
+      };
+      return payload.header ?? null;
+    })
+    .toMatchObject(expected);
+}
+
+test("header settings are editable and reflected on front", async ({ page, request }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
   await openSidebarSection(page, /^Header$/i);
@@ -18,11 +44,20 @@ test("header settings are editable and reflected on front", async ({ page }) => 
   const title = `Titre ${stamp}`;
   const bookingUrl = `https://example.com/e2e-${stamp}`;
 
-  await page.getByLabel("Nom").fill(name);
-  await page.getByLabel("Titre").fill(title);
-  await page.getByLabel("Adresse de prise de rendez-vous").fill(bookingUrl);
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await fillStableValue(page.getByLabel("Nom"), name);
+  await fillStableValue(page.getByLabel("Titre"), title);
+  await fillStableValue(page.getByLabel("Adresse de prise de rendez-vous"), bookingUrl);
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/settings/admin") &&
+        response.request().method() === "PUT" &&
+        response.ok(),
+    ),
+    page.getByRole("button", { name: "Enregistrer" }).click(),
+  ]);
   await expect(page.getByText(/Header mis a jour/i)).toBeVisible();
+  await expectPublicHeaderSettings(request, { name, title, bookingUrl });
 
   await page.goto("/");
   const brandButton = page.getByRole("button", { name: /Aller au backoffice|Aller à l’accueil/i });
@@ -69,11 +104,15 @@ test("home cards can be added and rendered as bullet list", async ({ page }) => 
   const bulletB = `Point B ${stamp}`;
 
   await page.getByRole("button", { name: "Encarts" }).click();
-  await page.getByRole("button", { name: "Ajouter" }).click();
-
   const titleInputs = page.getByLabel("Titre encart");
   const contentInputs = page.getByLabel("Contenu (1 ligne = 1 puce)");
-  const lastCardIndex = (await titleInputs.count()) - 1;
+  const addButton = page.getByRole("button", { name: "Ajouter" });
+  const canAddCard = await addButton.isEnabled();
+  if (canAddCard) {
+    await addButton.click();
+  }
+
+  const lastCardIndex = canAddCard ? (await titleInputs.count()) - 1 : 0;
 
   await titleInputs.nth(lastCardIndex).fill(cardTitle);
   await contentInputs.nth(lastCardIndex).fill(`${bulletA}\n${bulletB}`);
