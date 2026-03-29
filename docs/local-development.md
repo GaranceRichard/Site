@@ -60,6 +60,11 @@ npm run dev
 Frontend :
 - `http://localhost:3000`
 
+Comportement public :
+- hors mode demo, le frontoffice public lit maintenant les settings publics depuis le backend des le rendu serveur
+- si le backend n'est pas lance, le front retombe sur les valeurs par defaut normalisees
+- pour verifier les contenus reels et eviter les flashes de contenu historique, lancez donc backend + frontend ensemble en local
+
 ## Lancement combine
 
 ### Windows

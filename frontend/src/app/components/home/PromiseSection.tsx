@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import {
   getPromiseSettings,
   getPromiseSettingsServer,
@@ -9,10 +10,11 @@ import {
 import { Container, ELEVATED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 
 export default function PromiseSection() {
+  const initialSettings = useInitialSiteSettings();
   const promise = useSyncExternalStore(
     subscribePromiseSettings,
     getPromiseSettings,
-    getPromiseSettingsServer,
+    () => initialSettings?.promise ?? getPromiseSettingsServer(),
   );
 
   return (

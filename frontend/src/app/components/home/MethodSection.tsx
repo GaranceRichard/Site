@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import {
   getMethodSettings,
   getMethodSettingsServer,
@@ -15,10 +16,11 @@ export type MethodStep = {
 };
 
 export default function MethodSection() {
+  const initialSettings = useInitialSiteSettings();
   const settings = useSyncExternalStore(
     subscribeMethodSettings,
     getMethodSettings,
-    getMethodSettingsServer,
+    () => initialSettings?.method ?? getMethodSettingsServer(),
   );
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import { isDemoMode } from "../../lib/demo";
 import { fetchReferencesOnce } from "../../lib/references";
@@ -19,10 +20,11 @@ import {
 
 export default function HeroSection() {
   const demoMode = isDemoMode();
+  const initialSettings = useInitialSiteSettings();
   const settings = useSyncExternalStore(
     subscribeHomeHeroSettings,
     getHomeHeroSettings,
-    getHomeHeroSettingsServer,
+    () => initialSettings?.homeHero ?? getHomeHeroSettingsServer(),
   );
 
   const [hasReferences, setHasReferences] = useState(false);

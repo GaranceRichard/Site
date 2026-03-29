@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import ContentPageHeader from "../components/ContentPageHeader";
 import FooterSection from "../components/home/FooterSection";
+import SiteSettingsProvider from "../components/SiteSettingsProvider";
 import {
   Container,
   ELEVATED_PANEL_CLASS,
@@ -14,6 +15,7 @@ import {
   getPublicationPageSettings,
   getPublicationsPageEntries,
 } from "../lib/siteContent";
+import { fetchPublicSiteSettings } from "../lib/publicSiteSettings";
 import { buildMetadataTitle, fetchMetadataHeader } from "../lib/siteMetadata";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,15 +30,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicationsPage() {
-  const [settings, items] = await Promise.all([
+  const [initialSettings, settings, items] = await Promise.all([
+    fetchPublicSiteSettings(),
     getPublicationPageSettings(),
     getPublicationsPageEntries(),
   ]);
 
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
-      <div className="app-shell overflow-hidden">
-        <ContentPageHeader currentPath="/publications" />
+      <SiteSettingsProvider initialSettings={initialSettings}>
+        <div className="app-shell overflow-hidden">
+          <ContentPageHeader currentPath="/publications" />
 
         <section className="border-b subtle-divider py-16 sm:py-20">
           <Container>
@@ -90,8 +94,9 @@ export default async function PublicationsPage() {
           </Container>
         </section>
 
-        <FooterSection bookingUrl={BOOKING_URL} />
-      </div>
+          <FooterSection bookingUrl={BOOKING_URL} />
+        </div>
+      </SiteSettingsProvider>
     </main>
   );
 }

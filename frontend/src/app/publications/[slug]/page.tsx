@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import ContentPageHeader from "../../components/ContentPageHeader";
 import FooterSection from "../../components/home/FooterSection";
+import SiteSettingsProvider from "../../components/SiteSettingsProvider";
 import {
   Container,
   ELEVATED_PANEL_CLASS,
@@ -16,6 +17,7 @@ import {
   getPublicationPageEntryBySlug,
   getPublicationsPageEntries,
 } from "../../lib/siteContent";
+import { fetchPublicSiteSettings } from "../../lib/publicSiteSettings";
 import { buildMetadataTitle, fetchMetadataHeader } from "../../lib/siteMetadata";
 
 type PageProps = {
@@ -46,7 +48,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PublicationDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const [item, allItems] = await Promise.all([
+  const [initialSettings, item, allItems] = await Promise.all([
+    fetchPublicSiteSettings(),
     getPublicationPageEntryBySlug(slug),
     getPublicationsPageEntries(),
   ]);
@@ -59,8 +62,9 @@ export default async function PublicationDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
-      <div className="app-shell overflow-hidden">
-        <ContentPageHeader currentPath="/publications" />
+      <SiteSettingsProvider initialSettings={initialSettings}>
+        <div className="app-shell overflow-hidden">
+          <ContentPageHeader currentPath="/publications" />
 
         <section className="border-b subtle-divider py-16 sm:py-20">
           <Container>
@@ -131,8 +135,9 @@ export default async function PublicationDetailPage({ params }: PageProps) {
           </Container>
         </section>
 
-        <FooterSection bookingUrl={BOOKING_URL} />
-      </div>
+          <FooterSection bookingUrl={BOOKING_URL} />
+        </div>
+      </SiteSettingsProvider>
     </main>
   );
 }

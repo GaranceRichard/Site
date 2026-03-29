@@ -1,5 +1,3 @@
-"use client";
-
 export type HeaderSettings = {
   name: string;
   title: string;

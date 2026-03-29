@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useInitialSiteSettings } from "./SiteSettingsProvider";
 import ScrollNav from "./ScrollNav";
 import ThemeToggle from "./ThemeToggle";
 import { ANALYTICS_EVENTS, trackEvent } from "../lib/analytics";
@@ -30,10 +31,11 @@ export default function TopNav({
   const router = useRouter();
   const demoMode = isDemoMode();
   const backofficeEnabled = isBackofficeEnabled();
+  const initialSettings = useInitialSiteSettings();
   const headerSettings = useSyncExternalStore(
     subscribeHeaderSettings,
     getHeaderSettings,
-    getHeaderSettingsServer,
+    () => initialSettings?.header ?? getHeaderSettingsServer(),
   );
   const [open, setOpen] = useState(false);
   const [isLogged, setIsLogged] = useState(false);

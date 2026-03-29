@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import {
   getPublicationsSettings,
   getPublicationsSettingsServer,
@@ -33,10 +34,11 @@ function toBullets(content: string): string[] {
 }
 
 export default function ServicesSection() {
+  const initialSettings = useInitialSiteSettings();
   const settings = useSyncExternalStore(
     subscribePublicationsSettings,
     getPublicationsSettings,
-    getPublicationsSettingsServer,
+    () => initialSettings?.publications ?? getPublicationsSettingsServer(),
   );
   const [activeService, setActiveService] = useState<PublicationModalItem | null>(null);
 

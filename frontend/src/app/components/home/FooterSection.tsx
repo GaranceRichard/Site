@@ -2,23 +2,26 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+
 import ScrollTo from "../ScrollTo";
-import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
-import { Container, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, cx } from "./ui";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import AuthLoginButton from "../auth/LoginButton";
 import {
   getHeaderSettings,
   getHeaderSettingsServer,
   subscribeHeaderSettings,
 } from "../../content/headerSettings";
+import { ANALYTICS_EVENTS, trackEvent } from "../../lib/analytics";
 import { isDemoMode } from "../../lib/demo";
+import { Container, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS, cx } from "./ui";
 
 export default function FooterSection({ bookingUrl }: { bookingUrl: string }) {
   const demoMode = isDemoMode();
+  const initialSettings = useInitialSiteSettings();
   const headerSettings = useSyncExternalStore(
     subscribeHeaderSettings,
     getHeaderSettings,
-    getHeaderSettingsServer,
+    () => initialSettings?.header ?? getHeaderSettingsServer(),
   );
   const bookingHref = headerSettings.bookingUrl || bookingUrl;
 

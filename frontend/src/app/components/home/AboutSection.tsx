@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useInitialSiteSettings } from "../SiteSettingsProvider";
 import {
   getAboutSettings,
   getAboutSettingsServer,
@@ -9,10 +10,11 @@ import {
 import { Container, MUTED_PANEL_CLASS, PANEL_CLASS, SectionTitle, cx } from "./ui";
 
 export default function AboutSection() {
+  const initialSettings = useInitialSiteSettings();
   const settings = useSyncExternalStore(
     subscribeAboutSettings,
     getAboutSettings,
-    getAboutSettingsServer,
+    () => initialSettings?.about ?? getAboutSettingsServer(),
   );
 
   return (

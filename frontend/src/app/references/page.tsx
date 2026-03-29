@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 
 import ContentPageHeader from "../components/ContentPageHeader";
 import FooterSection from "../components/home/FooterSection";
+import SiteSettingsProvider from "../components/SiteSettingsProvider";
 import { Container, ELEVATED_PANEL_CLASS, MUTED_PANEL_CLASS, cx } from "../components/home/ui";
 import { BOOKING_URL } from "../content";
 import { isDemoMode, toDemoAssetUrl } from "../lib/demo";
 import { toProxiedMediaUrl } from "../lib/media";
+import { fetchPublicSiteSettings } from "../lib/publicSiteSettings";
 import { getReferencePageEntries } from "../lib/siteContent";
 import { buildMetadataTitle, fetchMetadataHeader } from "../lib/siteMetadata";
 
@@ -22,13 +24,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ReferencesPage() {
-  const items = await getReferencePageEntries();
+  const [initialSettings, items] = await Promise.all([
+    fetchPublicSiteSettings(),
+    getReferencePageEntries(),
+  ]);
   const demoMode = isDemoMode();
 
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
-      <div className="app-shell overflow-hidden">
-        <ContentPageHeader currentPath="/references" />
+      <SiteSettingsProvider initialSettings={initialSettings}>
+        <div className="app-shell overflow-hidden">
+          <ContentPageHeader currentPath="/references" />
 
         <section className="border-b subtle-divider py-16 sm:py-20">
           <Container>
@@ -91,8 +97,9 @@ export default async function ReferencesPage() {
           </Container>
         </section>
 
-        <FooterSection bookingUrl={BOOKING_URL} />
-      </div>
+          <FooterSection bookingUrl={BOOKING_URL} />
+        </div>
+      </SiteSettingsProvider>
     </main>
   );
 }

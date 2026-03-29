@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import ContentPageHeader from "../../components/ContentPageHeader";
 import FooterSection from "../../components/home/FooterSection";
+import SiteSettingsProvider from "../../components/SiteSettingsProvider";
 import {
   Container,
   ELEVATED_PANEL_CLASS,
@@ -14,6 +15,7 @@ import {
 import { BOOKING_URL } from "../../content";
 import { isDemoMode, toDemoAssetUrl } from "../../lib/demo";
 import { toProxiedMediaUrl } from "../../lib/media";
+import { fetchPublicSiteSettings } from "../../lib/publicSiteSettings";
 import {
   getReferencePageEntries,
   getReferencePageEntryBySlug,
@@ -48,7 +50,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ReferenceDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const [item, allItems] = await Promise.all([
+  const [initialSettings, item, allItems] = await Promise.all([
+    fetchPublicSiteSettings(),
     getReferencePageEntryBySlug(slug),
     getReferencePageEntries(),
   ]);
@@ -68,8 +71,9 @@ export default async function ReferenceDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen px-3 py-3 sm:px-4 sm:py-4">
-      <div className="app-shell overflow-hidden">
-        <ContentPageHeader currentPath="/references" />
+      <SiteSettingsProvider initialSettings={initialSettings}>
+        <div className="app-shell overflow-hidden">
+          <ContentPageHeader currentPath="/references" />
 
         <section className="border-b subtle-divider py-16 sm:py-20">
           <Container>
@@ -153,8 +157,9 @@ export default async function ReferenceDetailPage({ params }: PageProps) {
           </Container>
         </section>
 
-        <FooterSection bookingUrl={BOOKING_URL} />
-      </div>
+          <FooterSection bookingUrl={BOOKING_URL} />
+        </div>
+      </SiteSettingsProvider>
     </main>
   );
 }
