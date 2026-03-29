@@ -62,7 +62,7 @@ export default async function ReferenceDetailPage({ params }: PageProps) {
 
   const relatedItems = allItems.filter((entry) => entry.slug !== item.slug).slice(0, 3);
   const demoMode = isDemoMode();
-  const imageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
+  const imageSrc = item.image;
   const resolvedImage = imageSrc
     ? demoMode
       ? toDemoAssetUrl(imageSrc)

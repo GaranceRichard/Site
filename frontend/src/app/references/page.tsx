@@ -51,7 +51,7 @@ export default async function ReferencesPage() {
 
             <div className="mt-10 grid gap-4 lg:grid-cols-2">
               {items.map((item) => {
-                const imageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
+                const imageSrc = item.image;
                 const resolvedImage = imageSrc
                   ? demoMode
                     ? toDemoAssetUrl(imageSrc)

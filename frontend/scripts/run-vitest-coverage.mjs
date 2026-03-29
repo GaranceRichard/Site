@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const forwardedArgs = process.argv.slice(2);
 const vitestArgs = [
@@ -141,7 +142,7 @@ function shouldRetrySpawnError(error) {
   }
 
   const message = String(error.message || "");
-  return /spawn .* EPERM/i.test(message) || /spawnSync .* EPERM/i.test(message);
+  return /spawn(?:Sync)?(?: .*?)? EPERM/i.test(message);
 }
 
 function runVitest() {
@@ -187,6 +188,20 @@ function runVitest() {
   });
 }
 
+async function runVitestInProcess() {
+  rmSync(coverageDir, { recursive: true, force: true });
+
+  const previousArgv = process.argv;
+  process.argv = [process.execPath, "vitest", "run", "--configLoader", "runner", "--coverage", ...forwardedArgs];
+
+  try {
+    await import(pathToFileURL(path.join(process.cwd(), "scripts", "vite-child-process-patch.mjs")).href);
+    await import(pathToFileURL(path.join(process.cwd(), "node_modules", "vitest", "vitest.mjs")).href);
+  } finally {
+    process.argv = previousArgv;
+  }
+}
+
 let result = await runVitest();
 
 let attempt = 1;
@@ -198,6 +213,17 @@ while (result.error && shouldRetrySpawnError(result.error) && attempt < maxStart
 }
 
 if (result.error) {
+  if (shouldRetrySpawnError(result.error)) {
+    console.warn("Vitest coverage wrapper is falling back to in-process execution after repeated spawn EPERM.");
+    try {
+      await runVitestInProcess();
+      process.exit(0);
+    } catch (fallbackError) {
+      console.error(fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
+      process.exit(1);
+    }
+  }
+
   console.error(result.error.message);
   process.exit(1);
 }

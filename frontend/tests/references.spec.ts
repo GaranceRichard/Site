@@ -193,6 +193,29 @@ async function waitForMediaReady(
     .toBe(200);
 }
 
+async function waitForReferenceMediaReady(
+  request: import("@playwright/test").APIRequestContext,
+  reference: Pick<AdminReference, "image" | "image_thumb">,
+) {
+  const candidates = [reference.image_thumb, reference.image]
+    .map((value) => value?.trim() ?? "")
+    .filter(Boolean);
+
+  expect(candidates.length).toBeGreaterThan(0);
+
+  await expect
+    .poll(async () => {
+      for (const target of candidates) {
+        const response = await request.get(target);
+        if (response.status() === 200) {
+          return 200;
+        }
+      }
+      return 404;
+    })
+    .toBe(200);
+}
+
 test("backoffice references create and delete", async ({ page }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
@@ -276,7 +299,7 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   ]);
   await expect(page.getByText(referenceName)).toBeVisible();
   const createdReference = await fetchPublicReferenceByName(request, referenceName);
-  await waitForMediaReady(request, createdReference.image_thumb || createdReference.image);
+  await waitForReferenceMediaReady(request, createdReference);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
@@ -303,7 +326,7 @@ test("references flow: create, replace image, add icon, delete all and hide menu
     image_thumb: updatedAdminReference.image_thumb,
   });
   const updatedReference = await fetchPublicReferenceByName(request, referenceName);
-  await waitForMediaReady(request, updatedReference.image_thumb || updatedReference.image);
+  await waitForReferenceMediaReady(request, updatedReference);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();

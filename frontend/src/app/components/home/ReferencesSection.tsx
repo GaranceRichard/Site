@@ -18,15 +18,26 @@ function pickMissionTitle(item: ApiReference): string {
 }
 
 function toReferenceItem(item: ApiReference): ReferenceItem {
-  const imageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
   const demoMode = isDemoMode();
+  const preferredImageSrc = item.image_thumb?.trim() ? item.image_thumb : item.image;
+  const fallbackImageSrc =
+    item.image_thumb?.trim() && item.image_thumb.trim() !== item.image.trim()
+      ? item.image
+      : "";
   return {
     id: `ref-${item.id}`,
     nameCollapsed: item.reference_short?.trim() ? item.reference_short : item.reference,
     nameExpanded: item.reference,
     missionTitle: pickMissionTitle(item),
     label: "Référence",
-    imageSrc: demoMode ? toDemoAssetUrl(imageSrc) : toProxiedMediaUrl(imageSrc),
+    imageSrc: demoMode
+      ? toDemoAssetUrl(preferredImageSrc)
+      : toProxiedMediaUrl(preferredImageSrc),
+    fallbackImageSrc: fallbackImageSrc
+      ? demoMode
+        ? toDemoAssetUrl(fallbackImageSrc)
+        : toProxiedMediaUrl(fallbackImageSrc)
+      : undefined,
     badgeSrc: (demoMode ? toDemoAssetUrl(item.icon) : toProxiedMediaUrl(item.icon)) || undefined,
     badgeAlt: item.icon ? "Icône" : undefined,
     situation: item.situation || "",
@@ -45,7 +56,8 @@ export default function ReferencesSection() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [modal, setModal] = useState<ReferenceItem | null>(null);
-  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
+  const [hiddenImages, setHiddenImages] = useState<Record<string, true>>({});
+  const [fallbackImages, setFallbackImages] = useState<Record<string, true>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -77,8 +89,22 @@ export default function ReferencesSection() {
     };
   }, []);
 
-  function markImageFailed(id: string) {
-    setFailedImages((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  function resolveCardImage(item: ReferenceItem) {
+    if (hiddenImages[item.id]) {
+      return "";
+    }
+    if (fallbackImages[item.id] && item.fallbackImageSrc) {
+      return item.fallbackImageSrc;
+    }
+    return item.imageSrc;
+  }
+
+  function markImageFailed(item: ReferenceItem) {
+    if (item.fallbackImageSrc && !fallbackImages[item.id]) {
+      setFallbackImages((prev) => ({ ...prev, [item.id]: true }));
+      return;
+    }
+    setHiddenImages((prev) => (prev[item.id] ? prev : { ...prev, [item.id]: true }));
   }
 
   const featuredItems = useMemo(() => items.slice(0, 4), [items]);
@@ -125,7 +151,7 @@ export default function ReferencesSection() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {featuredItems.map((r, index) => {
-                  const featuredVisualSrc = failedImages[r.id] ? "" : r.imageSrc;
+                  const featuredVisualSrc = resolveCardImage(r);
                   const detailHref = toReferenceDetailHref(r);
 
                   return (
@@ -135,7 +161,9 @@ export default function ReferencesSection() {
                     >
                       <button
                         type="button"
-                        onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
+                        onClick={() =>
+                          setModal(featuredVisualSrc ? { ...r, imageSrc: featuredVisualSrc } : { ...r, imageSrc: "" })
+                        }
                         aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
                         className="w-full text-left"
                       >
@@ -154,7 +182,7 @@ export default function ReferencesSection() {
                                   className="h-full w-full object-cover"
                                   loading="eager"
                                   decoding="async"
-                                  onError={() => markImageFailed(r.id)}
+                                  onError={() => markImageFailed(r)}
                                 />
                               </>
                             </div>
@@ -194,47 +222,50 @@ export default function ReferencesSection() {
             </div>
 
             <div className="space-y-4">
-              {items.slice(4).map((r) => (
-                <div key={r.id} className={cx(PANEL_CLASS, "space-y-3")}>
-                  <button
-                    type="button"
-                    onClick={() => setModal(failedImages[r.id] ? { ...r, imageSrc: "" } : r)}
-                    aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
-                    className="flex w-full items-start gap-4 text-left"
-                  >
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]">
-                      {r.imageSrc && !failedImages[r.id] ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={r.imageSrc}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                            onError={() => markImageFailed(r.id)}
-                          />
-                        </>
-                      ) : null}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="eyebrow">{r.label ?? "Reference"}</p>
-                      <p className="mt-2 text-sm font-semibold">{r.nameExpanded}</p>
-                      <p className="mt-2 line-clamp-2 text-sm [color:var(--text-secondary)]">
-                        {r.missionTitle || r.situation}
-                      </p>
-                    </div>
-                  </button>
-                  <div>
-                    <Link
-                      href={toReferenceDetailHref(r)}
-                      className="inline-flex text-xs font-semibold uppercase tracking-[0.14em] [color:var(--text-muted)]"
+              {items.slice(4).map((r) => {
+                const imageSrc = resolveCardImage(r);
+                return (
+                  <div key={r.id} className={cx(PANEL_CLASS, "space-y-3")}>
+                    <button
+                      type="button"
+                      onClick={() => setModal(imageSrc ? { ...r, imageSrc } : { ...r, imageSrc: "" })}
+                      aria-label={`Ouvrir la mission : ${r.nameExpanded}`}
+                      className="flex w-full items-start gap-4 text-left"
                     >
-                      Voir la page
-                    </Link>
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)]">
+                        {imageSrc ? (
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageSrc}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                              decoding="async"
+                              onError={() => markImageFailed(r)}
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="eyebrow">{r.label ?? "Reference"}</p>
+                        <p className="mt-2 text-sm font-semibold">{r.nameExpanded}</p>
+                        <p className="mt-2 line-clamp-2 text-sm [color:var(--text-secondary)]">
+                          {r.missionTitle || r.situation}
+                        </p>
+                      </div>
+                    </button>
+                    <div>
+                      <Link
+                        href={toReferenceDetailHref(r)}
+                        className="inline-flex text-xs font-semibold uppercase tracking-[0.14em] [color:var(--text-muted)]"
+                      >
+                        Voir la page
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {items.length > 4 ? (
                 <div className={cx(MUTED_PANEL_CLASS, "text-sm [color:var(--text-secondary)]")}>

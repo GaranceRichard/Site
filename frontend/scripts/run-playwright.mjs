@@ -1,6 +1,7 @@
 import childProcess, { spawn } from "node:child_process";
 import path from "node:path";
 import { createRequire } from "node:module";
+import dotenv from "dotenv";
 
 const forwardedArgs = process.argv.slice(2);
 const shouldSerializeWorkersOnWindows =
@@ -22,6 +23,9 @@ const knownWarningPatterns = [
   /\[DEP0060\].*util\._extend.*deprecated/i,
   /^\(Use `node --trace-deprecation \.\.\.` to show where the warning was created\)\s*$/im,
 ];
+
+dotenv.config({ path: path.join(process.cwd(), ".env.local"), quiet: true });
+dotenv.config({ path: path.join(process.cwd(), ".env.e2e.local"), quiet: true });
 
 function stripAnsi(output) {
   return output.replaceAll(ansiPattern, "");

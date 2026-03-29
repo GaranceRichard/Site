@@ -7,6 +7,7 @@ export type Reference = {
   missionTitle: string;
   label?: string;
   imageSrc: string;
+  fallbackImageSrc?: string;
   badgeSrc?: string;
   badgeAlt?: string;
   situation: string;
