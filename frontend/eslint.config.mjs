@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "playwright.config.ts",
     "vitest.config.mjs",
     "vitest.config.vitals.mjs",
+    // Node build/test helpers are not React source files.
+    "scripts/**",
     "postcss.config.mjs",
     "tailwind.config.mjs",
     "lighthouserc*.json",
