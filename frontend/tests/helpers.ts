@@ -130,7 +130,22 @@ export async function fillContactForm(page: import("@playwright/test").Page, see
 export async function acceptContactConsent(page: import("@playwright/test").Page) {
   const consent = page.getByRole("checkbox", { name: /j'accepte|utilisees pour etre recontacte/i });
   await consent.scrollIntoViewIfNeeded();
-  await consent.check({ force: true });
+  if (await consent.isChecked()) {
+    return;
+  }
+
+  try {
+    await consent.check();
+  } catch {
+    await consent.evaluate((input) => {
+      const checkbox = input as HTMLInputElement;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  await expect(consent).toBeChecked();
 }
 
 export async function submitContactForm(page: import("@playwright/test").Page) {
