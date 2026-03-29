@@ -127,6 +127,12 @@ export async function fillContactForm(page: import("@playwright/test").Page, see
   await page.getByLabel("Message").fill(`Message E2E ${seed}`);
 }
 
+export async function acceptContactConsent(page: import("@playwright/test").Page) {
+  const consent = page.getByRole("checkbox", { name: /j'accepte|utilisees pour etre recontacte/i });
+  await consent.scrollIntoViewIfNeeded();
+  await consent.check({ force: true });
+}
+
 export async function submitContactForm(page: import("@playwright/test").Page) {
   const submit = page.getByRole("button", { name: /Envoyer|Envoi/i });
   await submit.scrollIntoViewIfNeeded();

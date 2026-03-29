@@ -69,6 +69,32 @@ class ReferenceMediaCleanupTests(APITestCase):
 
 
 class MediaCleanupUnitTests(APITestCase):
+    def test_cleanup_signal_skips_orphan_cleanup_in_e2e_mode(self):
+        from contact import signals
+
+        with (
+            patch.dict(os.environ, {"DJANGO_E2E_MODE": "true"}, clear=False),
+            patch.object(
+                signals, "cleanup_orphan_reference_media_files"
+            ) as cleanup_mock,
+        ):
+            signals.cleanup_orphan_reference_media(sender=Reference, instance=None)
+
+        cleanup_mock.assert_not_called()
+
+    def test_cleanup_signal_uses_grace_period_outside_e2e_mode(self):
+        from contact import signals
+
+        with (
+            patch.dict(os.environ, {"DJANGO_E2E_MODE": ""}, clear=False),
+            patch.object(
+                signals, "cleanup_orphan_reference_media_files"
+            ) as cleanup_mock,
+        ):
+            signals.cleanup_orphan_reference_media(sender=Reference, instance=None)
+
+        cleanup_mock.assert_called_once_with(grace_seconds=30)
+
     def test_media_relative_path_variants(self):
         from contact.media_cleanup import media_relative_path
 

@@ -1,3 +1,5 @@
+import os
+
 from django.core.files.storage import default_storage
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
@@ -19,6 +21,9 @@ def delete_reference_files(sender, instance: Reference, **kwargs):
 
 @receiver(post_delete, sender=Reference)
 def cleanup_orphan_reference_media(sender, instance: Reference, **kwargs):
+    if os.getenv("DJANGO_E2E_MODE", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return
+
     # Keep a short grace window so concurrent uploads are not treated as
     # orphans by a stale directory listing during threaded dev/E2E runs.
     cleanup_orphan_reference_media_files(grace_seconds=30)

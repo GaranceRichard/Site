@@ -72,4 +72,20 @@ describe("publicSiteSettings", () => {
 
     expect(settings.header).toEqual(DEFAULT_HEADER_SETTINGS);
   });
+
+  it("falls back to normalized defaults when api base resolution returns nothing", async () => {
+    vi.resetModules();
+    vi.doMock("./backoffice", async () => {
+      const actual = await vi.importActual<typeof import("./backoffice")>("./backoffice");
+      return {
+        ...actual,
+        resolveApiBaseUrl: () => undefined,
+      };
+    });
+
+    const { fetchPublicSiteSettings: fetchWithMissingBase } = await import("./publicSiteSettings");
+    const settings = await fetchWithMissingBase();
+
+    expect(settings.header).toEqual(DEFAULT_HEADER_SETTINGS);
+  });
 });

@@ -30,6 +30,11 @@ const ITEM: ReferenceItem = {
   results: ["Result A"],
 };
 
+const ITEM_WITH_BADGE: ReferenceItem = {
+  ...ITEM,
+  badgeSrc: "/references/badge.png",
+};
+
 describe("ReferenceModal", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -142,5 +147,22 @@ describe("ReferenceModal", () => {
 
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("uses the default badge alt and clears timers on unmount", () => {
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+    const cancelAnimationFrameSpy = vi.spyOn(window, "cancelAnimationFrame");
+    const onClose = vi.fn();
+
+    const { unmount } = render(<ReferenceModal item={ITEM_WITH_BADGE} onClose={onClose} />);
+
+    vi.advanceTimersByTime(0);
+
+    expect(screen.getByRole("img", { name: "Badge" })).toBeInTheDocument();
+
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(cancelAnimationFrameSpy).toHaveBeenCalled();
   });
 });

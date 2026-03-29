@@ -7,11 +7,13 @@ describe("siteContent", () => {
     process.env = { ...originalEnv };
     vi.resetModules();
     vi.restoreAllMocks();
+    vi.doUnmock("./backoffice");
   });
 
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    vi.doUnmock("./backoffice");
   });
 
   it("builds stable ascii slugs for content pages", async () => {
@@ -205,6 +207,67 @@ describe("siteContent", () => {
     expect(items[0]?.excerpt.endsWith("...")).toBe(true);
   });
 
+  it("returns empty publication items when the payload items field is not an array", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          publications: {
+            title: " Publications ",
+            items: "invalid",
+          },
+        }),
+      }),
+    );
+
+    const { getPublicationPageSettings, getPublicationsPageEntries } = await import("./siteContent");
+
+    await expect(getPublicationPageSettings()).resolves.toMatchObject({
+      title: "Publications",
+    });
+    await expect(getPublicationsPageEntries()).resolves.toEqual([]);
+  });
+
+  it("normalizes publication items even when links is not an array", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          publications: {
+            items: [
+              {
+                title: " Publication ",
+                content: " Contenu ",
+                links: "invalid",
+              },
+            ],
+          },
+        }),
+      }),
+    );
+
+    const { getPublicationsPageEntries } = await import("./siteContent");
+
+    await expect(getPublicationsPageEntries()).resolves.toEqual([
+      {
+        id: "publication-1",
+        title: "Publication",
+        content: "Contenu",
+        links: [],
+        slug: "publication-1",
+        excerpt: "Contenu",
+      },
+    ]);
+  });
+
   it("falls back safely when the publications API fails", async () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = "false";
     process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
@@ -229,9 +292,36 @@ describe("siteContent", () => {
     await expect(getPublicationsPageEntries()).resolves.toEqual([]);
   });
 
+  it("falls back safely when the publications API throws", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+
+    const { getPublicationPageSettings, getPublicationsPageEntries } = await import("./siteContent");
+
+    await expect(getPublicationPageSettings()).resolves.toEqual({
+      title: "Publications",
+      subtitle: "",
+      highlight: {
+        title: "",
+        content: "",
+      },
+    });
+    await expect(getPublicationsPageEntries()).resolves.toEqual([]);
+  });
+
   it("returns publication fallbacks when no api base is configured", async () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = "false";
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    vi.resetModules();
+    vi.doMock("./backoffice", async () => {
+      const actual = await vi.importActual<typeof import("./backoffice")>("./backoffice");
+      return {
+        ...actual,
+        resolveApiBaseUrl: () => undefined,
+      };
+    });
 
     const { getPublicationPageSettings, getPublicationsPageEntries } = await import("./siteContent");
 
@@ -364,9 +454,85 @@ describe("siteContent", () => {
   it("returns an empty references list when no api base is configured", async () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = "false";
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    vi.resetModules();
+    vi.doMock("./backoffice", async () => {
+      const actual = await vi.importActual<typeof import("./backoffice")>("./backoffice");
+      return {
+        ...actual,
+        resolveApiBaseUrl: () => undefined,
+      };
+    });
 
     const { getReferencePageEntries } = await import("./siteContent");
 
     await expect(getReferencePageEntries()).resolves.toEqual([]);
+  });
+
+  it("returns empty references list when the public references API responds not ok", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+      }),
+    );
+
+    const { getReferencePageEntries, getReferencePageEntryBySlug } = await import("./siteContent");
+
+    await expect(getReferencePageEntries()).resolves.toEqual([]);
+    await expect(getReferencePageEntryBySlug("missing")).resolves.toBeNull();
+  });
+
+  it("returns an empty references list when the payload is not an array", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ references: "invalid" }),
+      }),
+    );
+
+    const { getReferencePageEntries } = await import("./siteContent");
+
+    await expect(getReferencePageEntries()).resolves.toEqual([]);
+  });
+
+  it("keeps valid references even when result arrays are invalid", async () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = "false";
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://example.test";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            reference: "Reference robuste",
+            situation: "",
+            results: "invalid",
+            tasks: [" Task "],
+            actions: [" Action "],
+            image: "/media/references/ref.webp",
+          },
+        ],
+      }),
+    );
+
+    const { getReferencePageEntries } = await import("./siteContent");
+
+    await expect(getReferencePageEntries()).resolves.toMatchObject([
+      {
+        reference: "Reference robuste",
+        results: [],
+        tasks: [" Task "],
+        actions: [" Action "],
+        excerpt: "",
+      },
+    ]);
   });
 });

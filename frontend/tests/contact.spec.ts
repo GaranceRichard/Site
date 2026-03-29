@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { fillContactForm, submitContactForm } from "./helpers";
+import { acceptContactConsent, fillContactForm, submitContactForm } from "./helpers";
 
 async function submitContactFormWithRetry(page: import("@playwright/test").Page) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -29,7 +29,7 @@ test("contact form submits successfully @coverage @smoke", async ({ page }) => {
   await page.goto("/contact");
 
   await fillContactForm(page, `${Date.now()}-ok`);
-  await page.getByRole("checkbox").check();
+  await acceptContactConsent(page);
 
   await submitContactFormWithRetry(page);
   await expect(page.getByText(/Merci, votre message a bien.*envoy./i)).toBeVisible();
@@ -48,7 +48,7 @@ test("contact form honeypot short-circuits submission @coverage", async ({ page 
   await page.goto("/contact");
 
   await fillContactForm(page, `${Date.now()}-honeypot`);
-  await page.getByRole("checkbox").check();
+  await acceptContactConsent(page);
   await page.getByLabel("Website").fill("bot");
   await submitContactForm(page);
 

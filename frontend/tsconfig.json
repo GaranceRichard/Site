@@ -37,7 +37,9 @@
     "**/*.mts",
     "tailwind.config.mjs",
     ".e2e-virtual/.next/types/**/*.ts",
-    ".e2e-virtual/.next/dev/types/**/*.ts"
+    ".e2e-virtual/.next/dev/types/**/*.ts",
+    ".next-e2e/types/**/*.ts",
+    ".next-e2e/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

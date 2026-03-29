@@ -216,6 +216,26 @@ async function waitForReferenceMediaReady(
     .toBe(200);
 }
 
+async function waitForReferenceIconPath(
+  request: import("@playwright/test").APIRequestContext,
+  referenceName: string,
+  scope: "admin" | "public",
+) {
+  await expect
+    .poll(async () => {
+      const reference = scope === "admin"
+        ? await fetchAdminReferenceByName(request, referenceName)
+        : await fetchPublicReferenceByName(request, referenceName);
+      return mediaPathFromUrl(reference.icon);
+    })
+    .not.toBe("");
+
+  const reference = scope === "admin"
+    ? await fetchAdminReferenceByName(request, referenceName)
+    : await fetchPublicReferenceByName(request, referenceName);
+  return mediaPathFromUrl(reference.icon);
+}
+
 test("backoffice references create and delete", async ({ page }) => {
   requireAdminCreds();
   await loginAsAdmin(page);
@@ -270,6 +290,11 @@ test("frontoffice reference modal renders mocked public data @coverage", async (
   await modal.getByText("X", { exact: true }).click();
   await expect(modal).toHaveCount(0);
   await expect(page.getByText("Close count: 2")).toBeVisible();
+
+  await page.getByRole("button", { name: "Open modal" }).click();
+  await expect(modal).toBeVisible();
+  await page.goto("/");
+  await expect(modal).toHaveCount(0);
 });
 
 test("references flow: create, replace image, add icon, delete all and hide menu", async ({ page, request }) => {
@@ -397,11 +422,9 @@ test("reference icon replacement keeps front modal and media integrity", async (
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText(referenceName)).toBeVisible();
 
-  const firstAdminReference = await fetchAdminReferenceByName(request, referenceName);
+  const firstIconMediaPath = await waitForReferenceIconPath(request, referenceName, "admin");
   const firstPublicReference = await fetchPublicReferenceByName(request, referenceName);
-  const firstIconMediaPath = mediaPathFromUrl(firstAdminReference.icon);
 
-  expect(firstIconMediaPath).not.toBe("");
   expect(mediaPathFromUrl(firstPublicReference.icon)).toBe(firstIconMediaPath);
   expect(fs.existsSync(absoluteMediaPath(firstIconMediaPath))).toBeTruthy();
 
@@ -411,11 +434,10 @@ test("reference icon replacement keeps front modal and media integrity", async (
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText(referenceName)).toBeVisible();
 
+  const updatedIconMediaPath = await waitForReferenceIconPath(request, referenceName, "admin");
   const updatedAdminReference = await fetchAdminReferenceByName(request, referenceName);
   const updatedPublicReference = await fetchPublicReferenceByName(request, referenceName);
-  const updatedIconMediaPath = mediaPathFromUrl(updatedAdminReference.icon);
 
-  expect(updatedIconMediaPath).not.toBe("");
   expect(updatedIconMediaPath).not.toBe(firstIconMediaPath);
   expect(mediaPathFromUrl(updatedPublicReference.icon)).toBe(updatedIconMediaPath);
   expect(fs.existsSync(absoluteMediaPath(updatedIconMediaPath))).toBeTruthy();

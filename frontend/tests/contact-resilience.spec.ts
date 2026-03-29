@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { fillContactForm, submitContactForm } from "./helpers";
+import { acceptContactConsent, fillContactForm, submitContactForm } from "./helpers";
 
 test("contact form shows an error on network failure @coverage", async ({ page }) => {
   await page.route("**/api/contact/messages", async (route) => {
@@ -8,7 +8,7 @@ test("contact form shows an error on network failure @coverage", async ({ page }
 
   await page.goto("/contact");
   await fillContactForm(page, `${Date.now()}-network-failure`);
-  await page.getByRole("checkbox").check();
+  await acceptContactConsent(page);
   await submitContactForm(page);
 
   await expect(page.getByText(/^Erreur :/)).toBeVisible();
@@ -26,7 +26,7 @@ test("contact form shows timeout error when API is too slow @coverage", async ({
 
   await page.goto("/contact");
   await fillContactForm(page, `${Date.now()}-timeout`);
-  await page.getByRole("checkbox").check();
+  await acceptContactConsent(page);
   await submitContactForm(page);
 
   await expect(page.getByText(/^Erreur :/)).toBeVisible({ timeout: 20_000 });
@@ -43,7 +43,7 @@ test("contact form falls back to plain text API errors @coverage", async ({ page
 
   await page.goto("/contact");
   await fillContactForm(page, `${Date.now()}-plain-text`);
-  await page.getByRole("checkbox").check();
+  await acceptContactConsent(page);
   await submitContactForm(page);
 
   await expect(page.getByText(/^Erreur :/)).toBeVisible();
