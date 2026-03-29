@@ -35,6 +35,9 @@ backend/staticfiles/
 backend/media/
 backend/.tmp-test-media/
 backend/.test-media/
+backend/.tmp-manual-media/
+frontend/.e2e-auth-probe/
+frontend/.e2e-probe/
 
 # Tests / quality tools (si utilisés)
 .pytest_cache/

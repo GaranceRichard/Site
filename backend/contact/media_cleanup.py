@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -62,6 +63,25 @@ def _storage_files(prefix: str) -> list[str]:
     return [f"{prefix}/{name}" for name in files]
 
 
+def _storage_is_older_than(path: str, grace_seconds: int) -> bool:
+    if grace_seconds <= 0:
+        return True
+
+    try:
+        modified_at = default_storage.get_modified_time(path)
+    except Exception:
+        return True
+
+    if modified_at is None:
+        return True
+
+    if modified_at.tzinfo is None:
+        modified_at = modified_at.replace(tzinfo=timezone.utc)
+
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=grace_seconds)
+    return modified_at <= cutoff
+
+
 def audit_reference_media() -> dict:
     referenced_paths = referenced_media_paths()
     stored_paths = set(_storage_files("references")) | set(
@@ -120,7 +140,7 @@ def audit_reference_media() -> dict:
     }
 
 
-def cleanup_orphan_reference_media() -> int:
+def cleanup_orphan_reference_media(*, grace_seconds: int = 0) -> int:
     used = referenced_media_paths()
     deleted = 0
 
@@ -135,6 +155,8 @@ def cleanup_orphan_reference_media() -> int:
         for name in files:
             path = f"{prefix}/{name}"
             if path not in used:
+                if not _storage_is_older_than(path, grace_seconds):
+                    continue
                 default_storage.delete(path)
                 removed += 1
         return removed

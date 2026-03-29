@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from io import StringIO
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
+import os
 import shutil
 import uuid
 from unittest.mock import patch
@@ -190,6 +192,27 @@ class MediaCleanupUnitTests(APITestCase):
                 self.assertTrue(default_storage.exists(keep_thumb))
 
     @override_settings(MEDIA_URL="/media/")
+    def test_cleanup_orphan_reference_media_keeps_recent_files_during_grace_period(
+        self,
+    ):
+        from contact.media_cleanup import cleanup_orphan_reference_media
+
+        with workspace_tempdir() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                orphan_path = default_storage.save(
+                    "references/orphan.webp", ContentFile(b"orphan")
+                )
+                orphan_thumb = default_storage.save(
+                    "references/thumbs/orphan.webp", ContentFile(b"orphan-thumb")
+                )
+
+                deleted = cleanup_orphan_reference_media(grace_seconds=30)
+
+                self.assertEqual(deleted, 0)
+                self.assertTrue(default_storage.exists(orphan_path))
+                self.assertTrue(default_storage.exists(orphan_thumb))
+
+    @override_settings(MEDIA_URL="/media/")
     def test_cleanup_reference_media_command(self):
         with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
@@ -353,6 +376,12 @@ class MediaCleanupUnitTests(APITestCase):
                 self.assertTrue(default_storage.exists(orphan_thumb))
                 self.assertTrue(default_storage.exists(kept_path))
                 self.assertTrue(default_storage.exists(kept_thumb))
+
+                old_timestamp = (
+                    datetime.now(timezone.utc) - timedelta(seconds=120)
+                ).timestamp()
+                os.utime(Path(tempdir) / orphan_path, (old_timestamp, old_timestamp))
+                os.utime(Path(tempdir) / orphan_thumb, (old_timestamp, old_timestamp))
 
                 ref.delete()
 
