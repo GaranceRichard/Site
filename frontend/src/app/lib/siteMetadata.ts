@@ -1,3 +1,6 @@
+import demoSnapshot from "../content/demoSnapshot.json";
+import { isDemoMode } from "./demo";
+
 export type MetadataHeader = {
   name: string;
   title: string;
@@ -39,6 +42,11 @@ export function buildMetadataTitle(header: MetadataHeader): string {
 }
 
 export async function fetchMetadataHeader(): Promise<MetadataHeader> {
+  if (isDemoMode()) {
+    const payload = demoSnapshot as { settings?: { header?: unknown } };
+    return normalizeMetadataHeader(payload.settings?.header);
+  }
+
   try {
     const response = await fetch(`${getMetadataBackendOrigin()}/api/settings/`, {
       method: "GET",

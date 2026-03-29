@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_METADATA_HEADER,
@@ -9,6 +9,11 @@ import {
 } from "./siteMetadata";
 
 describe("siteMetadata", () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
   it("builds the tab title from the header name and title", () => {
     expect(buildMetadataTitle({ name: "Jane Doe", title: "Agile Coach" })).toBe("Jane Doe | Agile Coach");
   });
@@ -57,6 +62,15 @@ describe("siteMetadata", () => {
     await expect(fetchMetadataHeader()).resolves.toEqual({
       name: "Jane Doe",
       title: "Agile Coach",
+    });
+  });
+
+  it("uses the demo snapshot header in demo mode", async () => {
+    vi.stubEnv("NEXT_PUBLIC_DEMO_MODE", "true");
+
+    await expect(fetchMetadataHeader()).resolves.toEqual({
+      name: "Garance Richard",
+      title: "Delivery & Transformation",
     });
   });
 
