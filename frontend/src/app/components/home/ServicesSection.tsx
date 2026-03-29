@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   getPublicationsSettings,
@@ -7,6 +8,7 @@ import {
   type PublicationReferenceLink,
   subscribePublicationsSettings,
 } from "../../content/publicationsSettings";
+import { slugifySegment } from "../../lib/siteContent";
 import {
   Container,
   ELEVATED_PANEL_CLASS,
@@ -27,7 +29,7 @@ function toBullets(content: string): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.replace(/^[-*•]\s*/, ""));
+    .map((line) => line.replace(/^[-*\u2022]\s*/, ""));
 }
 
 export default function ServicesSection() {
@@ -80,34 +82,48 @@ export default function ServicesSection() {
                     <li key={`highlight-${index}`}>{point}</li>
                   ))}
                 </ul>
+                <div className="mt-6">
+                  <Link href="/publications" className="primary-button px-4 py-2 text-sm">
+                    Voir toutes les publications
+                  </Link>
+                </div>
               </div>
             </div>
 
             <div className="md:col-span-7">
               <div className="space-y-4">
-                {settings.items.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() =>
-                      setActiveService({
-                        title: item.title,
-                        content: item.content,
-                        links: item.links ?? [],
-                      })
-                    }
-                    className={cx(PANEL_CLASS, "flex w-full items-center justify-between gap-4 text-left hover:border-[color:var(--border-strong)]")}
-                    aria-haspopup="dialog"
-                    aria-expanded={activeService?.title === item.title}
-                  >
-                    <div>
-                      <p className="eyebrow">Publication</p>
-                      <span className="mt-3 block text-sm font-semibold">{item.title}</span>
+                {settings.items.map((item, index) => (
+                  <div key={item.id} className={cx(PANEL_CLASS, "space-y-4")}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveService({
+                          title: item.title,
+                          content: item.content,
+                          links: item.links ?? [],
+                        })
+                      }
+                      className="flex w-full items-center justify-between gap-4 text-left hover:border-[color:var(--border-strong)]"
+                      aria-haspopup="dialog"
+                      aria-expanded={activeService?.title === item.title}
+                    >
+                      <div>
+                        <p className="eyebrow">Publication</p>
+                        <span className="mt-3 block text-sm font-semibold">{item.title}</span>
+                      </div>
+                      <span className="ui-pill inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm">
+                        +
+                      </span>
+                    </button>
+                    <div className="flex justify-end">
+                      <Link
+                        href={`/publications/${slugifySegment(item.title || item.id)}-${index + 1}`}
+                        className="ui-pill px-3 py-2 text-xs font-semibold"
+                      >
+                        Lire la publication
+                      </Link>
                     </div>
-                    <span className="ui-pill inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm">
-                      +
-                    </span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

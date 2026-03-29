@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_METADATA_HEADER,
+  DEFAULT_METADATA_KEYWORDS,
+  DEFAULT_OPEN_GRAPH_DESCRIPTION,
+  DEFAULT_TWITTER_DESCRIPTION,
   buildMetadataTitle,
   fetchMetadataHeader,
   getMetadataBackendOrigin,
@@ -38,6 +41,27 @@ describe("siteMetadata", () => {
       name: DEFAULT_METADATA_HEADER.name,
       title: "Agile Coach",
     });
+  });
+
+  it("exposes metadata copy aligned with delivery and transformation", () => {
+    expect(DEFAULT_METADATA_KEYWORDS).toEqual([
+      "delivery transformation",
+      "directeur de projet",
+      "pilotage de delivery",
+      "capacite a livrer",
+      "arbitrages",
+      "gouvernance d'execution",
+      "priorisation",
+      "stabilisation de l'execution",
+      "transformation organisationnelle",
+      "garance richard",
+    ]);
+    expect(DEFAULT_OPEN_GRAPH_DESCRIPTION).toBe(
+      "Clarifier les priorites, objectiver les arbitrages et remettre l'execution sous controle dans des environnements complexes.",
+    );
+    expect(DEFAULT_TWITTER_DESCRIPTION).toBe(
+      "Delivery & Transformation : priorites clarifiees, arbitrages explicites, capacite a livrer securisee.",
+    );
   });
 
   it("builds the backend origin from the configured API base", () => {

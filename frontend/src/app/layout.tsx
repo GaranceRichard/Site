@@ -7,6 +7,9 @@ import SentryInit from "./components/SentryInit";
 import { withBasePath } from "./lib/demo";
 import {
   DEFAULT_METADATA_DESCRIPTION,
+  DEFAULT_METADATA_KEYWORDS,
+  DEFAULT_OPEN_GRAPH_DESCRIPTION,
+  DEFAULT_TWITTER_DESCRIPTION,
   buildMetadataTitle,
   fetchMetadataHeader,
 } from "./lib/siteMetadata";
@@ -21,23 +24,17 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${header.name}`,
     },
     description: DEFAULT_METADATA_DESCRIPTION,
-    keywords: [
-      "coach lean agile",
-      "transformation agile",
-      "accompagnement equipes",
-      "optimisation flux",
-      "garance richard",
-    ],
+    keywords: DEFAULT_METADATA_KEYWORDS,
     openGraph: {
       title: siteTitle,
-      description: "Des equipes plus sereines, des livraisons plus fiables. Accompagnement oriente resultats.",
+      description: DEFAULT_OPEN_GRAPH_DESCRIPTION,
       type: "website",
       locale: "fr_CA",
     },
     twitter: {
       card: "summary_large_image",
       title: siteTitle,
-      description: "Accompagnement Lean-Agile pragmatique pour clarifier la priorite et stabiliser le flux.",
+      description: DEFAULT_TWITTER_DESCRIPTION,
     },
     icons: {
       icon: withBasePath("/brand/logo.png"),

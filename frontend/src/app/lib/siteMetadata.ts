@@ -8,11 +8,30 @@ export type MetadataHeader = {
 
 export const DEFAULT_METADATA_HEADER: MetadataHeader = {
   name: "Garance Richard",
-  title: "Coach Lean-Agile",
+  title: "Delivery & Transformation",
 };
 
 export const DEFAULT_METADATA_DESCRIPTION =
-  "Accompagnement Lean-Agile pragmatique pour clarifier les priorites, stabiliser le flux et renforcer l'autonomie des equipes.";
+  "Intervention en delivery et transformation pour clarifier les priorites, objectiver les arbitrages et securiser la capacite a livrer dans des contextes exigeants.";
+
+export const DEFAULT_METADATA_KEYWORDS = [
+  "delivery transformation",
+  "directeur de projet",
+  "pilotage de delivery",
+  "capacite a livrer",
+  "arbitrages",
+  "gouvernance d'execution",
+  "priorisation",
+  "stabilisation de l'execution",
+  "transformation organisationnelle",
+  "garance richard",
+];
+
+export const DEFAULT_OPEN_GRAPH_DESCRIPTION =
+  "Clarifier les priorites, objectiver les arbitrages et remettre l'execution sous controle dans des environnements complexes.";
+
+export const DEFAULT_TWITTER_DESCRIPTION =
+  "Delivery & Transformation : priorites clarifiees, arbitrages explicites, capacite a livrer securisee.";
 
 export function getMetadataBackendOrigin(apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL): string {
   return (apiBaseUrl?.trim() || "http://127.0.0.1:8000").replace(/\/$/, "");
