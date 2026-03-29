@@ -8,7 +8,7 @@
     "homeHero": {
       "eyebrow": "Delivery & Transformation",
       "title": "Faire de la complexité un levier d’action.",
-      "subtitle": "J’interviens dans des contextes complexes pour aider les organisations à ne plus subir cette complexité, mais à en faire un levier de transformation, en sécurisant leur produit et leur trajectoire.",
+      "subtitle": "J’interviens dans des contextes exigeants pour aider les organisations à reprendre la main sur leur trajectoire, en sécurisant leur produit, leurs arbitrages et leur capacité à livrer.",
       "links": [
         {
           "id": "services",
@@ -52,7 +52,7 @@
         {
           "id": "card-1",
           "title": "Mode d’intervention",
-          "content": "Diagnostic ciblé. Quelques leviers structurants. Des routines utiles, sans bureaucratie. Stabilisation, puis transfert."
+          "content": "Diagnostic ciblé. Des leviers structurants au bon niveau. Des routines utiles, sans bureaucratie. Stabilisation, puis transfert."
         },
         {
           "id": "card-2",
@@ -98,7 +98,7 @@
         {
           "id": "promise-card-1",
           "title": "Diagnostic ciblé",
-          "content": "Observer le flux, clarifier les irritants, choisir peu d actions a fort impact."
+          "content": "Observer le flux, clarifier les irritants, choisir peu d'actions a fort impact."
         },
         {
           "id": "promise-card-2",
@@ -119,7 +119,7 @@
     },
     "method": {
       "eyebrow": "Approche",
-      "title": "Un chemin clair, etape par etape",
+      "title": "Un chemin clair, étape par étape",
       "subtitle": "Diagnostiquer, décider, mettre en œuvre, stabiliser, avec rigueur et sobriété.",
       "steps": [
         {
@@ -170,7 +170,7 @@
         }
       ]
     },
-    "updated_at": "2026-03-26T20:58:43.514143Z"
+    "updated_at": "2026-03-29T00:12:13.907854Z"
   },
   "references": [
     {
