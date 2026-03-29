@@ -12,7 +12,7 @@ const shouldSerializeWorkersOnWindows =
 const resolvedArgs = shouldSerializeWorkersOnWindows ? [...forwardedArgs, "--workers=1"] : forwardedArgs;
 const playwrightCli = path.join(process.cwd(), "node_modules", "@playwright", "test", "cli.js");
 const playwrightArgs = [playwrightCli, ...resolvedArgs];
-const maxStartupAttempts = 4;
+const maxStartupAttempts = 8;
 const ansiPattern = /\u001B\[[0-9;]*[A-Za-z]/g;
 const require = createRequire(import.meta.url);
 const originalSpawn = childProcess.spawn.bind(childProcess);
@@ -64,8 +64,9 @@ function hasTransientStartupError(output) {
   );
 }
 
-function waitBeforeRetry() {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
+function waitBeforeRetry(attempt = 1) {
+  const delayMs = Math.min(4_000, 750 * Math.max(1, attempt));
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delayMs);
 }
 
 function shouldRetrySpawnError(error) {
@@ -197,7 +198,7 @@ function withSpawnRetries(factory, label) {
         throw error;
       }
       console.warn(`${label} failed on attempt ${attempt}, retrying...`);
-      waitBeforeRetry();
+      waitBeforeRetry(attempt);
       attempt += 1;
     }
   }
@@ -288,7 +289,7 @@ let result = await runPlaywright();
 
 while (result.error && shouldRetrySpawnError(result.error) && attempt < maxStartupAttempts) {
   console.warn(`Playwright startup failed on attempt ${attempt}, retrying...`);
-  waitBeforeRetry();
+  waitBeforeRetry(attempt);
   attempt += 1;
   result = await runPlaywright();
 }
@@ -316,7 +317,7 @@ let normalizedOutput = stripAnsi(output);
 
 while ((result.status ?? 1) !== 0 && hasTransientStartupError(normalizedOutput) && attempt < maxStartupAttempts) {
   console.warn(`Playwright command failed on attempt ${attempt}, retrying...`);
-  waitBeforeRetry();
+  waitBeforeRetry(attempt);
   attempt += 1;
   result = await runPlaywright();
 

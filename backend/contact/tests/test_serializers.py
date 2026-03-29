@@ -261,6 +261,36 @@ class ReferenceSerializerTests(TestCase):
         )
 
     @override_settings(MEDIA_URL="/media/")
+    def test_reference_representation_falls_back_to_image_when_thumb_is_missing(self):
+        with workspace_tempdir() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                image_path = default_storage.save(
+                    "references/live.webp", ContentFile(b"image")
+                )
+                ref = Reference.objects.create(
+                    reference="Ref fallback thumb",
+                    image=image_path,
+                    image_thumb="references/thumbs/missing.webp",
+                    icon="",
+                    situation="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                request = APIRequestFactory().get("/api/contact/references")
+                serializer = ReferenceSerializer(ref, context={"request": request})
+
+                self.assertEqual(
+                    serializer.data["image"],
+                    "http://testserver/media/references/live.webp",
+                )
+                self.assertEqual(
+                    serializer.data["image_thumb"],
+                    "http://testserver/media/references/live.webp",
+                )
+
+    @override_settings(MEDIA_URL="/media/")
     def test_media_url_field_normalizes_local_media_and_keeps_external_urls(self):
         field = MediaUrlField()
 

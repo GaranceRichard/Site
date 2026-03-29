@@ -124,6 +124,21 @@ class ReferenceSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        thumb_value = self._as_str(getattr(instance, "image_thumb", "")).strip()
+        image_value = self._as_str(getattr(instance, "image", "")).strip()
+        thumb_path = media_relative_path(thumb_value)
+        image_path = media_relative_path(image_value)
+
+        # Public consumers should get a usable image URL even if a derived thumb
+        # disappeared after upload or cleanup.
+        if thumb_path and image_path and not default_storage.exists(thumb_path):
+            data["image_thumb"] = data.get("image", "")
+
+        return data
+
     def _as_str(self, value) -> str:
         if value is None:
             return ""
