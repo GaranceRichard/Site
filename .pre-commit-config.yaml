@@ -1,6 +1,11 @@
 repos:
   - repo: local
     hooks:
+      - id: demo-snapshot
+        name: Refresh demo snapshot
+        entry: node scripts/update-demo-snapshot.mjs
+        language: system
+        pass_filenames: false
       - id: full-suite
         name: Full Test Suite (backend + frontend + e2e)
         entry: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pre-commit-full.ps1

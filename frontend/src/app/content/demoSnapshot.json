@@ -8,7 +8,7 @@
     "homeHero": {
       "eyebrow": "Delivery & Transformation",
       "title": "Faire de la complexité un levier d’action.",
-      "subtitle": "J’interviens dans des contextes exigeants pour aider les organisations à reprendre la main sur leur trajectoire, en sécurisant leur produit, leurs arbitrages et leur capacité à livrer.",
+      "subtitle": "J’interviens dans des contextes exigeants pour aider les organisations à clarifier leurs priorités, objectiver leurs arbitrages et sécuriser leur capacité à livrer.",
       "links": [
         {
           "id": "services",
@@ -70,7 +70,7 @@
       "title": "Une responsabilité de delivery, un cadre exigeant",
       "subtitle": "Intervenir là où la livraison est exposée : programmes complexes, organisations contraintes, enjeux de fiabilité.\nUn cadre sobre pour sécuriser l’exécution sans créer de friction inutile.",
       "highlight": {
-        "intro": "Expérience de contextes publics et privés, sur des programmes à forte contrainte.\nIntervention orientée résultat : clarifier les priorités, stabiliser le flux, rendre les décisions explicites et transférer la capacité à livrer.",
+        "intro": "J’interviens dans des contextes publics et privés où l’exécution se fragilise sous l’effet de priorités concurrentes, de dépendances mal traitées ou de décisions insuffisamment posées. Mon rôle consiste à clarifier les priorités, rendre les arbitrages explicites, stabiliser le flux et transférer une capacité à livrer plus robuste.",
         "items": [
           {
             "id": "about-item-1",
@@ -98,7 +98,7 @@
         {
           "id": "promise-card-1",
           "title": "Diagnostic ciblé",
-          "content": "Observer le flux, clarifier les irritants, choisir peu d'actions a fort impact."
+          "content": "Observer le flux, clarifier les irritants, choisir peu d'actions à fort impact."
         },
         {
           "id": "promise-card-2",
@@ -126,25 +126,25 @@
           "id": "method-step-1",
           "step": "01",
           "title": "Observer",
-          "text": "Cartographier le flux, clarifier les irritants et comprendre les contraintes réelles."
+          "text": "Cartographier le flux, identifier les points de blocage, clarifier les rôles et mettre en évidence les dépendances qui freinent l’exécution."
         },
         {
           "id": "method-step-2",
           "step": "02",
           "title": "Choisir",
-          "text": "Définir deux ou trois leviers maximum : priorisation, travail en cours, qualité, gouvernance."
+          "text": "Cadrer les priorités, expliciter les arbitrages et retenir un nombre limité de leviers à fort impact."
         },
         {
           "id": "method-step-3",
           "step": "03",
           "title": "Mettre en œuvre",
-          "text": "Installer des routines utiles, ajuster le pilotage et renforcer l’autonomie des équipes."
+          "text": "Installer des routines utiles, sécuriser les décisions, réduire les frictions et rétablir une exécution plus lisible."
         },
         {
           "id": "method-step-4",
           "step": "04",
           "title": "Ancrer",
-          "text": "Stabiliser dans la durée : standards légers, suivi, transfert et montée en compétence."
+          "text": "Stabiliser le fonctionnement, transférer les repères utiles et renforcer l’autonomie des équipes et des responsables."
         }
       ]
     },
@@ -167,10 +167,22 @@
               "url": "https://garancerichard.github.io/monte-carlo-azure/"
             }
           ]
+        },
+        {
+          "id": "publication-1774745482688",
+          "title": "Clarifier avant d’accélérer",
+          "content": "Quand les priorités, les rôles et les dépendances restent flous, vouloir aller plus vite produit rarement de l’efficacité. Le plus souvent, l’organisation accélère dans le désordre : décisions tardives, arbitrages implicites, travail repris, charge dispersée. Avant de chercher la vitesse, il faut rétablir des repères de pilotage simples : qui décide, sur quoi, dans quel ordre, et avec quelles dépendances.\n\nDans les environnements exposés, la pression pousse souvent à lancer plus, demander plus vite et multiplier les initiatives. Mais lorsque les priorités ne sont pas stabilisées, que les rôles restent ambigus et que les dépendances sont mal traitées, cette accélération aggrave la situation. Elle augmente les reprises, fragilise la qualité de décision et érode la capacité réelle à livrer. Clarifier avant d’accélérer, ce n’est pas ralentir par principe. C’est remettre de l’ordre là où l’exécution se brouille : expliciter les priorités, poser les responsabilités, rendre visibles les dépendances et limiter les ouvertures simultanées. La vitesse utile vient ensuite, sur une base plus lisible et plus robuste.",
+          "links": []
+        },
+        {
+          "id": "publication-1774745516698",
+          "title": "Stabiliser sous contrainte",
+          "content": "Certains environnements ne laissent ni confort, ni continuité, ni marge de manœuvre. Exposition politique, fragmentation des acteurs, priorités mouvantes, dépendances nombreuses : dans ces contextes, l’enjeu n’est pas d’appliquer un modèle idéal, mais de remettre une trajectoire sous contrôle. Stabiliser sous contrainte, c’est recréer un minimum de lisibilité, de décision et de discipline d’exécution.\n\nDans un environnement exposé, la difficulté ne vient pas seulement de la charge de travail. Elle vient aussi de la dispersion des responsabilités, des arbitrages tardifs, des injonctions concurrentes et d’une exécution qui se fragilise à mesure que les tensions montent. Dans ce type de contexte, la priorité n’est pas de transformer tout le système d’un coup. Elle est de restaurer quelques appuis essentiels : une trajectoire lisible, des priorités assumées, des décisions explicites, des routines sobres et une capacité minimale à tenir les engagements. Stabiliser sous contrainte, c’est réduire l’instabilité là où elle coûte le plus, sans ajouter de bureaucratie inutile. L’objectif n’est pas la perfection. L’objectif est de remettre l’action sous contrôle.",
+          "links": []
         }
       ]
     },
-    "updated_at": "2026-03-29T00:12:13.907854Z"
+    "updated_at": "2026-03-29T00:52:26.299766Z"
   },
   "references": [
     {

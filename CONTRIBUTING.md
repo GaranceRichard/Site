@@ -76,6 +76,7 @@ pre-commit install
 ```
 
 Le hook lance la suite complete (backend + frontend + E2E).
+Avant les tests, il regenere aussi `frontend/src/app/content/demoSnapshot.json` depuis la base backend courante et le restage automatiquement pour garder la GitHub Page iso avec le contenu de dev.
 Prerequis E2E: fichier `frontend/.env.e2e.local` avec `E2E_ADMIN_USER` et `E2E_ADMIN_PASS`.
 Note: le hook peut etre long a executer.
 
