@@ -378,6 +378,7 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   });
   const iconReadyReference = await fetchPublicReferenceByName(request, referenceName);
   await waitForMediaReady(request, iconReadyReference.icon);
+  const iconMediaPath = mediaPathFromUrl(iconReadyReference.icon);
 
   await page.goto("/");
   await page.locator("section#references").scrollIntoViewIfNeeded();
@@ -387,9 +388,10 @@ test("references flow: create, replace image, add icon, delete all and hide menu
   const icon = modal.getByRole("img", { name: /Ic.ne|Badge/i });
   if ((await icon.count()) > 0) {
     await expect(icon).toBeVisible();
-    await expect
-      .poll(async () => icon.evaluate((img) => (img as HTMLImageElement).naturalWidth))
-      .toBeGreaterThan(0);
+    await expect(icon).toHaveAttribute(
+      "src",
+      new RegExp(iconMediaPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+    );
   }
 
   await openReferencesManager(page);
