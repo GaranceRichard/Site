@@ -714,7 +714,9 @@ class DataAuditTests(APITestCase):
         self.assertIn("- 2", payload)
 
     @override_settings(MEDIA_URL="/media/")
-    def test_audit_project_data_command_text_skips_broken_media_section_when_empty(self):
+    def test_audit_project_data_command_text_skips_broken_media_section_when_empty(
+        self,
+    ):
         with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):
                 image_path = default_storage.save(

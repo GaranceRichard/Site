@@ -390,7 +390,9 @@ results = ["Resultat B"]
         )
 
     def test_optional_string_accepts_explicit_none(self):
-        self.assertEqual(_optional_string({"reference_short": None}, "reference_short"), "")
+        self.assertEqual(
+            _optional_string({"reference_short": None}, "reference_short"), ""
+        )
         self.assertEqual(_optional_string({"icon": None}, "icon"), "")
         self.assertEqual(_optional_string({"situation": None}, "situation"), "")
 
