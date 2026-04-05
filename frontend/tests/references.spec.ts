@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test } from "./fixtures";
 import { getE2EPaths, getE2EUrls } from "../src/e2e/config";
+import { toProxiedMediaUrl } from "../src/app/lib/media";
 import { getAdminAccessToken, loginAsAdmin, requireAdminCreds } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
@@ -182,14 +183,14 @@ async function waitForMediaReady(
   request: import("@playwright/test").APIRequestContext,
   mediaUrl: string | null | undefined,
 ) {
-  const target = mediaUrl?.trim() ?? "";
+  const target = toProxiedMediaUrl(mediaUrl);
   expect(target).not.toBe("");
 
   await expect
     .poll(async () => {
       const response = await request.get(target);
       return response.status();
-    })
+    }, { timeout: 30_000 })
     .toBe(200);
 }
 
@@ -198,7 +199,7 @@ async function waitForReferenceMediaReady(
   reference: Pick<AdminReference, "image" | "image_thumb">,
 ) {
   const candidates = [reference.image_thumb, reference.image]
-    .map((value) => value?.trim() ?? "")
+    .map((value) => toProxiedMediaUrl(value))
     .filter(Boolean);
 
   expect(candidates.length).toBeGreaterThan(0);
@@ -212,7 +213,7 @@ async function waitForReferenceMediaReady(
         }
       }
       return 404;
-    })
+    }, { timeout: 30_000 })
     .toBe(200);
 }
 
