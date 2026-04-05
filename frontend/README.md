@@ -46,6 +46,8 @@ npm run build
 - `npm run test:e2e:smoke` : filet rapide des parcours critiques transverses.
 - `npm run test:e2e:coverage` : KPI browser court, limite au front visible (`ContactForm`, `ReferenceModal`) et collecte brute V8 dans `coverage-e2e/`.
 - `npm run test:e2e:coverage:report` : collecte + aggregation Istanbul (text/json/html) dans `coverage-e2e-report/`.
+- Le report E2E courant remonte `ContactForm.tsx` a `95.45%` de branches, avec les branches d'erreur utiles deja couvertes (JSON, texte brut, timeout, throw non-Error, honeypot, succes, consent absent).
+- La branche restante est le fallback d'initialisation `resolveApiBaseUrl() ?? "/api-proxy"`; elle est volontairement consideree secondaire en E2E car elle releve surtout du wiring d'environnement.
 - `npm run test:e2e:full` : suite Playwright exhaustive, hors KPI coverage.
 - Les medias backend exposes via `/media/...` sont remappes cote frontend vers `/api-proxy/media/...` pour garder un chargement same-origin fiable dans la modale de references et en CI.
 
@@ -82,6 +84,7 @@ npm run build
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 - Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
 - Les commandes `next` et `playwright` du frontend sont maintenant encapsulees dans des wrappers de prevention (`run-next.mjs`, `run-playwright.mjs`, `start-e2e-frontend.mjs`) pour reduire les `spawn EPERM` Windows avant rerun manuel.
+- Le faisceau `tests/contact.spec.ts` + `tests/contact-resilience.spec.ts` couvre maintenant les branches critiques de `ContactForm` en E2E, ce qui a fait passer le score branche du report de `86.36%` a `95.45%`.
 
 ## Audit de performance local
 
