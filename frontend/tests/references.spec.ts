@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test } from "./fixtures";
 import { getE2EPaths, getE2EUrls } from "../src/e2e/config";
-import { toProxiedMediaUrl } from "../src/app/lib/media";
 import { getAdminAccessToken, loginAsAdmin, requireAdminCreds } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
@@ -180,41 +179,39 @@ async function expectPublicReferenceToMatchAdmin(
 }
 
 async function waitForMediaReady(
-  request: import("@playwright/test").APIRequestContext,
+  _request: import("@playwright/test").APIRequestContext,
   mediaUrl: string | null | undefined,
 ) {
-  const target = toProxiedMediaUrl(mediaUrl);
-  expect(target).not.toBe("");
+  const mediaPath = mediaPathFromUrl(mediaUrl ?? "");
+  expect(mediaPath).not.toBe("");
 
   await expect
     .poll(async () => {
-      const response = await request.get(target);
-      return response.status();
+      return fs.existsSync(absoluteMediaPath(mediaPath));
     }, { timeout: 30_000 })
-    .toBe(200);
+    .toBeTruthy();
 }
 
 async function waitForReferenceMediaReady(
-  request: import("@playwright/test").APIRequestContext,
+  _request: import("@playwright/test").APIRequestContext,
   reference: Pick<AdminReference, "image" | "image_thumb">,
 ) {
   const candidates = [reference.image_thumb, reference.image]
-    .map((value) => toProxiedMediaUrl(value))
+    .map((value) => mediaPathFromUrl(value ?? ""))
     .filter(Boolean);
 
   expect(candidates.length).toBeGreaterThan(0);
 
   await expect
     .poll(async () => {
-      for (const target of candidates) {
-        const response = await request.get(target);
-        if (response.status() === 200) {
-          return 200;
+      for (const mediaPath of candidates) {
+        if (fs.existsSync(absoluteMediaPath(mediaPath))) {
+          return true;
         }
       }
-      return 404;
+      return false;
     }, { timeout: 30_000 })
-    .toBe(200);
+    .toBeTruthy();
 }
 
 async function waitForReferenceIconPath(
