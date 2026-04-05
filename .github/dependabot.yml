@@ -5,13 +5,15 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 2
+    # Keep Dependabot focused on security fixes; routine version bumps are handled manually.
+    open-pull-requests-limit: 0
     ignore:
       - dependency-name: Django
         update-types:
           - version-update:semver-major
     groups:
-      backend-dependencies:
+      backend-security-updates:
+        applies-to: security-updates
         patterns:
           - "*"
 
@@ -19,8 +21,10 @@ updates:
     directory: /frontend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 2
+    # Keep Dependabot focused on security fixes; routine version bumps are handled manually.
+    open-pull-requests-limit: 0
     groups:
-      frontend-dependencies:
+      frontend-security-updates:
+        applies-to: security-updates
         patterns:
           - "*"

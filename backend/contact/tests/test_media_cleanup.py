@@ -714,6 +714,36 @@ class DataAuditTests(APITestCase):
         self.assertIn("- 2", payload)
 
     @override_settings(MEDIA_URL="/media/")
+    def test_audit_project_data_command_text_skips_broken_media_section_when_empty(self):
+        with workspace_tempdir() as tempdir:
+            with override_settings(MEDIA_ROOT=tempdir):
+                image_path = default_storage.save(
+                    "references/ok.webp", ContentFile(b"ok")
+                )
+                thumb_path = default_storage.save(
+                    "references/thumbs/ok.webp", ContentFile(b"thumb")
+                )
+
+                SiteSettings.get_solo()
+                Reference.objects.create(
+                    reference="Ref saine",
+                    order_index=1,
+                    image=image_path,
+                    image_thumb=thumb_path,
+                    icon="",
+                    tasks=[],
+                    actions=[],
+                    results=[],
+                )
+
+                out = StringIO()
+                call_command("audit_project_data", stdout=out)
+                payload = out.getvalue()
+
+                self.assertIn("Audit project data", payload)
+                self.assertNotIn("RÃ©fÃ©rences avec chemins cassÃ©s:", payload)
+
+    @override_settings(MEDIA_URL="/media/")
     def test_audit_reference_media_command_text_lists_orphans(self):
         with workspace_tempdir() as tempdir:
             with override_settings(MEDIA_ROOT=tempdir):

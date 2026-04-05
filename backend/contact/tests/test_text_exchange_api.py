@@ -16,6 +16,9 @@ from contact.image_upload import MAX_UPLOAD_BYTES
 from contact.ga4 import GA4FetchError
 from contact.text_exchange import (
     TextExchangeError,
+    _delete_reference_media,
+    _optional_string,
+    _table_list,
     build_exchange_dictionary,
     export_exchange_text,
     import_exchange_text,
@@ -385,6 +388,32 @@ results = ["Resultat B"]
             ctx.exception.detail["format_version"],
             "Version de format non supportee.",
         )
+
+    def test_optional_string_accepts_explicit_none(self):
+        self.assertEqual(_optional_string({"reference_short": None}, "reference_short"), "")
+        self.assertEqual(_optional_string({"icon": None}, "icon"), "")
+        self.assertEqual(_optional_string({"situation": None}, "situation"), "")
+
+    def test_table_list_rejects_entries_that_are_not_tables(self):
+        with self.assertRaises(TextExchangeError) as ctx:
+            _table_list({"references": ["oops"]}, "references", "references")
+
+        self.assertEqual(
+            ctx.exception.detail["references"],
+            "`references` doit etre une liste de sections.",
+        )
+
+    def test_delete_reference_media_skips_empty_and_non_media_values(self):
+        reference = Reference(
+            image="",
+            image_thumb=None,
+            icon="https://example.com/not-media.png",
+        )
+
+        with patch("contact.text_exchange.default_storage.delete") as delete_mock:
+            _delete_reference_media(reference)
+
+        delete_mock.assert_not_called()
 
     def test_export_and_import_handle_multiline_text_and_existing_media_cleanup(self):
         settings = SiteSettings.get_solo()
