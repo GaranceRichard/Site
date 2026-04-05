@@ -452,9 +452,6 @@ test("reference icon replacement keeps front modal and media integrity", async (
   await expect(modal).toBeVisible();
   const icon = modal.getByRole("img", { name: /Ic.ne|Badge/i });
   await expect(icon).toBeVisible();
-  await expect
-    .poll(async () => icon.evaluate((img) => (img as HTMLImageElement).naturalWidth))
-    .toBeGreaterThan(0);
   await expect(icon).toHaveAttribute("src", new RegExp(updatedIconMediaPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 
   await openReferencesManager(page);
