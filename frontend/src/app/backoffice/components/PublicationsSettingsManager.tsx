@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import {
   getPublicationsSettings,
   getPublicationsSettingsServer,
@@ -11,6 +11,7 @@ import {
 } from "../../content/publicationsSettings";
 import { savePublicationsSettings } from "../../content/siteSettingsStore";
 import { moveItem } from "./HomeSettingsManager";
+import { useSettingsManager } from "./useSettingsManager";
 
 type PublicationFormItem = PublicationItem & {
   links: PublicationReferenceLink[];
@@ -67,31 +68,52 @@ function normalizeFormState(settings: PublicationsSettings): PublicationsFormSta
   };
 }
 
+function clampActiveItemIndex(index: number, itemCount: number) {
+  if (itemCount === 0) {
+    return 0;
+  }
+  return Math.min(index, itemCount - 1);
+}
+
 export default function PublicationsSettingsManager() {
-  const [activeTab, setActiveTab] = useState<"titles" | "highlight" | "items">("titles");
   const [activeItemIndex, setActiveItemIndex] = useState(0);
-  const persisted = useSyncExternalStore(
-    subscribePublicationsSettings,
-    getPublicationsSettings,
-    getPublicationsSettingsServer,
-  );
-  const [form, setForm] = useState<PublicationsFormState>(() => normalizeFormState(persisted));
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    setForm(normalizeFormState(persisted));
-  }, [persisted]);
-
-  useEffect(() => {
-    setActiveItemIndex((current) => {
-      if (form.items.length === 0) {
-        return 0;
+  const {
+    activeTab,
+    form,
+    error,
+    isSaving,
+    message,
+    onSubmit,
+    setActiveTab,
+    setForm,
+  } = useSettingsManager<
+    PublicationsSettings,
+    PublicationsFormState,
+    PublicationsSettings,
+    "titles" | "highlight" | "items"
+  >({
+    subscribe: subscribePublicationsSettings,
+    getSnapshot: getPublicationsSettings,
+    getServerSnapshot: getPublicationsSettingsServer,
+    initialTab: "titles",
+    mapPersistedToForm: normalizeFormState,
+    normalizeForSubmit,
+    save: savePublicationsSettings,
+    successMessage: "Publications mises a jour.",
+    fallbackErrorMessage: "Impossible d'enregistrer les publications.",
+    validate: (normalized) => {
+      if (
+        !normalized.title ||
+        !normalized.subtitle ||
+        !normalized.highlight.title ||
+        !normalized.highlight.content
+      ) {
+        return "Le titre, le sous-titre et l'encart sont obligatoires.";
       }
-      return Math.min(current, form.items.length - 1);
-    });
-  }, [form.items.length]);
+      return null;
+    },
+  });
+  const visibleItemIndex = clampActiveItemIndex(activeItemIndex, form.items.length);
 
   function updateItem(index: number, next: Partial<PublicationFormItem>) {
     setForm((prev) => {
@@ -113,45 +135,6 @@ export default function PublicationsSettingsManager() {
       items[itemIndex] = { ...items[itemIndex], links };
       return { ...prev, items };
     });
-  }
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage(null);
-    setError(null);
-
-    const normalized = normalizeForSubmit(form);
-    if (
-      !normalized.title ||
-      !normalized.subtitle ||
-      !normalized.highlight.title ||
-      !normalized.highlight.content
-    ) {
-      setError("Le titre, le sous-titre et l'encart sont obligatoires.");
-      return;
-    }
-
-    let token: string | null = null;
-    try {
-      token = sessionStorage.getItem("access_token");
-    } catch {
-      token = null;
-    }
-
-    if (!token) {
-      setError("Connexion requise pour enregistrer ces changements.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await savePublicationsSettings(normalized, token);
-      setMessage("Publications mises a jour.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible d'enregistrer les publications.");
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   return (
@@ -292,7 +275,7 @@ export default function PublicationsSettingsManager() {
                           onClick={() => setActiveItemIndex(index)}
                           className={[
                             "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
-                            activeItemIndex === index
+                            visibleItemIndex === index
                               ? "border-neutral-300 bg-neutral-100 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
                               : "border-neutral-200 bg-white text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200",
                           ].join(" ")}
@@ -334,11 +317,9 @@ export default function PublicationsSettingsManager() {
                       onClick={() => {
                         setForm((prev) => ({
                           ...prev,
-                          items: prev.items.filter((_, i) => i !== activeItemIndex),
+                          items: prev.items.filter((_, i) => i !== visibleItemIndex),
                         }));
-                        setActiveItemIndex((current) =>
-                          Math.max(0, Math.min(current, form.items.length - 2)),
-                        );
+                        setActiveItemIndex((current) => Math.max(0, Math.min(current, form.items.length - 2)));
                       }}
                       disabled={form.items.length === 0}
                       className="rounded-lg border border-neutral-200 px-3 py-2 text-xs font-semibold disabled:opacity-40 dark:border-neutral-800"
@@ -357,8 +338,8 @@ export default function PublicationsSettingsManager() {
                 {form.items.length > 0 ? (
                   <>
                     {(() => {
-                      const item = form.items[activeItemIndex];
-                      const index = activeItemIndex;
+                      const item = form.items[visibleItemIndex];
+                      const index = visibleItemIndex;
                       const itemLinks = item.links;
                       return (
                         <div className="grid gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">

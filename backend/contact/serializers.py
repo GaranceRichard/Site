@@ -17,6 +17,49 @@ from .site_settings_defaults import (
 )
 
 
+def _coerce_str(value, default):
+    return value.strip() or default
+
+
+def _normalize_card_list(value, default, max_count):
+    normalized_items = []
+
+    for item in value:
+        if {"id", "step", "title", "text"}.issubset(item):
+            normalized = {
+                "id": item["id"].strip(),
+                "step": item["step"].strip(),
+                "title": item["title"].strip(),
+                "text": item["text"].strip(),
+            }
+            if normalized["id"] and normalized["step"] and (
+                normalized["title"] or normalized["text"]
+            ):
+                normalized_items.append(normalized)
+        elif {"id", "title", "content"}.issubset(item):
+            normalized = {
+                "id": item["id"].strip(),
+                "title": item["title"].strip(),
+                "content": item["content"].strip(),
+            }
+            if normalized["id"] and (
+                normalized["title"] or normalized["content"]
+            ):
+                normalized_items.append(normalized)
+        elif {"id", "text"}.issubset(item):
+            normalized = {
+                "id": item["id"].strip(),
+                "text": item["text"].strip(),
+            }
+            if normalized["id"] and normalized["text"]:
+                normalized_items.append(normalized)
+
+    normalized_items = normalized_items[:max_count]
+    if not normalized_items and default is not None:
+        return default
+    return normalized_items
+
+
 class MediaPathField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str):
@@ -205,13 +248,13 @@ class HeaderSettingsSerializer(serializers.Serializer):
     bookingUrl = serializers.URLField(max_length=500)
 
     def validate_name(self, value: str) -> str:
-        return value.strip() or DEFAULT_HEADER_SETTINGS["name"]
+        return _coerce_str(value, DEFAULT_HEADER_SETTINGS["name"])
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_HEADER_SETTINGS["title"]
+        return _coerce_str(value, DEFAULT_HEADER_SETTINGS["title"])
 
     def validate_bookingUrl(self, value: str) -> str:
-        return value.strip() or DEFAULT_HEADER_SETTINGS["bookingUrl"]
+        return _coerce_str(value, DEFAULT_HEADER_SETTINGS["bookingUrl"])
 
 
 class HeroSectionLinkSerializer(serializers.Serializer):
@@ -250,18 +293,7 @@ class HomeHeroSettingsSerializer(serializers.Serializer):
         return keywords
 
     def validate_cards(self, value):
-        cards = [
-            {
-                "id": item["id"].strip(),
-                "title": item["title"].strip(),
-                "content": item["content"].strip(),
-            }
-            for item in value
-            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
-        ][:4]
-        if not cards:
-            return DEFAULT_HOME_HERO_SETTINGS["cards"]
-        return cards
+        return _normalize_card_list(value, DEFAULT_HOME_HERO_SETTINGS["cards"], 4)
 
 
 class PromiseCardSerializer(serializers.Serializer):
@@ -276,24 +308,13 @@ class PromiseSettingsSerializer(serializers.Serializer):
     cards = PromiseCardSerializer(many=True)
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_PROMISE_SETTINGS["title"]
+        return _coerce_str(value, DEFAULT_PROMISE_SETTINGS["title"])
 
     def validate_subtitle(self, value: str) -> str:
-        return value.strip() or DEFAULT_PROMISE_SETTINGS["subtitle"]
+        return _coerce_str(value, DEFAULT_PROMISE_SETTINGS["subtitle"])
 
     def validate_cards(self, value):
-        cards = [
-            {
-                "id": item["id"].strip(),
-                "title": item["title"].strip(),
-                "content": item["content"].strip(),
-            }
-            for item in value
-            if item["id"].strip() and (item["title"].strip() or item["content"].strip())
-        ][:6]
-        if not cards:
-            return DEFAULT_PROMISE_SETTINGS["cards"]
-        return cards
+        return _normalize_card_list(value, DEFAULT_PROMISE_SETTINGS["cards"], 6)
 
 
 class AboutHighlightItemSerializer(serializers.Serializer):
@@ -306,18 +327,10 @@ class AboutHighlightSerializer(serializers.Serializer):
     items = AboutHighlightItemSerializer(many=True)
 
     def validate_intro(self, value: str) -> str:
-        return value.strip() or DEFAULT_ABOUT_SETTINGS["highlight"]["intro"]
+        return _coerce_str(value, DEFAULT_ABOUT_SETTINGS["highlight"]["intro"])
 
     def validate_items(self, value):
-        items = [
-            {
-                "id": item["id"].strip(),
-                "text": item["text"].strip(),
-            }
-            for item in value
-            if item["id"].strip() and item["text"].strip()
-        ][:4]
-        return items
+        return _normalize_card_list(value, None, 4)
 
 
 class AboutSettingsSerializer(serializers.Serializer):
@@ -328,10 +341,10 @@ class AboutSettingsSerializer(serializers.Serializer):
     highlight = AboutHighlightSerializer()
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_ABOUT_SETTINGS["title"]
+        return _coerce_str(value, DEFAULT_ABOUT_SETTINGS["title"])
 
     def validate_subtitle(self, value: str) -> str:
-        return value.strip() or DEFAULT_ABOUT_SETTINGS["subtitle"]
+        return _coerce_str(value, DEFAULT_ABOUT_SETTINGS["subtitle"])
 
 
 class MethodStepSerializer(serializers.Serializer):
@@ -348,30 +361,16 @@ class MethodSettingsSerializer(serializers.Serializer):
     steps = MethodStepSerializer(many=True)
 
     def validate_eyebrow(self, value: str) -> str:
-        return value.strip() or DEFAULT_METHOD_SETTINGS["eyebrow"]
+        return _coerce_str(value, DEFAULT_METHOD_SETTINGS["eyebrow"])
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_METHOD_SETTINGS["title"]
+        return _coerce_str(value, DEFAULT_METHOD_SETTINGS["title"])
 
     def validate_subtitle(self, value: str) -> str:
-        return value.strip() or DEFAULT_METHOD_SETTINGS["subtitle"]
+        return _coerce_str(value, DEFAULT_METHOD_SETTINGS["subtitle"])
 
     def validate_steps(self, value):
-        steps = [
-            {
-                "id": item["id"].strip(),
-                "step": item["step"].strip(),
-                "title": item["title"].strip(),
-                "text": item["text"].strip(),
-            }
-            for item in value
-            if item["id"].strip()
-            and item["step"].strip()
-            and (item["title"].strip() or item["text"].strip())
-        ][:6]
-        if not steps:
-            return DEFAULT_METHOD_SETTINGS["steps"]
-        return steps
+        return _normalize_card_list(value, DEFAULT_METHOD_SETTINGS["steps"], 6)
 
 
 class PublicationHighlightSerializer(serializers.Serializer):
@@ -379,10 +378,12 @@ class PublicationHighlightSerializer(serializers.Serializer):
     content = serializers.CharField(trim_whitespace=True)
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["title"]
+        return _coerce_str(value, DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["title"])
 
     def validate_content(self, value: str) -> str:
-        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["content"]
+        return _coerce_str(
+            value, DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["content"]
+        )
 
 
 class PublicationItemSerializer(serializers.Serializer):
@@ -404,10 +405,10 @@ class PublicationsSettingsSerializer(serializers.Serializer):
     items = PublicationItemSerializer(many=True)
 
     def validate_title(self, value: str) -> str:
-        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["title"]
+        return _coerce_str(value, DEFAULT_PUBLICATIONS_SETTINGS["title"])
 
     def validate_subtitle(self, value: str) -> str:
-        return value.strip() or DEFAULT_PUBLICATIONS_SETTINGS["subtitle"]
+        return _coerce_str(value, DEFAULT_PUBLICATIONS_SETTINGS["subtitle"])
 
     def validate_items(self, value):
         items = [

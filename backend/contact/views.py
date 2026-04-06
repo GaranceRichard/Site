@@ -1,3 +1,5 @@
+import logging
+
 from django.core.cache import cache
 from django.db import models
 from rest_framework import generics, permissions, serializers, status
@@ -55,6 +57,8 @@ from .text_exchange import (
     export_exchange_text,
     import_exchange_text,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ContactMessageCreateView(generics.CreateAPIView):
@@ -217,6 +221,7 @@ class ReferenceImageUploadAdminView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception:
+            logger.exception("Reference image processing failed.")
             return Response(
                 {"detail": "Impossible de traiter l'image."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -399,6 +404,37 @@ class SiteSettingsAdminView(APIView):
 class StatsSummaryAdminView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
+    def _get_fresh_cache_response(self):
+        cached_payload = cache.get(get_stats_summary_cache_key())
+        if cached_payload is None:
+            return None
+        return Response(cached_payload, status=status.HTTP_200_OK)
+
+    def _get_stale_cache_response(self, warning: str):
+        stale_payload = cache.get(get_stats_summary_last_success_cache_key())
+        if stale_payload is None:
+            return None
+        return Response(
+            {
+                **stale_payload,
+                "stale": True,
+                "warning": warning,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def _cache_success_payload(self, payload):
+        cache.set(
+            get_stats_summary_cache_key(),
+            payload,
+            STATS_SUMMARY_CACHE_TTL_SECONDS,
+        )
+        cache.set(
+            get_stats_summary_last_success_cache_key(),
+            payload,
+            STATS_SUMMARY_LAST_SUCCESS_TTL_SECONDS,
+        )
+
     @extend_schema(
         responses={
             200: inline_serializer(
@@ -414,12 +450,9 @@ class StatsSummaryAdminView(APIView):
         }
     )
     def get(self, request):
-        fresh_cache_key = get_stats_summary_cache_key()
-        stale_cache_key = get_stats_summary_last_success_cache_key()
-
-        cached_payload = cache.get(fresh_cache_key)
-        if cached_payload is not None:
-            return Response(cached_payload, status=status.HTTP_200_OK)
+        cached_response = self._get_fresh_cache_response()
+        if cached_response is not None:
+            return cached_response
 
         if not is_ga4_configured():
             return Response({"configured": False}, status=status.HTTP_200_OK)
@@ -431,16 +464,9 @@ class StatsSummaryAdminView(APIView):
                 **fetch_ga4_summary(),
             }
         except GA4FetchError as exc:
-            stale_payload = cache.get(stale_cache_key)
-            if stale_payload is not None:
-                return Response(
-                    {
-                        **stale_payload,
-                        "stale": True,
-                        "warning": str(exc),
-                    },
-                    status=status.HTTP_200_OK,
-                )
+            stale_response = self._get_stale_cache_response(str(exc))
+            if stale_response is not None:
+                return stale_response
 
             return Response(
                 {
@@ -451,10 +477,5 @@ class StatsSummaryAdminView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
-        cache.set(fresh_cache_key, payload, STATS_SUMMARY_CACHE_TTL_SECONDS)
-        cache.set(
-            stale_cache_key,
-            payload,
-            STATS_SUMMARY_LAST_SUCCESS_TTL_SECONDS,
-        )
+        self._cache_success_payload(payload)
         return Response(payload, status=status.HTTP_200_OK)

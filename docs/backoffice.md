@@ -61,3 +61,5 @@ npm run test:e2e
 - le backoffice utilise JWT
 - le frontend sait passer par `/api-proxy` puis basculer vers `NEXT_PUBLIC_API_BASE_URL`
 - les medias locaux des references passent par un proxy same-origin Next pour fiabiliser le chargement en dev, CI et E2E
+- les formulaires editoriaux du backoffice peuvent mutualiser leur cycle `subscribe -> edition -> validation -> sauvegarde` via `frontend/src/app/backoffice/components/useSettingsManager.ts`
+- le manager `Publications` derive maintenant l'onglet actif a partir de l'etat courant de la liste, ce qui evite les `setState` synchrones dans un effet React et garde `npm run lint` vert

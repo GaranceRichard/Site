@@ -1,6 +1,5 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import {
   getHomeHeroSettings,
   getHomeHeroSettingsServer,
@@ -10,6 +9,7 @@ import {
   type HomeHeroSettings,
 } from "../../content/homeHeroSettings";
 import { saveHomeHeroSettings } from "../../content/siteSettingsStore";
+import { useSettingsManager } from "./useSettingsManager";
 
 export function moveItem<T>(items: T[], from: number, to: number): T[] {
   if (to < 0 || to >= items.length || from === to) {
@@ -46,20 +46,34 @@ function normalizeForSubmit(settings: HomeHeroSettings): HomeHeroSettings {
 }
 
 export default function HomeSettingsManager() {
-  const [activeTab, setActiveTab] = useState<"titles" | "cards" | "links-keywords">("titles");
-  const persisted = useSyncExternalStore(
-    subscribeHomeHeroSettings,
-    getHomeHeroSettings,
-    getHomeHeroSettingsServer,
-  );
-  const [form, setForm] = useState<HomeHeroSettings>(persisted);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    setForm(persisted);
-  }, [persisted]);
+  const {
+    activeTab,
+    form,
+    error,
+    isSaving,
+    message,
+    onSubmit,
+    setActiveTab,
+    setForm,
+  } = useSettingsManager<HomeHeroSettings, HomeHeroSettings, HomeHeroSettings, "titles" | "cards" | "links-keywords">({
+    subscribe: subscribeHomeHeroSettings,
+    getSnapshot: getHomeHeroSettings,
+    getServerSnapshot: getHomeHeroSettingsServer,
+    initialTab: "titles",
+    normalizeForSubmit,
+    save: saveHomeHeroSettings,
+    successMessage: "Accueil mis a jour.",
+    fallbackErrorMessage: "Impossible d'enregistrer l'accueil.",
+    validate: (normalized) => {
+      if (!normalized.eyebrow || !normalized.title || !normalized.subtitle) {
+        return "Sur-titre, titre et sous-titre sont obligatoires.";
+      }
+      if (normalized.keywords.length < 1 || normalized.keywords.length > 5) {
+        return "Il faut entre 1 et 5 mots-cles.";
+      }
+      return null;
+    },
+  });
 
   function updateLink(index: number, next: Partial<HeroSectionLink>) {
     setForm((prev) => {
@@ -75,44 +89,6 @@ export default function HomeSettingsManager() {
       cards[index] = { ...cards[index], ...next };
       return { ...prev, cards };
     });
-  }
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage(null);
-    setError(null);
-
-    const normalized = normalizeForSubmit(form);
-    if (!normalized.eyebrow || !normalized.title || !normalized.subtitle) {
-      setError("Sur-titre, titre et sous-titre sont obligatoires.");
-      return;
-    }
-    if (normalized.keywords.length < 1 || normalized.keywords.length > 5) {
-      setError("Il faut entre 1 et 5 mots-cles.");
-      return;
-    }
-
-    let token: string | null = null;
-    try {
-      token = sessionStorage.getItem("access_token");
-    } catch {
-      token = null;
-    }
-
-    if (!token) {
-      setError("Connexion requise pour enregistrer ces changements.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await saveHomeHeroSettings(normalized, token);
-      setMessage("Accueil mis a jour.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible d'enregistrer l'accueil.");
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   return (

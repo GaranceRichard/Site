@@ -81,6 +81,8 @@ npm run build
 - Les nouveaux tests `siteSettingsStore.test.ts` couvrent les branches de fallback et d'erreur du store de settings public/admin.
 - Le backoffice couvre maintenant la section `A propos` via `AboutSettingsManager.tsx` et `aboutSettings.test.ts`, pour aligner le schema frontend avec l'extension `about` de `SiteSettings`.
 - Le backoffice inclut maintenant un flux `Chargeur / extracteur` dedie, avec telechargement du canevas TOML, export de contenu et import valide avec feedback utilisateur.
+- Les managers `HomeSettingsManager` et `PublicationsSettingsManager` partagent maintenant le hook `useSettingsManager.ts`, avec un test dedie sur le cycle synchro/validation/sauvegarde.
+- `PublicationsSettingsManager.tsx` ne recadre plus l'item actif via `useEffect` ; l'index visible est derive depuis la longueur courante de la liste pour rester conforme a la regle ESLint `react-hooks/set-state-in-effect`.
 - Le bootstrap backend Playwright ne depend plus de PowerShell: le smoke E2E et la suite complete demarrent maintenant avec le meme lanceur Node portable en local et en CI Linux.
 - Les references publiques utilisent maintenant `src/app/lib/media.ts` et `src/app/api-proxy/media/[...path]/route.ts` pour proxifier les medias backend locaux et stabiliser l'affichage des icones/images en E2E.
 - Les commandes `next` et `playwright` du frontend sont maintenant encapsulees dans des wrappers de prevention (`run-next.mjs`, `run-playwright.mjs`, `start-e2e-frontend.mjs`) pour reduire les `spawn EPERM` Windows avant rerun manuel.

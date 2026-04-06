@@ -117,15 +117,22 @@ class ReferenceAdminIntegrationTests(APITestCase):
         strategy.process_reference_image.side_effect = RuntimeError("boom")
         get_upload_strategy_mock.return_value = strategy
 
-        upload = self.client.post(
-            "/api/contact/references/admin/upload",
-            {"file": self._fake_upload("image/webp", 128)},
-            format="multipart",
-            **self.auth_headers(),
-        )
+        with self.assertLogs("contact.views", level="ERROR") as captured_logs:
+            upload = self.client.post(
+                "/api/contact/references/admin/upload",
+                {"file": self._fake_upload("image/webp", 128)},
+                format="multipart",
+                **self.auth_headers(),
+            )
 
         self.assertEqual(upload.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(upload.data["detail"], "Impossible de traiter l'image.")
+        self.assertTrue(
+            any(
+                "Reference image processing failed." in message
+                for message in captured_logs.output
+            )
+        )
 
     @patch("contact.views.get_upload_strategy")
     def test_reference_image_upload_returns_saved_payload(

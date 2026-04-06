@@ -11,6 +11,7 @@ from contact.stats_cache import (
     get_stats_summary_cache_key,
     get_stats_summary_last_success_cache_key,
 )
+from contact.views import StatsSummaryAdminView
 
 
 @override_settings(
@@ -148,3 +149,40 @@ class StatsSummaryApiTests(APITestCase):
         self.assertEqual(res.data["stale"], True)
         self.assertEqual(res.data["cachedAt"], "2026-03-18T12:00:00+00:00")
         self.assertEqual(res.data["warning"], "ga down")
+
+    def test_private_fresh_cache_helper_returns_cached_response(self):
+        cached_payload = {
+            "configured": True,
+            "stale": False,
+            "cachedAt": "2026-03-19T12:00:00+00:00",
+            "data": {"visitors30d": {"total": 10, "trend": []}},
+        }
+        cache.set(get_stats_summary_cache_key(), cached_payload, 3600)
+
+        response = StatsSummaryAdminView()._get_fresh_cache_response()
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, cached_payload)
+
+    def test_private_stale_cache_helper_marks_payload_as_stale(self):
+        stale_payload = {
+            "configured": True,
+            "stale": False,
+            "cachedAt": "2026-03-18T12:00:00+00:00",
+            "data": {"visitors30d": {"total": 15, "trend": []}},
+        }
+        cache.set(get_stats_summary_last_success_cache_key(), stale_payload, 3600)
+
+        response = StatsSummaryAdminView()._get_stale_cache_response("ga down")
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                **stale_payload,
+                "stale": True,
+                "warning": "ga down",
+            },
+        )
