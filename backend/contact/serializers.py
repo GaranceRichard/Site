@@ -32,8 +32,10 @@ def _normalize_card_list(value, default, max_count):
                 "title": item["title"].strip(),
                 "text": item["text"].strip(),
             }
-            if normalized["id"] and normalized["step"] and (
-                normalized["title"] or normalized["text"]
+            if (
+                normalized["id"]
+                and normalized["step"]
+                and (normalized["title"] or normalized["text"])
             ):
                 normalized_items.append(normalized)
         elif {"id", "title", "content"}.issubset(item):
@@ -42,9 +44,7 @@ def _normalize_card_list(value, default, max_count):
                 "title": item["title"].strip(),
                 "content": item["content"].strip(),
             }
-            if normalized["id"] and (
-                normalized["title"] or normalized["content"]
-            ):
+            if normalized["id"] and (normalized["title"] or normalized["content"]):
                 normalized_items.append(normalized)
         elif {"id", "text"}.issubset(item):
             normalized = {
@@ -381,9 +381,7 @@ class PublicationHighlightSerializer(serializers.Serializer):
         return _coerce_str(value, DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["title"])
 
     def validate_content(self, value: str) -> str:
-        return _coerce_str(
-            value, DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["content"]
-        )
+        return _coerce_str(value, DEFAULT_PUBLICATIONS_SETTINGS["highlight"]["content"])
 
 
 class PublicationItemSerializer(serializers.Serializer):
